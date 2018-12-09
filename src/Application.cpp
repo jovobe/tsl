@@ -18,7 +18,7 @@ using std::vector;
 
 namespace tsl {
 
-void Application::init_glfw() {
+void Application::init_glfw() const {
 
     glfwSetErrorCallback(&Application::glfw_error_callback);
     if (!glfwInit()) {

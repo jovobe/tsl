@@ -26,7 +26,7 @@ public:
     void glfw_key_callback(int key, int scancode, int action, int mods);
     void glfw_framebuffer_size_callback(int width, int height);
 
-    void render();
+    void render() const;
     bool should_close() const;
 
 private:

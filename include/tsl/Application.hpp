@@ -34,7 +34,7 @@ private:
 
     Application();
 
-    void init_glfw();
+    void init_glfw() const;
     static void glfw_error_callback(int error, const char* description);
     static void glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods);
     static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height);

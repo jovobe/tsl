@@ -208,7 +208,7 @@ void Window::glfw_framebuffer_size_callback(int width, int height) {
     // TODO: implement
 }
 
-void Window::render() {
+void Window::render() const {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);
