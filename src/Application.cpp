@@ -24,6 +24,8 @@ void Application::init_glfw() const {
     if (!glfwInit()) {
         exit(EXIT_FAILURE);
     }
+
+    glfwSetTime(0);
 }
 
 void Application::glfw_error_callback(int error, const char* description) {
@@ -31,7 +33,7 @@ void Application::glfw_error_callback(int error, const char* description) {
 }
 
 void Application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
-    cout << "INFO: key pressed!" << endl;
+//    cout << "INFO: key pressed!" << endl;
 
     auto& instance = getInstance();
     try {
@@ -42,10 +44,46 @@ void Application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scanco
     }
 }
 
-void Application::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    cout << "framebuffer size callback!" << endl;
+void Application::glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
+    cout << "INFO: framebuffer size callback! (" << width << "," << height << ")" << endl;
     // TODO: make this window specific
     glViewport(0, 0, width, height);
+}
+
+void Application::glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height) {
+    cout << "INFO: window size callback! (" << width << "," << height << ")" << endl;
+
+    auto& instance = getInstance();
+    try {
+        auto& window = instance.windows.at(glfw_window);
+        window.glfw_window_size_callback(width, height);
+    } catch (out_of_range&) {
+        cout << "WARNING: window size callback for unknown window!" << endl;
+    }
+}
+
+void Application::glfw_mouse_button_callback(GLFWwindow* glfw_window, int button, int action, int mods) {
+//    cout << "INFO: mouse button pressed" << endl;
+
+    auto& instance = getInstance();
+    try {
+        auto& window = instance.windows.at(glfw_window);
+        window.glfw_mouse_button_callback(button, action, mods);
+    } catch (out_of_range&) {
+        cout << "WARNING: window size callback for unknown window!" << endl;
+    }
+}
+
+void Application::glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos, double y_pos) {
+//    cout << "INFO: cursor pos callback! (" << x_pos << "," << y_pos << ")" << endl;
+
+    auto& instance = getInstance();
+    try {
+        auto& window = instance.windows.at(glfw_window);
+        window.glfw_cursor_pos_callback(x_pos, y_pos);
+    } catch (out_of_range&) {
+        cout << "WARNING: window size callback for unknown window!" << endl;
+    }
 }
 
 Application& Application::getInstance() {
@@ -91,6 +129,10 @@ void Application::run() {
 
 Application::~Application() {
     glfwTerminate();
+}
+
+double Application::get_time() const {
+    return glfwGetTime();
 }
 
 }

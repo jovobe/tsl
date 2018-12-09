@@ -29,15 +29,22 @@ public:
     void create_window(string title, uint32_t width, uint32_t height);
     void run();
 
+    double get_time() const;
+
 private:
     map<GLFWwindow*, Window> windows;
 
     Application();
 
     void init_glfw() const;
+
+    // GLFW callbacks
     static void glfw_error_callback(int error, const char* description);
     static void glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods);
-    static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height);
+    static void glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height);
+    static void glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height);
+    static void glfw_mouse_button_callback(GLFWwindow* glfw_window, int button, int action, int mods);
+    static void glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos, double y_pos);
 
     // TODO: restrict scope
     friend class Window;

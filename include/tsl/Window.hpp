@@ -7,6 +7,7 @@
 #include <string>
 
 #include <tsl/Application.hpp>
+#include <tsl/Camera.hpp>
 
 using std::string;
 
@@ -25,6 +26,12 @@ public:
 
     void glfw_key_callback(int key, int scancode, int action, int mods);
     void glfw_framebuffer_size_callback(int width, int height);
+    void glfw_window_size_callback(int width, int height);
+    void glfw_mouse_button_callback(int button, int action, int mods);
+    void glfw_cursor_pos_callback(double x_pos, double y_pos);
+
+    void enable_cursor_pos_callback();
+    void disable_cursor_pos_callback();
 
     void render() const;
     bool should_close() const;
@@ -42,6 +49,8 @@ private:
     GLuint vertex_array;
     GLuint vertex_buffer;
     GLuint index_buffer;
+
+    Camera camera;
 
     // TODO: restrict scope
 //    friend void Application::create_window(string title, uint32_t width, uint32_t height);

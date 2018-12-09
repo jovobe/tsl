@@ -31,7 +31,10 @@ using glm::lookAt;
 namespace tsl {
 
 Window::Window(string title, uint32_t width, uint32_t height) :
-    title(move(title)), width(width), height(height)
+    title(move(title)),
+    width(width),
+    height(height),
+    camera()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -59,6 +62,8 @@ Window::Window(string title, uint32_t width, uint32_t height) :
     glfwMakeContextCurrent(glfw_window);
     glfwSetKeyCallback(glfw_window, &Application::glfw_key_callback);
     glfwSetFramebufferSizeCallback(glfw_window, &Application::glfw_framebuffer_size_callback);
+    glfwSetWindowSizeCallback(glfw_window, &Application::glfw_window_size_callback);
+    glfwSetMouseButtonCallback(glfw_window, &Application::glfw_mouse_button_callback);
     glfwSwapInterval(1);
 
     // Vertex shader
@@ -200,12 +205,83 @@ Window::Window(string title, uint32_t width, uint32_t height) :
 }
 
 void Window::glfw_key_callback(int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
+    switch (action) {
+        case GLFW_PRESS:
+            switch (key) {
+                case GLFW_KEY_ESCAPE:
+                    glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
+                    break;
+                case GLFW_KEY_W:
+                case GLFW_KEY_S:
+                case GLFW_KEY_A:
+                case GLFW_KEY_D:
+                    camera.reset_move_time();
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case GLFW_REPEAT:
+            switch (key) {
+                case GLFW_KEY_W:
+                    camera.move_forward();
+                    break;
+                case GLFW_KEY_S:
+                    camera.move_backwards();
+                    break;
+                case GLFW_KEY_A:
+                    camera.move_left();
+                    break;
+                case GLFW_KEY_D:
+                    camera.move_right();
+                    break;
+                default:
+                    break;
+            }
+        default:
+            break;
+    }
 }
 
 void Window::glfw_framebuffer_size_callback(int width, int height) {
     // TODO: implement
+}
+
+void Window::glfw_window_size_callback(int width, int height) {
+    this->width = static_cast<uint32_t>(width);
+    this->height = static_cast<uint32_t>(height);
+}
+
+void Window::glfw_mouse_button_callback(int button, int action, int mods) {
+    switch (action) {
+        case GLFW_PRESS:
+            switch (button) {
+                case GLFW_MOUSE_BUTTON_RIGHT:
+                    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    enable_cursor_pos_callback();
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case GLFW_RELEASE:
+            switch (button) {
+                case GLFW_MOUSE_BUTTON_RIGHT:
+                    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    disable_cursor_pos_callback();
+                    camera.reset_curos_pos();
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void Window::glfw_cursor_pos_callback(double x_pos, double y_pos) {
+    camera.cursor_pos_changed(x_pos, y_pos);
 }
 
 void Window::render() const {
@@ -214,12 +290,8 @@ void Window::render() const {
     glUseProgram(program);
 
     // projection
-    auto projection = perspective(radians(45.0f), (float) width / (float) height, 0.1f, 100.0f);
-    auto view = lookAt(
-            vec3(4,3,3), // Camera is at (4,3,3), in World Space
-            vec3(0,0,0), // and looks at the origin
-            vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
-    );
+    auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 100.0f);
+    auto view = camera.get_view_matrix();
     auto model = mat4(1.0f);
     auto mvp = projection * view * model;
     auto mvp_location = glGetUniformLocation(program, "MVP");
@@ -263,6 +335,14 @@ Window& Window::operator=(Window&& window) noexcept {
     index_buffer = exchange(window.index_buffer, 0);
 
     return *this;
+}
+
+void Window::enable_cursor_pos_callback() {
+    glfwSetCursorPosCallback(glfw_window, &Application::glfw_cursor_pos_callback);
+}
+
+void Window::disable_cursor_pos_callback() {
+    glfwSetCursorPosCallback(glfw_window, nullptr);
 }
 
 }
