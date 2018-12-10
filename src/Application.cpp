@@ -5,6 +5,8 @@
 #include <functional>
 #include <stdexcept>
 #include <vector>
+#include <thread>
+#include <chrono>
 
 using std::string;
 using std::cout;
@@ -15,6 +17,10 @@ using std::move;
 using std::make_pair;
 using std::out_of_range;
 using std::vector;
+using std::this_thread::sleep_until;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::steady_clock;
 
 namespace tsl {
 
@@ -102,7 +108,25 @@ void Application::create_window(string title, uint32_t width, uint32_t height) {
 
 void Application::run() {
     vector<GLFWwindow*> to_close;
+    auto last_time = get_time();
+    auto start = steady_clock::now();
+    uint32_t num_frames = 0;
+
     while (true) {
+        auto now = steady_clock::now();
+        auto diff = now - start;
+        auto end = now + milliseconds(static_cast<uint32_t>((1.0f / FPS_TARGET) * 1000));
+
+        // mesaure speed
+        auto current_time = get_time();
+        num_frames += 1;
+        if (current_time - last_time >= 1.0) {
+            auto ms_per_frame = 1000.0f / num_frames;
+            cout << ms_per_frame << " ms/frame" << endl;
+            num_frames = 0;
+            last_time += 1.0;
+        }
+
         // TODO: quit the app if quit was pressed, not when no windows are left
         if (windows.empty()) {
             break;
@@ -124,6 +148,8 @@ void Application::run() {
             }
             to_close.clear();
         }
+
+        sleep_until(end);
     }
 }
 

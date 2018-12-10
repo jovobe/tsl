@@ -34,6 +34,8 @@ public:
 private:
     map<GLFWwindow*, Window> windows;
 
+    const float FPS_TARGET = 60;
+
     Application();
 
     void init_glfw() const;
