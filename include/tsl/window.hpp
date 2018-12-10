@@ -33,7 +33,7 @@ public:
     void enable_cursor_pos_callback();
     void disable_cursor_pos_callback();
 
-    void render() const;
+    void render();
     bool should_close() const;
 
 private:

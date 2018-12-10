@@ -24,6 +24,10 @@ using std::nullopt;
 
 namespace tsl {
 
+const vec3 camera::INITIAL_POS(0, 0, 3);
+const vec3 camera::INITIAL_DIRECTION(0, 0, -1);
+const vec3 camera::INITIAL_UP(0, 1, 0);
+
 mat4 camera::get_view_matrix() const {
     return lookAt(pos, pos + direction, up);
 }
@@ -40,13 +44,15 @@ void camera::cursor_pos_changed(double x_pos, double y_pos) {
 
     // calc mouse movement
     double time_delta = time - last_mouse_time;
-    double x_pos_delta = x_pos - (*last_cursor_pos).x;
-    double y_pos_delta = y_pos - (*last_cursor_pos).y;
+    double x_pos_delta = (*last_cursor_pos).x - x_pos;
+    double y_pos_delta = (*last_cursor_pos).y - y_pos;
     auto x_offset = x_pos_delta * MOUSE_SENSITIVITY * time_delta;
     auto y_offset = y_pos_delta * MOUSE_SENSITIVITY * time_delta;
     last_mouse_time = time;
     (*last_cursor_pos).x = x_pos;
     (*last_cursor_pos).y = y_pos;
+
+    // TODO: camera movement inverts, when crossing x axis
 
     // constraint view to not turn upside down
     auto new_direction = rotateY(rotateX(direction, static_cast<float>(y_offset)), static_cast<float>(x_offset));
@@ -59,42 +65,48 @@ void camera::reset_curos_pos() {
     last_cursor_pos = nullopt;
 }
 
-void camera::move_forward() {
+void camera::handle_moving_direction() {
     auto time = application::get_instance().get_time();
-    auto time_delta = static_cast<float>(time - last_move_time);
+    if (!last_move_time) {
+        last_move_time = time;
+        return;
+    }
+
+    auto time_delta = static_cast<float>(time - (*last_move_time));
     last_move_time = time;
 
-    pos += direction * time_delta * MOVE_SPEED;
+    vec3 move(0, 0, 0);
+    if (moving_direction.forward) {
+        move += direction * time_delta * MOVE_SPEED;
+    }
+    if (moving_direction.backwards) {
+        move -= direction * time_delta * MOVE_SPEED;
+    }
+    if (moving_direction.left) {
+        auto left = cross(up, direction);
+        move += left * time_delta * MOVE_SPEED;
+    }
+    if (moving_direction.right) {
+        auto right = cross(direction, up);
+        move += right * time_delta * MOVE_SPEED;
+    }
+    if (moving_direction.up) {
+        move += up * time_delta * MOVE_SPEED;
+    }
+    if (moving_direction.down) {
+        move -= up * time_delta * MOVE_SPEED;
+    }
+    pos += move;
 }
 
-void camera::move_backwards() {
-    auto time = application::get_instance().get_time();
-    auto time_delta = static_cast<float>(time - last_move_time);
-    last_move_time = time;
-
-    pos -= direction * time_delta * MOVE_SPEED;
+void camera::reset_last_move_time() {
+    last_move_time = nullopt;
 }
 
-void camera::move_left() {
-    auto time = application::get_instance().get_time();
-    auto time_delta = static_cast<float>(time - last_move_time);
-    last_move_time = time;
-
-    auto left = cross(up, direction);
-    pos += left * time_delta * MOVE_SPEED;
-}
-
-void camera::move_right() {
-    auto time = application::get_instance().get_time();
-    auto time_delta = static_cast<float>(time - last_move_time);
-    last_move_time = time;
-
-    auto right = cross(direction, up);
-    pos += right * time_delta * MOVE_SPEED;
-}
-
-void camera::reset_move_time() {
-    last_move_time = application::get_instance().get_time();
+void camera::reset_position() {
+    pos = INITIAL_POS;
+    direction = INITIAL_DIRECTION;
+    up = INITIAL_UP;
 }
 
 }

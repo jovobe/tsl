@@ -202,32 +202,61 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
                     break;
                 case GLFW_KEY_W:
+                    camera.moving_direction.forward = true;
+                    break;
                 case GLFW_KEY_S:
+                    camera.moving_direction.backwards = true;
+                    break;
                 case GLFW_KEY_A:
+                    camera.moving_direction.left = true;
+                    break;
                 case GLFW_KEY_D:
-                    camera.reset_move_time();
+                    camera.moving_direction.right = true;
+                    break;
+                case GLFW_KEY_SPACE:
+                    camera.moving_direction.up = true;
+                    break;
+                case GLFW_KEY_C:
+                    camera.moving_direction.down = true;
+                    break;
+                case GLFW_KEY_R:
+                    camera.reset_position();
                     break;
                 default:
                     break;
             }
             break;
-        case GLFW_REPEAT:
+        case GLFW_RELEASE:
             switch (key) {
+                // TODO: weird behaviour, when releasing a key while another one is pressed? -> reset to early?
                 case GLFW_KEY_W:
-                    camera.move_forward();
+                    camera.moving_direction.forward = false;
+                    camera.reset_last_move_time();
                     break;
                 case GLFW_KEY_S:
-                    camera.move_backwards();
+                    camera.moving_direction.backwards = false;
+                    camera.reset_last_move_time();
                     break;
                 case GLFW_KEY_A:
-                    camera.move_left();
+                    camera.moving_direction.left = false;
+                    camera.reset_last_move_time();
                     break;
                 case GLFW_KEY_D:
-                    camera.move_right();
+                    camera.moving_direction.right = false;
+                    camera.reset_last_move_time();
+                    break;
+                case GLFW_KEY_SPACE:
+                    camera.moving_direction.up = false;
+                    camera.reset_last_move_time();
+                    break;
+                case GLFW_KEY_C:
+                    camera.moving_direction.down = false;
+                    camera.reset_last_move_time();
                     break;
                 default:
                     break;
             }
+            break;
         default:
             break;
     }
@@ -274,7 +303,9 @@ void window::glfw_cursor_pos_callback(double x_pos, double y_pos) {
     camera.cursor_pos_changed(x_pos, y_pos);
 }
 
-void window::render() const {
+void window::render() {
+    camera.handle_moving_direction();
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);

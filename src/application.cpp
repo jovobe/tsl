@@ -41,6 +41,10 @@ void application::glfw_error_callback(int error, const char* description) {
 void application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
 //    cout << "INFO: key pressed!" << endl;
 
+//    if (action == GLFW_PRESS) {
+//        cout << "INFO: key pressed!" << endl;
+//    }
+
     auto& instance = get_instance();
     try {
         auto& window = instance.windows.at(glfw_window);

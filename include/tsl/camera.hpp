@@ -17,25 +17,37 @@ struct mouse_pos {
     mouse_pos(double x, double y) : x(x), y(y) {};
 };
 
+struct move_direction {
+    bool forward;
+    bool backwards;
+    bool left;
+    bool right;
+    bool up;
+    bool down;
+
+    move_direction(): forward(false), backwards(false), left(false), right(false), up(false), down(false) {};
+};
+
 class camera {
 public:
+    move_direction moving_direction;
+
     camera() :
-        pos(0, 0, 3),
-        direction(0, 0, -1),
-        up(0, 1, 0),
+        pos(INITIAL_POS),
+        direction(INITIAL_DIRECTION),
+        up(INITIAL_UP),
         last_cursor_pos(),
         last_mouse_time(0),
-        last_move_time(0)
+        last_move_time(),
+        moving_direction()
     {};
 
     mat4 get_view_matrix() const;
-    void move_forward();
-    void move_backwards();
-    void move_left();
-    void move_right();
+    void handle_moving_direction();
     void cursor_pos_changed(double x_pos, double y_pos);
     void reset_curos_pos();
-    void reset_move_time();
+    void reset_last_move_time();
+    void reset_position();
 
 private:
     vec3 pos;
@@ -44,10 +56,14 @@ private:
 
     optional<mouse_pos> last_cursor_pos;
     double last_mouse_time;
-    double last_move_time;
+    optional<double> last_move_time;
 
     const float MOUSE_SENSITIVITY = 0.1;
     const float MOVE_SPEED = 3;
+
+    static const vec3 INITIAL_POS;
+    static const vec3 INITIAL_DIRECTION;
+    static const vec3 INITIAL_UP;
 };
 
 }
