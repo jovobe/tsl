@@ -5,8 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <tsl/Window.hpp>
-#include <tsl/Application.hpp>
+#include <tsl/window.hpp>
+#include <tsl/application.hpp>
 #include <tsl/read_file.hpp>
 
 #include <string>
@@ -30,7 +30,7 @@ using glm::lookAt;
 
 namespace tsl {
 
-Window::Window(string title, uint32_t width, uint32_t height) :
+window::window(string title, uint32_t width, uint32_t height) :
     title(move(title)),
     width(width),
     height(height),
@@ -60,10 +60,10 @@ Window::Window(string title, uint32_t width, uint32_t height) :
     }
 
     glfwMakeContextCurrent(glfw_window);
-    glfwSetKeyCallback(glfw_window, &Application::glfw_key_callback);
-    glfwSetFramebufferSizeCallback(glfw_window, &Application::glfw_framebuffer_size_callback);
-    glfwSetWindowSizeCallback(glfw_window, &Application::glfw_window_size_callback);
-    glfwSetMouseButtonCallback(glfw_window, &Application::glfw_mouse_button_callback);
+    glfwSetKeyCallback(glfw_window, &application::glfw_key_callback);
+    glfwSetFramebufferSizeCallback(glfw_window, &application::glfw_framebuffer_size_callback);
+    glfwSetWindowSizeCallback(glfw_window, &application::glfw_window_size_callback);
+    glfwSetMouseButtonCallback(glfw_window, &application::glfw_mouse_button_callback);
     glfwSwapInterval(1);
 
     // Vertex shader
@@ -123,17 +123,17 @@ Window::Window(string title, uint32_t width, uint32_t height) :
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
-    GLint isLinked = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-    cout << "program link status: " << isLinked << endl;
-    if (isLinked == GL_FALSE)
+    GLint is_linked = 0;
+    glGetProgramiv(program, GL_LINK_STATUS, &is_linked);
+    cout << "program link status: " << is_linked << endl;
+    if (is_linked == GL_FALSE)
     {
         GLint max_length = 0;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &max_length);
 
         // The maxLength includes the NULL character
-        std::vector<GLchar> infoLog(static_cast<unsigned long>(max_length));
-        glGetProgramInfoLog(program, max_length, &max_length, &infoLog[0]);
+        std::vector<GLchar> info_log(static_cast<unsigned long>(max_length));
+        glGetProgramInfoLog(program, max_length, &max_length, &info_log[0]);
 
         // We don't need the program anymore.
         glDeleteProgram(program);
@@ -141,7 +141,7 @@ Window::Window(string title, uint32_t width, uint32_t height) :
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
 
-        string log(infoLog.begin(), infoLog.end());
+        string log(info_log.begin(), info_log.end());
 
         // pop null terminator
         log.pop_back();
@@ -160,16 +160,6 @@ Window::Window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(fragment_shader);
 
     // Vertex data
-    /*
-    static const float vertices[] = {
-        -0.6f, -0.4f, 0.0f, 1.0f, 0.0f, 0.0f,
-        0.6f, -0.4f, 0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.6f, 0.0f, 0.0f, 0.0f, 1.0f
-    };
-    static const unsigned int indices[] = {
-        0, 1, 2
-    };
-     */
     static const float vertices[] = {
             0.5f,   0.5f,   0.0f, 1.0f, 0.0f, 0.0f,
             0.5f,  -0.5f,   0.0f, 0.0f, 1.0f, 0.0f,
@@ -193,18 +183,18 @@ Window::Window(string title, uint32_t width, uint32_t height) :
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // pointer binding
-    auto vpos_location = glGetAttribLocation(program, "aPos");
+    auto vpos_location = glGetAttribLocation(program, "pos");
     glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 0));
     glEnableVertexAttribArray(static_cast<GLuint>(vpos_location));
 
-    auto vcolor_location = glGetAttribLocation(program, "aColor");
+    auto vcolor_location = glGetAttribLocation(program, "color_in");
     glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
     glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
 
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
-void Window::glfw_key_callback(int key, int scancode, int action, int mods) {
+void window::glfw_key_callback(int key, int scancode, int action, int mods) {
     switch (action) {
         case GLFW_PRESS:
             switch (key) {
@@ -243,16 +233,16 @@ void Window::glfw_key_callback(int key, int scancode, int action, int mods) {
     }
 }
 
-void Window::glfw_framebuffer_size_callback(int width, int height) {
+void window::glfw_framebuffer_size_callback(int width, int height) {
     // TODO: implement
 }
 
-void Window::glfw_window_size_callback(int width, int height) {
+void window::glfw_window_size_callback(int width, int height) {
     this->width = static_cast<uint32_t>(width);
     this->height = static_cast<uint32_t>(height);
 }
 
-void Window::glfw_mouse_button_callback(int button, int action, int mods) {
+void window::glfw_mouse_button_callback(int button, int action, int mods) {
     switch (action) {
         case GLFW_PRESS:
             switch (button) {
@@ -280,11 +270,11 @@ void Window::glfw_mouse_button_callback(int button, int action, int mods) {
     }
 }
 
-void Window::glfw_cursor_pos_callback(double x_pos, double y_pos) {
+void window::glfw_cursor_pos_callback(double x_pos, double y_pos) {
     camera.cursor_pos_changed(x_pos, y_pos);
 }
 
-void Window::render() const {
+void window::render() const {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program);
@@ -304,7 +294,7 @@ void Window::render() const {
     glfwPollEvents();
 }
 
-Window::~Window() {
+window::~window() {
     // if this window was moved, we don't have to destruct it
     if (glfw_window != nullptr) {
         // TODO: add checks if array and buffers need to be deleted
@@ -316,15 +306,15 @@ Window::~Window() {
     }
 }
 
-bool Window::should_close() const {
+bool window::should_close() const {
     return (glfwWindowShouldClose(glfw_window) != 0);
 }
 
-Window::Window(Window&& window) noexcept {
+window::window(window&& window) noexcept {
     *this = move(window);
 }
 
-Window& Window::operator=(Window&& window) noexcept {
+window& window::operator=(window&& window) noexcept {
     glfw_window = exchange(window.glfw_window, nullptr);
     title = move(window.title);
     width = exchange(window.width, 0);
@@ -337,11 +327,11 @@ Window& Window::operator=(Window&& window) noexcept {
     return *this;
 }
 
-void Window::enable_cursor_pos_callback() {
-    glfwSetCursorPosCallback(glfw_window, &Application::glfw_cursor_pos_callback);
+void window::enable_cursor_pos_callback() {
+    glfwSetCursorPosCallback(glfw_window, &application::glfw_cursor_pos_callback);
 }
 
-void Window::disable_cursor_pos_callback() {
+void window::disable_cursor_pos_callback() {
     glfwSetCursorPosCallback(glfw_window, nullptr);
 }
 

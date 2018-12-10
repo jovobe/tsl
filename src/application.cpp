@@ -1,4 +1,4 @@
-#include <tsl/Application.hpp>
+#include <tsl/application.hpp>
 
 #include <utility>
 #include <iostream>
@@ -24,9 +24,9 @@ using std::chrono::steady_clock;
 
 namespace tsl {
 
-void Application::init_glfw() const {
+void application::init_glfw() const {
 
-    glfwSetErrorCallback(&Application::glfw_error_callback);
+    glfwSetErrorCallback(&application::glfw_error_callback);
     if (!glfwInit()) {
         exit(EXIT_FAILURE);
     }
@@ -34,14 +34,14 @@ void Application::init_glfw() const {
     glfwSetTime(0);
 }
 
-void Application::glfw_error_callback(int error, const char* description) {
+void application::glfw_error_callback(int error, const char* description) {
     cout << "ERROR: " << description << endl;
 }
 
-void Application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
+void application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
 //    cout << "INFO: key pressed!" << endl;
 
-    auto& instance = getInstance();
+    auto& instance = get_instance();
     try {
         auto& window = instance.windows.at(glfw_window);
         window.glfw_key_callback(key, scancode, action, mods);
@@ -50,16 +50,16 @@ void Application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scanco
     }
 }
 
-void Application::glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
+void application::glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
     cout << "INFO: framebuffer size callback! (" << width << "," << height << ")" << endl;
     // TODO: make this window specific
     glViewport(0, 0, width, height);
 }
 
-void Application::glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height) {
+void application::glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height) {
     cout << "INFO: window size callback! (" << width << "," << height << ")" << endl;
 
-    auto& instance = getInstance();
+    auto& instance = get_instance();
     try {
         auto& window = instance.windows.at(glfw_window);
         window.glfw_window_size_callback(width, height);
@@ -68,10 +68,10 @@ void Application::glfw_window_size_callback(GLFWwindow* glfw_window, int width, 
     }
 }
 
-void Application::glfw_mouse_button_callback(GLFWwindow* glfw_window, int button, int action, int mods) {
+void application::glfw_mouse_button_callback(GLFWwindow* glfw_window, int button, int action, int mods) {
 //    cout << "INFO: mouse button pressed" << endl;
 
-    auto& instance = getInstance();
+    auto& instance = get_instance();
     try {
         auto& window = instance.windows.at(glfw_window);
         window.glfw_mouse_button_callback(button, action, mods);
@@ -80,10 +80,10 @@ void Application::glfw_mouse_button_callback(GLFWwindow* glfw_window, int button
     }
 }
 
-void Application::glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos, double y_pos) {
+void application::glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos, double y_pos) {
 //    cout << "INFO: cursor pos callback! (" << x_pos << "," << y_pos << ")" << endl;
 
-    auto& instance = getInstance();
+    auto& instance = get_instance();
     try {
         auto& window = instance.windows.at(glfw_window);
         window.glfw_cursor_pos_callback(x_pos, y_pos);
@@ -92,21 +92,21 @@ void Application::glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos
     }
 }
 
-Application& Application::getInstance() {
-    static Application instance;
+application& application::get_instance() {
+    static application instance;
     return instance;
 }
 
-Application::Application() {
+application::application() {
     init_glfw();
 }
 
-void Application::create_window(string title, uint32_t width, uint32_t height) {
-    Window win(move(title), width, height);
+void application::create_window(string title, uint32_t width, uint32_t height) {
+    window win(move(title), width, height);
     windows.insert(make_pair(win.glfw_window, move(win)));
 }
 
-void Application::run() {
+void application::run() {
     vector<GLFWwindow*> to_close;
     auto last_time = get_time();
     auto start = steady_clock::now();
@@ -153,11 +153,11 @@ void Application::run() {
     }
 }
 
-Application::~Application() {
+application::~application() {
     glfwTerminate();
 }
 
-double Application::get_time() const {
+double application::get_time() const {
     return glfwGetTime();
 }
 

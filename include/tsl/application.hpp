@@ -4,7 +4,7 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
-#include <tsl/Window.hpp>
+#include <tsl/window.hpp>
 
 #include <map>
 
@@ -13,18 +13,18 @@ using std::map;
 
 namespace tsl {
 
-class Window;
+class window;
 
-class Application {
+class application {
 public:
-    Application(Application&&) = delete;
-    Application(Application const &) = delete;
-    Application& operator=(const Application&) = delete;
-    Application& operator=(Application&&) = delete;
+    application(application&&) = delete;
+    application(application const &) = delete;
+    application& operator=(const application&) = delete;
+    application& operator=(application&&) = delete;
 
-    ~Application();
+    ~application();
 
-    static Application& getInstance();
+    static application& get_instance();
 
     void create_window(string title, uint32_t width, uint32_t height);
     void run();
@@ -32,11 +32,11 @@ public:
     double get_time() const;
 
 private:
-    map<GLFWwindow*, Window> windows;
+    map<GLFWwindow*, window> windows;
 
     const float FPS_TARGET = 60;
 
-    Application();
+    application();
 
     void init_glfw() const;
 
@@ -49,8 +49,8 @@ private:
     static void glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos, double y_pos);
 
     // TODO: restrict scope
-    friend class Window;
-//    friend Window::Window(string title, uint32_t width, uint32_t height);
+    friend class window;
+//    friend window::window(string title, uint32_t width, uint32_t height);
 };
 
 }

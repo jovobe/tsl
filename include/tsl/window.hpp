@@ -6,23 +6,23 @@
 
 #include <string>
 
-#include <tsl/Application.hpp>
-#include <tsl/Camera.hpp>
+#include <tsl/application.hpp>
+#include <tsl/camera.hpp>
 
 using std::string;
 
 namespace tsl {
 
-class Window {
+class window {
 public:
     // TODO: make private?
-    Window(string title, uint32_t width, uint32_t height);
-    Window(Window const &) = delete;
-    Window(Window&& window) noexcept;
-    Window& operator=(const Window&) = delete;
-    Window& operator=(Window&& window) noexcept;
+    window(string title, uint32_t width, uint32_t height);
+    window(window const &) = delete;
+    window(window&& window) noexcept;
+    window& operator=(const window&) = delete;
+    window& operator=(window&& window) noexcept;
 
-    ~Window();
+    ~window();
 
     void glfw_key_callback(int key, int scancode, int action, int mods);
     void glfw_framebuffer_size_callback(int width, int height);
@@ -50,11 +50,11 @@ private:
     GLuint vertex_buffer;
     GLuint index_buffer;
 
-    Camera camera;
+    camera camera;
 
     // TODO: restrict scope
-//    friend void Application::create_window(string title, uint32_t width, uint32_t height);
-    friend class Application;
+//    friend void application::create_window(string title, uint32_t width, uint32_t height);
+    friend class application;
 };
 
 }

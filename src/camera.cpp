@@ -1,5 +1,5 @@
-#include <tsl/Camera.hpp>
-#include <tsl/Application.hpp>
+#include <tsl/camera.hpp>
+#include <tsl/application.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
@@ -24,16 +24,16 @@ using std::nullopt;
 
 namespace tsl {
 
-mat4 Camera::get_view_matrix() const {
+mat4 camera::get_view_matrix() const {
     return lookAt(pos, pos + direction, up);
 }
 
-void Camera::cursor_pos_changed(double x_pos, double y_pos) {
-    auto time = Application::getInstance().get_time();
+void camera::cursor_pos_changed(double x_pos, double y_pos) {
+    auto time = application::get_instance().get_time();
 
     // if mouse pos is not initialised, dont do anything except initialising it
     if (!last_cursor_pos) {
-        last_cursor_pos = MousePos(x_pos, y_pos);
+        last_cursor_pos = mouse_pos(x_pos, y_pos);
         last_mouse_time = time;
         return;
     }
@@ -55,28 +55,28 @@ void Camera::cursor_pos_changed(double x_pos, double y_pos) {
     }
 }
 
-void Camera::reset_curos_pos() {
+void camera::reset_curos_pos() {
     last_cursor_pos = nullopt;
 }
 
-void Camera::move_forward() {
-    auto time = Application::getInstance().get_time();
+void camera::move_forward() {
+    auto time = application::get_instance().get_time();
     auto time_delta = static_cast<float>(time - last_move_time);
     last_move_time = time;
 
     pos += direction * time_delta * MOVE_SPEED;
 }
 
-void Camera::move_backwards() {
-    auto time = Application::getInstance().get_time();
+void camera::move_backwards() {
+    auto time = application::get_instance().get_time();
     auto time_delta = static_cast<float>(time - last_move_time);
     last_move_time = time;
 
     pos -= direction * time_delta * MOVE_SPEED;
 }
 
-void Camera::move_left() {
-    auto time = Application::getInstance().get_time();
+void camera::move_left() {
+    auto time = application::get_instance().get_time();
     auto time_delta = static_cast<float>(time - last_move_time);
     last_move_time = time;
 
@@ -84,8 +84,8 @@ void Camera::move_left() {
     pos += left * time_delta * MOVE_SPEED;
 }
 
-void Camera::move_right() {
-    auto time = Application::getInstance().get_time();
+void camera::move_right() {
+    auto time = application::get_instance().get_time();
     auto time_delta = static_cast<float>(time - last_move_time);
     last_move_time = time;
 
@@ -93,8 +93,8 @@ void Camera::move_right() {
     pos += right * time_delta * MOVE_SPEED;
 }
 
-void Camera::reset_move_time() {
-    last_move_time = Application::getInstance().get_time();
+void camera::reset_move_time() {
+    last_move_time = application::get_instance().get_time();
 }
 
 }

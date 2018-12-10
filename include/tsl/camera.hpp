@@ -10,16 +10,16 @@ using std::optional;
 
 namespace tsl {
 
-struct MousePos {
+struct mouse_pos {
     double x;
     double y;
 
-    MousePos(double x, double y) : x(x), y(y) {};
+    mouse_pos(double x, double y) : x(x), y(y) {};
 };
 
-class Camera {
+class camera {
 public:
-    Camera() :
+    camera() :
         pos(0, 0, 3),
         direction(0, 0, -1),
         up(0, 1, 0),
@@ -42,7 +42,7 @@ private:
     vec3 direction;
     vec3 up;
 
-    optional<MousePos> last_cursor_pos;
+    optional<mouse_pos> last_cursor_pos;
     double last_mouse_time;
     double last_move_time;
 
