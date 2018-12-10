@@ -50,7 +50,7 @@ private:
     GLuint vertex_buffer;
     GLuint index_buffer;
 
-    camera camera;
+    class camera camera;
 
     // TODO: restrict scope
 //    friend void application::create_window(string title, uint32_t width, uint32_t height);
