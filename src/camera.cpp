@@ -32,40 +32,11 @@ mat4 camera::get_view_matrix() const {
     return lookAt(pos, pos + direction, up);
 }
 
-void camera::cursor_pos_changed(double x_pos, double y_pos) {
-    auto time = application::get_instance().get_time();
-
-    // if mouse pos is not initialised, dont do anything except initialising it
-    if (!last_cursor_pos) {
-        last_cursor_pos = mouse_pos(x_pos, y_pos);
-        last_mouse_time = time;
-        return;
-    }
-
-    // calc mouse movement
-    double time_delta = time - last_mouse_time;
-    double x_pos_delta = (*last_cursor_pos).x - x_pos;
-    double y_pos_delta = (*last_cursor_pos).y - y_pos;
-    auto x_offset = x_pos_delta * MOUSE_SENSITIVITY * time_delta;
-    auto y_offset = y_pos_delta * MOUSE_SENSITIVITY * time_delta;
-    last_mouse_time = time;
-    (*last_cursor_pos).x = x_pos;
-    (*last_cursor_pos).y = y_pos;
-
-    // TODO: camera movement inverts, when crossing x axis
-
-    // constraint view to not turn upside down
-    auto new_direction = rotateY(rotateX(direction, static_cast<float>(y_offset)), static_cast<float>(x_offset));
-    if (abs(dot(new_direction, up)) < 0.9) {
-        direction = new_direction;
-    }
-}
-
 void camera::reset_curos_pos() {
     last_cursor_pos = nullopt;
 }
 
-void camera::handle_moving_direction() {
+void camera::handle_moving_direction(const mouse_pos& mouse_pos) {
     auto time = application::get_instance().get_time();
     if (!last_move_time) {
         last_move_time = time;
@@ -75,6 +46,7 @@ void camera::handle_moving_direction() {
     auto time_delta = static_cast<float>(time - (*last_move_time));
     last_move_time = time;
 
+    // handle movement
     vec3 move(0, 0, 0);
     if (moving_direction.forward) {
         move += direction * time_delta * MOVE_SPEED;
@@ -97,6 +69,30 @@ void camera::handle_moving_direction() {
         move -= up * time_delta * MOVE_SPEED;
     }
     pos += move;
+
+    // handle orientation
+    if (moving_direction.mouse) {
+        // if mouse pos is not initialised, dont do anything except initialising it
+        if (!last_cursor_pos) {
+            last_cursor_pos = mouse_pos;
+            return;
+        }
+
+        // calc mouse movement
+        double x_pos_delta = (*last_cursor_pos).x - mouse_pos.x;
+        double y_pos_delta = (*last_cursor_pos).y - mouse_pos.y;
+        auto x_offset = x_pos_delta * MOUSE_SENSITIVITY * time_delta;
+        auto y_offset = y_pos_delta * MOUSE_SENSITIVITY * time_delta;
+        last_cursor_pos = mouse_pos;
+
+        // TODO: camera movement inverts, when crossing x axis
+
+        // constraint view to not turn upside down
+        auto new_direction = rotateY(rotateX(direction, static_cast<float>(y_offset)), static_cast<float>(x_offset));
+        if (abs(dot(new_direction, up)) < 0.9) {
+            direction = new_direction;
+        }
+    }
 }
 
 void camera::reset_last_move_time() {

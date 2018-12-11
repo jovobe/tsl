@@ -1,7 +1,10 @@
 #ifndef TSL_CAMERA_HPP
 #define TSL_CAMERA_HPP
 
+#include <tsl/mouse_pos.hpp>
+
 #include <glm/glm.hpp>
+
 #include <optional>
 
 using glm::vec3;
@@ -10,13 +13,6 @@ using std::optional;
 
 namespace tsl {
 
-struct mouse_pos {
-    double x;
-    double y;
-
-    mouse_pos(double x, double y) : x(x), y(y) {};
-};
-
 struct move_direction {
     bool forward;
     bool backwards;
@@ -24,8 +20,17 @@ struct move_direction {
     bool right;
     bool up;
     bool down;
+    bool mouse;
 
-    move_direction(): forward(false), backwards(false), left(false), right(false), up(false), down(false) {};
+    move_direction():
+        forward(false),
+        backwards(false),
+        left(false),
+        right(false),
+        up(false),
+        down(false),
+        mouse(false)
+    {};
 };
 
 class camera {
@@ -43,8 +48,7 @@ public:
     {};
 
     mat4 get_view_matrix() const;
-    void handle_moving_direction();
-    void cursor_pos_changed(double x_pos, double y_pos);
+    void handle_moving_direction(const mouse_pos& mouse_pos);
     void reset_curos_pos();
     void reset_last_move_time();
     void reset_position();

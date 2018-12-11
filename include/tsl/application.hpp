@@ -29,6 +29,7 @@ public:
     void create_window(string title, uint32_t width, uint32_t height);
     void run();
 
+    // GLFW wrapper functions
     double get_time() const;
 
 private:
@@ -46,7 +47,6 @@ private:
     static void glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height);
     static void glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height);
     static void glfw_mouse_button_callback(GLFWwindow* glfw_window, int button, int action, int mods);
-    static void glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos, double y_pos);
 
     // TODO: restrict scope
     friend class window;

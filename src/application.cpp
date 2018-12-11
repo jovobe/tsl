@@ -85,18 +85,6 @@ void application::glfw_mouse_button_callback(GLFWwindow* glfw_window, int button
     }
 }
 
-void application::glfw_cursor_pos_callback(GLFWwindow* glfw_window, double x_pos, double y_pos) {
-//    cout << "INFO: cursor pos callback! (" << x_pos << "," << y_pos << ")" << endl;
-
-    auto& instance = get_instance();
-    try {
-        auto& window = instance.windows.at(glfw_window);
-        window.glfw_cursor_pos_callback(x_pos, y_pos);
-    } catch (out_of_range&) {
-        cout << "WARNING: window size callback for unknown window!" << endl;
-    }
-}
-
 application& application::get_instance() {
     static application instance;
     return instance;

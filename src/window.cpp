@@ -277,7 +277,7 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
             switch (button) {
                 case GLFW_MOUSE_BUTTON_RIGHT:
                     glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                    enable_cursor_pos_callback();
+                    camera.moving_direction.mouse = true;
                     break;
                 default:
                     break;
@@ -287,7 +287,8 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
             switch (button) {
                 case GLFW_MOUSE_BUTTON_RIGHT:
                     glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                    disable_cursor_pos_callback();
+                    camera.moving_direction.mouse = false;
+                    camera.reset_last_move_time();
                     camera.reset_curos_pos();
                     break;
                 default:
@@ -299,12 +300,8 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
     }
 }
 
-void window::glfw_cursor_pos_callback(double x_pos, double y_pos) {
-    camera.cursor_pos_changed(x_pos, y_pos);
-}
-
 void window::render() {
-    camera.handle_moving_direction();
+    camera.handle_moving_direction(get_mouse_pos());
 
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -358,12 +355,11 @@ window& window::operator=(window&& window) noexcept {
     return *this;
 }
 
-void window::enable_cursor_pos_callback() {
-    glfwSetCursorPosCallback(glfw_window, &application::glfw_cursor_pos_callback);
-}
-
-void window::disable_cursor_pos_callback() {
-    glfwSetCursorPosCallback(glfw_window, nullptr);
+mouse_pos window::get_mouse_pos() const {
+    double x_pos;
+    double y_pos;
+    glfwGetCursorPos(glfw_window, &x_pos, &y_pos);
+    return mouse_pos(x_pos, y_pos);
 }
 
 }

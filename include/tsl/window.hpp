@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include <tsl/mouse_pos.hpp>
 #include <tsl/application.hpp>
 #include <tsl/camera.hpp>
 
@@ -28,13 +29,12 @@ public:
     void glfw_framebuffer_size_callback(int width, int height);
     void glfw_window_size_callback(int width, int height);
     void glfw_mouse_button_callback(int button, int action, int mods);
-    void glfw_cursor_pos_callback(double x_pos, double y_pos);
-
-    void enable_cursor_pos_callback();
-    void disable_cursor_pos_callback();
 
     void render();
+
+    // GLFW wrapper functions
     bool should_close() const;
+    mouse_pos get_mouse_pos() const;
 
 private:
     string title;
