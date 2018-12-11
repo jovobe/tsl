@@ -13,8 +13,7 @@ using glm::radians;
 using glm::normalize;
 using glm::pi;
 using glm::cross;
-using glm::rotateX;
-using glm::rotateY;
+using glm::rotate;
 using glm::dot;
 using glm::abs;
 
@@ -44,6 +43,8 @@ void camera::handle_moving_direction(const mouse_pos& mouse_pos) {
     }
 
     auto time_delta = static_cast<float>(time - (*last_move_time));
+    auto left = cross(up, direction);
+    auto right = cross(direction, up);
     last_move_time = time;
 
     // handle movement
@@ -55,11 +56,9 @@ void camera::handle_moving_direction(const mouse_pos& mouse_pos) {
         move -= direction * time_delta * MOVE_SPEED;
     }
     if (moving_direction.left) {
-        auto left = cross(up, direction);
         move += left * time_delta * MOVE_SPEED;
     }
     if (moving_direction.right) {
-        auto right = cross(direction, up);
         move += right * time_delta * MOVE_SPEED;
     }
     if (moving_direction.up) {
@@ -85,10 +84,12 @@ void camera::handle_moving_direction(const mouse_pos& mouse_pos) {
         auto y_offset = y_pos_delta * MOUSE_SENSITIVITY * time_delta;
         last_cursor_pos = mouse_pos;
 
-        // TODO: camera movement inverts, when crossing x axis
-
         // constraint view to not turn upside down
-        auto new_direction = rotateY(rotateX(direction, static_cast<float>(y_offset)), static_cast<float>(x_offset));
+        auto new_direction = rotate(
+            rotate(direction, static_cast<float>(y_offset), right),
+            static_cast<float>(x_offset),
+            up
+        );
         if (abs(dot(new_direction, up)) < 0.9) {
             direction = new_direction;
         }
