@@ -21,6 +21,7 @@ using std::this_thread::sleep_until;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
 using std::chrono::steady_clock;
+using std::chrono::duration_cast;
 
 namespace tsl {
 
@@ -115,6 +116,8 @@ void application::run() {
     auto last_time = get_time();
     auto start = steady_clock::now();
     uint32_t num_frames = 0;
+    int32_t num_sleep = 0;
+    auto ms = milliseconds(1);
 
     while (true) {
         auto now = steady_clock::now();
@@ -126,8 +129,11 @@ void application::run() {
         num_frames += 1;
         if (current_time - last_time >= 1.0) {
             auto ms_per_frame = 1000.0f / num_frames;
+            auto sleep_per_frame = num_sleep / num_frames;
             cout << ms_per_frame << " ms/frame" << endl;
+            cout << sleep_per_frame << " ms sleep/frame" << endl;
             num_frames = 0;
+            num_sleep = 0;
             last_time += 1.0;
         }
 
@@ -153,6 +159,10 @@ void application::run() {
             to_close.clear();
         }
 
+        auto sleep = duration_cast<milliseconds>(end - steady_clock::now()).count();
+        if (sleep > 0) {
+            num_sleep += sleep;
+        }
         sleep_until(end);
     }
 }
