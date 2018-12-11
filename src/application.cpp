@@ -118,8 +118,7 @@ void application::run() {
         if (current_time - last_time >= 1.0) {
             auto ms_per_frame = 1000.0f / num_frames;
             auto sleep_per_frame = num_sleep / num_frames;
-            cout << ms_per_frame << " ms/frame" << endl;
-            cout << sleep_per_frame << " ms sleep/frame" << endl;
+            cout << ms_per_frame << " ms/frame (sleeping: " << sleep_per_frame << " ms)" << endl;
             num_frames = 0;
             num_sleep = 0;
             last_time += 1.0;
