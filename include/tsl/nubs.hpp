@@ -16,9 +16,12 @@ namespace tsl {
 /**
  * c: number of control points
  * p: degree
- * m: number of knots
- * n: c + 1
+ * m+1: number of knots
+ * n: c - 1
  * m=n+p+1
+ *
+ * curve x: U, x, n, p
+ * curve y: V, y, m, p
  */
 struct nubs {
 
@@ -37,10 +40,32 @@ struct nubs {
     // matrix of control points
     regular_grid P;
 
-    nubs() : p(0), q(0), U(), V(), P() {};
+    // number of control points in x direction
+    uint32_t x;
+
+    // number of control points in y direction
+    uint32_t y;
+
+    // n: x + 1
+    uint32_t n;
+
+    // m: y + 1
+    uint32_t m;
+
+    nubs() : p(0), q(0), U(), V(), P(), x(), y(), n(), m() {};
+
+    regular_grid get_grid(uint32_t resolution) const;
+    vec3 get_surface_point(float u, float v) const;
+    size_t get_u_span(float u) const;
+    size_t get_v_span(float v) const;
+    vector<float> get_u_basis_funs(size_t span, float u) const;
+    vector<float> get_v_basis_funs(size_t span, float v) const;
 };
 
 nubs get_example_data_1();
+nubs get_example_data_2();
+nubs get_example_data_3();
+nubs get_example_data_4();
 
 }
 

@@ -175,7 +175,13 @@ window::window(string title, uint32_t width, uint32_t height) :
     };
 
     auto data = get_example_data_1();
-    draw_buffer = data.P.get_render_buffer();
+//    auto data = get_example_data_2();
+//    auto data = get_example_data_3();
+//    auto data = get_example_data_4();
+    auto grid = data.get_grid(10);
+    auto grid_draw_buffer = grid.get_render_buffer();
+//    draw_buffer = data.P.get_render_buffer();
+    draw_buffer = grid_draw_buffer;
 
     glGenVertexArrays(1, &vertex_array);
     glGenBuffers(1, &vertex_buffer);

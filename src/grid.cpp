@@ -14,8 +14,8 @@ gl_buffer regular_grid::get_render_buffer() const {
 
     // reserve space
     // TODO: assuming filled and regular here -> fix!
-    auto y = static_cast<uint32_t>(points.size());
     auto x = static_cast<uint32_t>(points[0].size());
+    auto y = static_cast<uint32_t>(points.size());
     auto num_vertices = x * y;
 
     // 3 values per vertex
