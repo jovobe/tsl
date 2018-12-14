@@ -9,6 +9,7 @@
 #include <tsl/mouse_pos.hpp>
 #include <tsl/application.hpp>
 #include <tsl/camera.hpp>
+#include <tsl/gl_buffer.hpp>
 
 using std::string;
 
@@ -40,6 +41,10 @@ private:
     string title;
     uint32_t width;
     uint32_t height;
+
+    bool wireframe_mode;
+
+    gl_buffer draw_buffer;
 
     // TODO: wrap this in a smart pointer
     // Pointer to glfw window. If this points to nullptr, the window was moved.

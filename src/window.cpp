@@ -8,6 +8,7 @@
 #include <tsl/window.hpp>
 #include <tsl/application.hpp>
 #include <tsl/read_file.hpp>
+#include <tsl/nubs.hpp>
 
 #include <string>
 #include <iostream>
@@ -27,6 +28,7 @@ using glm::mat4;
 using glm::value_ptr;
 using glm::perspective;
 using glm::lookAt;
+using glm::rotate;
 
 namespace tsl {
 
@@ -34,7 +36,8 @@ window::window(string title, uint32_t width, uint32_t height) :
     title(move(title)),
     width(width),
     height(height),
-    camera()
+    camera(),
+    wireframe_mode(false)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -160,36 +163,41 @@ window::window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(fragment_shader);
 
     // Vertex data
-    static const float vertices[] = {
-            0.5f,   0.5f,   0.0f, 1.0f, 0.0f, 0.0f,
-            0.5f,  -0.5f,   0.0f, 0.0f, 1.0f, 0.0f,
-            -0.5f,  -0.5f,   0.0f, 0.0f, 0.0f, 1.0f,
-            -0.5f,   0.5f,   0.0f, 0.0f, 0.5f, 0.5f
+    draw_buffer.vertex_buffer = {
+        vec3(0.5f, 0.5f, 0.0f),
+        vec3(0.5f, -0.5f, 0.0f),
+        vec3(-0.5f, -0.5f, 0.0f),
+        vec3(-0.5f, 0.5f, 0.0f)
     };
-    static const unsigned int indices[] = {
-            0, 1, 3,
-            1, 2, 3
+    draw_buffer.index_buffer = {
+        0, 1, 3,
+        1, 2, 3
     };
+
+    auto data = get_example_data_1();
+    draw_buffer = data.P.get_render_buffer();
 
     glGenVertexArrays(1, &vertex_array);
     glGenBuffers(1, &vertex_buffer);
     glGenBuffers(1, &index_buffer);
     glBindVertexArray(vertex_array);
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, draw_buffer.vertex_buffer.size() * sizeof(vec3), draw_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, draw_buffer.index_buffer.size() * sizeof(uint32_t), draw_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // pointer binding
     auto vpos_location = glGetAttribLocation(program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 0));
+    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     glEnableVertexAttribArray(static_cast<GLuint>(vpos_location));
 
-    auto vcolor_location = glGetAttribLocation(program, "color_in");
-    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
-    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
+//    auto vcolor_location = glGetAttribLocation(program, "color_in");
+//    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
+//    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
 
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
@@ -202,7 +210,18 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
                     break;
                 case GLFW_KEY_W:
-                    camera.moving_direction.forward = true;
+                    if ((mods & GLFW_MOD_CONTROL) != 0) {
+                        cout << "INFO: toggled wireframe mode" << endl;
+                        wireframe_mode = !wireframe_mode;
+                        glBindVertexArray(vertex_array);
+                        if (wireframe_mode) {
+                            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                        } else {
+                            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                        }
+                    } else {
+                        camera.moving_direction.forward = true;
+                    }
                     break;
                 case GLFW_KEY_S:
                     camera.moving_direction.backwards = true;
@@ -310,13 +329,13 @@ void window::render() {
     // projection
     auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 100.0f);
     auto view = camera.get_view_matrix();
-    auto model = mat4(1.0f);
+    auto model = rotate(mat4(1.0f), radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
     auto mvp = projection * view * model;
     auto mvp_location = glGetUniformLocation(program, "MVP");
     glUniformMatrix4fv(mvp_location, 1, GL_FALSE, value_ptr(mvp));
 
     glBindVertexArray(vertex_array);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(draw_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
 
     glfwSwapBuffers(glfw_window);
     glfwPollEvents();
@@ -351,6 +370,8 @@ window& window::operator=(window&& window) noexcept {
     vertex_array = exchange(window.vertex_array, 0);
     vertex_buffer = exchange(window.vertex_buffer, 0);
     index_buffer = exchange(window.index_buffer, 0);
+    wireframe_mode = exchange(window.wireframe_mode, false);
+    draw_buffer = move(window.draw_buffer);
 
     return *this;
 }
