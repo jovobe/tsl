@@ -163,13 +163,13 @@ window::window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(fragment_shader);
 
     // Vertex data
-    draw_buffer.vertex_buffer = {
+    surface_buffer.vertex_buffer = {
         vec3(0.5f, 0.5f, 0.0f),
         vec3(0.5f, -0.5f, 0.0f),
         vec3(-0.5f, -0.5f, 0.0f),
         vec3(-0.5f, 0.5f, 0.0f)
     };
-    draw_buffer.index_buffer = {
+    surface_buffer.index_buffer = {
         0, 1, 3,
         1, 2, 3
     };
@@ -180,21 +180,23 @@ window::window(string title, uint32_t width, uint32_t height) :
 //    auto data = get_example_data_4();
     auto grid = data.get_grid(10);
     auto grid_draw_buffer = grid.get_render_buffer();
-//    draw_buffer = data.P.get_render_buffer();
-    draw_buffer = grid_draw_buffer;
+//    surface_buffer = data.P.get_render_buffer();
+    surface_buffer = grid_draw_buffer;
+    control_buffer = data.P.get_render_buffer();
 
-    glGenVertexArrays(1, &vertex_array);
-    glGenBuffers(1, &vertex_buffer);
-    glGenBuffers(1, &index_buffer);
-    glBindVertexArray(vertex_array);
+    // surface
+    glGenVertexArrays(1, &surface_vertex_array);
+    glGenBuffers(1, &surface_vertex_buffer);
+    glGenBuffers(1, &surface_index_buffer);
+    glBindVertexArray(surface_vertex_array);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, draw_buffer.vertex_buffer.size() * sizeof(vec3), draw_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, surface_vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, surface_buffer.vertex_buffer.size() * sizeof(vec3), surface_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, draw_buffer.index_buffer.size() * sizeof(uint32_t), draw_buffer.index_buffer.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, surface_buffer.index_buffer.size() * sizeof(uint32_t), surface_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // pointer binding
     auto vpos_location = glGetAttribLocation(program, "pos");
@@ -205,7 +207,28 @@ window::window(string title, uint32_t width, uint32_t height) :
 //    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
 //    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
 
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // control polygon
+    glGenVertexArrays(1, &control_vertex_array);
+    glGenBuffers(1, &control_vertex_buffer);
+    glGenBuffers(1, &control_index_buffer);
+    glBindVertexArray(control_vertex_array);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    glBindBuffer(GL_ARRAY_BUFFER, control_vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, control_buffer.vertex_buffer.size() * sizeof(vec3), control_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_buffer.index_buffer.size() * sizeof(uint32_t), control_buffer.index_buffer.data(), GL_STATIC_DRAW);
+
+    // pointer binding
+    auto control_vpos_location = glGetAttribLocation(program, "pos");
+    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    glEnableVertexAttribArray(static_cast<GLuint>(control_vpos_location));
+
+//    auto vcolor_location = glGetAttribLocation(program, "color_in");
+//    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
+//    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
 }
 
 void window::glfw_key_callback(int key, int scancode, int action, int mods) {
@@ -219,12 +242,6 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     if ((mods & GLFW_MOD_CONTROL) != 0) {
                         cout << "INFO: toggled wireframe mode" << endl;
                         wireframe_mode = !wireframe_mode;
-                        glBindVertexArray(vertex_array);
-                        if (wireframe_mode) {
-                            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                        } else {
-                            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                        }
                     } else {
                         camera.moving_direction.forward = true;
                     }
@@ -340,8 +357,25 @@ void window::render() {
     auto mvp_location = glGetUniformLocation(program, "MVP");
     glUniformMatrix4fv(mvp_location, 1, GL_FALSE, value_ptr(mvp));
 
-    glBindVertexArray(vertex_array);
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(draw_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+    auto color_location = glGetUniformLocation(program, "color_in");
+    glUniformMatrix4fv(color_location, 1, GL_FALSE, value_ptr(mvp));
+    glUniform3fv(color_location, 1, value_ptr(vec3(0, 1, 0)));
+
+    glBindVertexArray(surface_vertex_array);
+    if (wireframe_mode) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(surface_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+
+    GLfloat lineWidthRange[2] = {0.0f, 0.0f};
+    glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, lineWidthRange);
+
+    glUniform3fv(color_location, 1, value_ptr(vec3(1, 0, 0)));
+    glBindVertexArray(control_vertex_array);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(control_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
 
     glfwSwapBuffers(glfw_window);
     glfwPollEvents();
@@ -351,9 +385,13 @@ window::~window() {
     // if this window was moved, we don't have to destruct it
     if (glfw_window != nullptr) {
         // TODO: add checks if array and buffers need to be deleted
-        glDeleteVertexArrays(1, &vertex_array);
-        glDeleteBuffers(1, &vertex_buffer);
-        glDeleteBuffers(1, &index_buffer);
+        glDeleteVertexArrays(1, &surface_vertex_array);
+        glDeleteBuffers(1, &surface_vertex_buffer);
+        glDeleteBuffers(1, &surface_index_buffer);
+
+        glDeleteVertexArrays(1, &control_vertex_array);
+        glDeleteBuffers(1, &control_vertex_buffer);
+        glDeleteBuffers(1, &control_index_buffer);
 
         glfwDestroyWindow(glfw_window);
     }
@@ -373,11 +411,15 @@ window& window::operator=(window&& window) noexcept {
     width = exchange(window.width, 0);
     height = exchange(window.height, 0);
     program = exchange(window.program, 0);
-    vertex_array = exchange(window.vertex_array, 0);
-    vertex_buffer = exchange(window.vertex_buffer, 0);
-    index_buffer = exchange(window.index_buffer, 0);
+    surface_vertex_array = exchange(window.surface_vertex_array, 0);
+    surface_vertex_buffer = exchange(window.surface_vertex_buffer, 0);
+    surface_index_buffer = exchange(window.surface_index_buffer, 0);
+    control_vertex_array = exchange(window.control_vertex_array, 0);
+    control_vertex_buffer = exchange(window.control_vertex_buffer, 0);
+    control_index_buffer = exchange(window.control_index_buffer, 0);
     wireframe_mode = exchange(window.wireframe_mode, false);
-    draw_buffer = move(window.draw_buffer);
+    surface_buffer = move(window.surface_buffer);
+    control_buffer = move(window.control_buffer);
 
     return *this;
 }

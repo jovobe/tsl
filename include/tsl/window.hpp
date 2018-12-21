@@ -44,16 +44,21 @@ private:
 
     bool wireframe_mode;
 
-    gl_buffer draw_buffer;
+    gl_buffer surface_buffer;
+    gl_buffer control_buffer;
 
     // TODO: wrap this in a smart pointer
     // Pointer to glfw window. If this points to nullptr, the window was moved.
     GLFWwindow* glfw_window;
 
     GLuint program;
-    GLuint vertex_array;
-    GLuint vertex_buffer;
-    GLuint index_buffer;
+    GLuint surface_vertex_array;
+    GLuint surface_vertex_buffer;
+    GLuint surface_index_buffer;
+
+    GLuint control_vertex_array;
+    GLuint control_vertex_buffer;
+    GLuint control_index_buffer;
 
     class camera camera;
 
