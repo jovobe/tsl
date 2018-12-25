@@ -13,8 +13,15 @@ void resolution<T>::decrement() {
 }
 
 template<typename T>
-T resolution<T>::get() {
+T resolution<T>::get() const {
     return data;
+}
+
+template<typename T>
+void resolution<T>::set(T val) {
+    if (val >= 1) {
+        data = val;
+    }
 }
 
 }

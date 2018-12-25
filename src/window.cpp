@@ -6,6 +6,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include <tsl/window.hpp>
 #include <tsl/application.hpp>
 #include <tsl/read_file.hpp>
@@ -78,6 +82,15 @@ window::window(string title, uint32_t width, uint32_t height) :
         cout << "ERROR: Failed to init GLEW!" << endl;
         exit(EXIT_FAILURE);
     }
+
+    // ImGui
+    const char* glsl_version = "#version 330";
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.IniFilename = nullptr;
+    ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImGui::StyleColorsDark();
 
     // Vertex shader
     auto vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -349,6 +362,28 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
 }
 
 void window::render() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    {
+        ImGui::Begin("Settings");
+        ImGui::Checkbox("Wireframe mode", &wireframe_mode);
+        ImGui::Checkbox("Show control polygon", &control_mode);
+        ImGui::Checkbox("Show surface", &surface_mode);
+        static int slider_resolution=1;
+        if (ImGui::SliderInt("Resolution", &slider_resolution, 1, 40)) {
+            nubs_resolution.set(static_cast<uint32_t>(slider_resolution));
+            update_nubs_buffer();
+        }
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
+    }
+
+    ImGui::Render();
+
+    glfwMakeContextCurrent(glfw_window);
     camera.handle_moving_direction(get_mouse_pos());
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -384,6 +419,9 @@ void window::render() {
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(control_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
     }
 
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    glfwMakeContextCurrent(glfw_window);
     glfwSwapBuffers(glfw_window);
     glfwPollEvents();
 }
@@ -399,6 +437,10 @@ window::~window() {
         glDeleteVertexArrays(1, &control_vertex_array);
         glDeleteBuffers(1, &control_vertex_buffer);
         glDeleteBuffers(1, &control_index_buffer);
+
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
 
         glfwDestroyWindow(glfw_window);
     }

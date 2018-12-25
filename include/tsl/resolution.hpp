@@ -9,7 +9,8 @@ public:
     resolution() : data(1) {};
     void increment();
     void decrement();
-    T get();
+    T get() const;
+    void set(T val);
 
 private:
     T data;
