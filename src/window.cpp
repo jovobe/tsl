@@ -1,4 +1,5 @@
-#define GLFW_INCLUDE_GLCOREARB
+#include <GL/glew.h>
+
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -71,6 +72,12 @@ window::window(string title, uint32_t width, uint32_t height) :
     glfwSetWindowSizeCallback(glfw_window, &application::glfw_window_size_callback);
     glfwSetMouseButtonCallback(glfw_window, &application::glfw_mouse_button_callback);
     glfwSwapInterval(1);
+
+    // GLEW
+    if (glewInit() != GLEW_OK) {
+        cout << "ERROR: Failed to init GLEW!" << endl;
+        exit(EXIT_FAILURE);
+    }
 
     // Vertex shader
     auto vertex_shader = glCreateShader(GL_VERTEX_SHADER);

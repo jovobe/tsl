@@ -1,7 +1,6 @@
 #ifndef TSL_APPLICATION_HPP
 #define TSL_APPLICATION_HPP
 
-#define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
 #include <tsl/window.hpp>

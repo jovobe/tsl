@@ -10,17 +10,18 @@ project(tsl VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# deps
 find_package(glfw3 3.2 REQUIRED)
+find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
-#find_package(Freetype REQUIRED)
 
-# glfreetype
-#add_subdirectory(ext/glfreetype)
-#include_directories(ext/glfreetype/include)
+# imgui
+add_subdirectory(ext/imgui)
+include_directories(ext/imgui)
 
+# application
 include_directories(include)
-
 add_subdirectory(src)
 add_subdirectory(test)
 

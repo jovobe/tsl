@@ -1,7 +1,6 @@
 #ifndef TSL_WINDOW_HPP
 #define TSL_WINDOW_HPP
 
-#define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
 #include <string>

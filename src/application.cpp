@@ -29,6 +29,7 @@ void application::init_glfw() const {
 
     glfwSetErrorCallback(&application::glfw_error_callback);
     if (!glfwInit()) {
+        cout << "ERROR: Failed to init GLFW!" << endl;
         exit(EXIT_FAILURE);
     }
 
