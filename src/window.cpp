@@ -37,7 +37,10 @@ window::window(string title, uint32_t width, uint32_t height) :
     width(width),
     height(height),
     camera(),
-    wireframe_mode(false)
+    wireframe_mode(false),
+    control_mode(true),
+    surface_mode(true),
+    nubs_resolution()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -163,57 +166,34 @@ window::window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(fragment_shader);
 
     // Vertex data
-    surface_buffer.vertex_buffer = {
-        vec3(0.5f, 0.5f, 0.0f),
-        vec3(0.5f, -0.5f, 0.0f),
-        vec3(-0.5f, -0.5f, 0.0f),
-        vec3(-0.5f, 0.5f, 0.0f)
-    };
-    surface_buffer.index_buffer = {
-        0, 1, 3,
-        1, 2, 3
-    };
+//    surface_buffer.vertex_buffer = {
+//        vec3(0.5f, 0.5f, 0.0f),
+//        vec3(0.5f, -0.5f, 0.0f),
+//        vec3(-0.5f, -0.5f, 0.0f),
+//        vec3(-0.5f, 0.5f, 0.0f)
+//    };
+//    surface_buffer.index_buffer = {
+//        0, 1, 3,
+//        1, 2, 3
+//    };
 
-    auto data = get_example_data_1();
+    nubs = get_example_data_1();
 //    auto data = get_example_data_2();
 //    auto data = get_example_data_3();
 //    auto data = get_example_data_4();
-    auto grid = data.get_grid(10);
-    auto grid_draw_buffer = grid.get_render_buffer();
-//    surface_buffer = data.P.get_render_buffer();
-    surface_buffer = grid_draw_buffer;
-    control_buffer = data.P.get_render_buffer();
 
     // surface
     glGenVertexArrays(1, &surface_vertex_array);
     glGenBuffers(1, &surface_vertex_buffer);
     glGenBuffers(1, &surface_index_buffer);
-    glBindVertexArray(surface_vertex_array);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glBindBuffer(GL_ARRAY_BUFFER, surface_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, surface_buffer.vertex_buffer.size() * sizeof(vec3), surface_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, surface_buffer.index_buffer.size() * sizeof(uint32_t), surface_buffer.index_buffer.data(), GL_STATIC_DRAW);
-
-    // pointer binding
-    auto vpos_location = glGetAttribLocation(program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-    glEnableVertexAttribArray(static_cast<GLuint>(vpos_location));
-
-//    auto vcolor_location = glGetAttribLocation(program, "color_in");
-//    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
-//    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
+    update_nubs_buffer();
 
     // control polygon
     glGenVertexArrays(1, &control_vertex_array);
     glGenBuffers(1, &control_vertex_buffer);
     glGenBuffers(1, &control_index_buffer);
     glBindVertexArray(control_vertex_array);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glBindBuffer(GL_ARRAY_BUFFER, control_vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, control_buffer.vertex_buffer.size() * sizeof(vec3), control_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
@@ -223,7 +203,7 @@ window::window(string title, uint32_t width, uint32_t height) :
 
     // pointer binding
     auto control_vpos_location = glGetAttribLocation(program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    glVertexAttribPointer(static_cast<GLuint>(control_vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     glEnableVertexAttribArray(static_cast<GLuint>(control_vpos_location));
 
 //    auto vcolor_location = glGetAttribLocation(program, "color_in");
@@ -247,7 +227,12 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     }
                     break;
                 case GLFW_KEY_S:
-                    camera.moving_direction.backwards = true;
+                    if ((mods & GLFW_MOD_CONTROL) != 0) {
+                        cout << "INFO: toggled surface mode" << endl;
+                        surface_mode = !surface_mode;
+                    } else {
+                        camera.moving_direction.backwards = true;
+                    }
                     break;
                 case GLFW_KEY_A:
                     camera.moving_direction.left = true;
@@ -259,10 +244,24 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     camera.moving_direction.up = true;
                     break;
                 case GLFW_KEY_C:
-                    camera.moving_direction.down = true;
+                    if ((mods & GLFW_MOD_CONTROL) != 0) {
+                        cout << "INFO: toggled control plygon mode" << endl;
+                        control_mode = !control_mode;
+                    } else {
+                        camera.moving_direction.down = true;
+                    }
                     break;
                 case GLFW_KEY_R:
                     camera.reset_position();
+                    break;
+                // TODO: switch to keyboard layout independent version! (use `glfwSetCharCallback`)
+                case GLFW_KEY_RIGHT_BRACKET:
+                    nubs_resolution.increment();
+                    update_nubs_buffer();
+                    break;
+                case GLFW_KEY_SLASH:
+                    nubs_resolution.decrement();
+                    update_nubs_buffer();
                     break;
                 default:
                     break;
@@ -361,21 +360,22 @@ void window::render() {
     glUniformMatrix4fv(color_location, 1, GL_FALSE, value_ptr(mvp));
     glUniform3fv(color_location, 1, value_ptr(vec3(0, 1, 0)));
 
-    glBindVertexArray(surface_vertex_array);
-    if (wireframe_mode) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    } else {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (surface_mode) {
+        glBindVertexArray(surface_vertex_array);
+        if (wireframe_mode) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(surface_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
     }
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(surface_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
 
-    GLfloat lineWidthRange[2] = {0.0f, 0.0f};
-    glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, lineWidthRange);
-
-    glUniform3fv(color_location, 1, value_ptr(vec3(1, 0, 0)));
-    glBindVertexArray(control_vertex_array);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(control_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+    if (control_mode) {
+        glUniform3fv(color_location, 1, value_ptr(vec3(1, 0, 0)));
+        glBindVertexArray(control_vertex_array);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(control_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+    }
 
     glfwSwapBuffers(glfw_window);
     glfwPollEvents();
@@ -418,8 +418,12 @@ window& window::operator=(window&& window) noexcept {
     control_vertex_buffer = exchange(window.control_vertex_buffer, 0);
     control_index_buffer = exchange(window.control_index_buffer, 0);
     wireframe_mode = exchange(window.wireframe_mode, false);
+    control_mode = exchange(window.control_mode, false);
+    surface_mode = exchange(window.surface_mode, false);
     surface_buffer = move(window.surface_buffer);
     control_buffer = move(window.control_buffer);
+    nubs = move(window.nubs);
+    nubs_resolution = move(window.nubs_resolution);
 
     return *this;
 }
@@ -429,6 +433,34 @@ mouse_pos window::get_mouse_pos() const {
     double y_pos;
     glfwGetCursorPos(glfw_window, &x_pos, &y_pos);
     return mouse_pos(x_pos, y_pos);
+}
+
+void window::load_nubs_data_to_gpu() const {
+    glBindVertexArray(surface_vertex_array);
+
+    glBindBuffer(GL_ARRAY_BUFFER, surface_vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, surface_buffer.vertex_buffer.size() * sizeof(vec3), surface_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, surface_buffer.index_buffer.size() * sizeof(uint32_t), surface_buffer.index_buffer.data(), GL_STATIC_DRAW);
+
+    // TODO: perhaps this is not necessary?
+    // pointer binding
+    auto vpos_location = glGetAttribLocation(program, "pos");
+    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    glEnableVertexAttribArray(static_cast<GLuint>(vpos_location));
+
+//    auto vcolor_location = glGetAttribLocation(program, "color_in");
+//    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
+//    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
+}
+
+void window::update_nubs_buffer() {
+    auto grid = nubs.get_grid(nubs_resolution.get());
+    surface_buffer = grid.get_render_buffer();
+    control_buffer = nubs.P.get_render_buffer();
+
+    load_nubs_data_to_gpu();
 }
 
 }

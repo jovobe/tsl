@@ -2,7 +2,11 @@
 
 #include <glm/glm.hpp>
 
+#include <algorithm>
+
 using glm::vec3;
+
+using std::min;
 
 namespace tsl {
 
@@ -107,13 +111,21 @@ regular_grid nubs::get_grid(uint32_t resolution) const {
     auto v_max = resolution * y;
     out.points.reserve(v_max);
 
-    for (uint32_t v = 0; v <= v_max; ++v) {
+    // TODO: at resolution == 1 this should yield the control polygon. currently there is a small difference - why?
+    float current_u = 0;
+    float current_v = 0;
+    float step_u = static_cast<float>(u_max) / (u_max - 1);
+    float step_v = static_cast<float>(v_max) / (v_max - 1);
+    for (uint32_t v = 0; v < v_max; ++v) {
+        current_u = 0;
         vector<vec3> row;
         row.reserve(u_max);
-        for (uint32_t u = 0; u <= u_max; ++u) {
-            row.push_back(get_surface_point(static_cast<float>(u) / u_max, static_cast<float>(v) / v_max));
+        for (uint32_t u = 0; u < u_max; ++u) {
+            row.push_back(get_surface_point(min(current_u / u_max, 1.0f), min(current_v / v_max, 1.0f)));
+            current_u += step_u;
         }
         out.points.push_back(row);
+        current_v += step_v;
     }
 
     return out;

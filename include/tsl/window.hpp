@@ -10,6 +10,8 @@
 #include <tsl/application.hpp>
 #include <tsl/camera.hpp>
 #include <tsl/gl_buffer.hpp>
+#include <tsl/nubs.hpp>
+#include <tsl/resolution.hpp>
 
 using std::string;
 
@@ -43,6 +45,8 @@ private:
     uint32_t height;
 
     bool wireframe_mode;
+    bool control_mode;
+    bool surface_mode;
 
     gl_buffer surface_buffer;
     gl_buffer control_buffer;
@@ -60,11 +64,18 @@ private:
     GLuint control_vertex_buffer;
     GLuint control_index_buffer;
 
+    // uint32_t nubs_resolution;
+    resolution<uint32_t> nubs_resolution;
+    struct nubs nubs;
+
     class camera camera;
 
     // TODO: restrict scope
 //    friend void application::create_window(string title, uint32_t width, uint32_t height);
     friend class application;
+
+    void load_nubs_data_to_gpu() const;
+    void update_nubs_buffer();
 };
 
 }
