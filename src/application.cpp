@@ -91,7 +91,7 @@ application& application::get_instance() {
     return instance;
 }
 
-application::application() {
+application::application() : windows(), last_num_frames(0), last_sleep(0) {
     init_glfw();
 }
 
@@ -105,7 +105,7 @@ void application::run() {
     auto last_time = get_time();
     auto start = steady_clock::now();
     uint32_t num_frames = 0;
-    int32_t num_sleep = 0;
+    uint32_t num_sleep = 0;
     auto ms = milliseconds(1);
 
     while (true) {
@@ -117,9 +117,8 @@ void application::run() {
         auto current_time = get_time();
         num_frames += 1;
         if (current_time - last_time >= 1.0) {
-            auto ms_per_frame = 1000.0f / num_frames;
-            auto sleep_per_frame = num_sleep / num_frames;
-            cout << ms_per_frame << " ms/frame (sleeping: " << sleep_per_frame << " ms)" << endl;
+            last_num_frames = num_frames;
+            last_sleep = num_sleep;
             num_frames = 0;
             num_sleep = 0;
             last_time += 1.0;
@@ -161,6 +160,14 @@ application::~application() {
 
 double application::get_time() const {
     return glfwGetTime();
+}
+
+uint32_t application::get_last_num_frames() const {
+    return last_num_frames;
+}
+
+uint32_t application::get_last_sleep() const {
+    return last_sleep;
 }
 
 }

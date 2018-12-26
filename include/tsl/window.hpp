@@ -54,6 +54,8 @@ private:
     // Pointer to glfw window. If this points to nullptr, the window was moved.
     GLFWwindow* glfw_window;
 
+    int slider_resolution;
+
     GLuint program;
     GLuint surface_vertex_array;
     GLuint surface_vertex_buffer;
@@ -63,7 +65,6 @@ private:
     GLuint control_vertex_buffer;
     GLuint control_index_buffer;
 
-    // uint32_t nubs_resolution;
     resolution<uint32_t> nubs_resolution;
     struct nubs nubs;
 

@@ -45,7 +45,8 @@ window::window(string title, uint32_t width, uint32_t height) :
     wireframe_mode(false),
     control_mode(true),
     surface_mode(true),
-    nubs_resolution()
+    nubs_resolution(1),
+    slider_resolution(1)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -88,6 +89,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.IniFilename = nullptr;
+
     ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
@@ -277,10 +279,14 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                 // TODO: switch to keyboard layout independent version! (use `glfwSetCharCallback`)
                 case GLFW_KEY_RIGHT_BRACKET:
                     nubs_resolution.increment();
+                    slider_resolution += 1;
                     update_nubs_buffer();
                     break;
                 case GLFW_KEY_SLASH:
                     nubs_resolution.decrement();
+                    if (slider_resolution > 1) {
+                        slider_resolution -= 1;
+                    }
                     update_nubs_buffer();
                     break;
                 default:
@@ -367,17 +373,28 @@ void window::render() {
     ImGui::NewFrame();
 
     {
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+
         ImGui::Begin("Settings");
         ImGui::Checkbox("Wireframe mode", &wireframe_mode);
         ImGui::Checkbox("Show control polygon", &control_mode);
         ImGui::Checkbox("Show surface", &surface_mode);
-        static int slider_resolution=1;
+
         if (ImGui::SliderInt("Resolution", &slider_resolution, 1, 40)) {
             nubs_resolution.set(static_cast<uint32_t>(slider_resolution));
             update_nubs_buffer();
         }
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        auto& app = application::get_instance();
+        auto last_num_frames = app.get_last_num_frames();
+        if (last_num_frames > 0) {
+            auto ms_per_frame = 1000.0f / last_num_frames;
+            auto sleep_per_frame = app.get_last_sleep() / last_num_frames;
+            ImGui::Text("Rendering: %.3f ms/frame (%.1f FPS, sleeping: %d ms)", ms_per_frame, ImGui::GetIO().Framerate, sleep_per_frame);
+        } else {
+            ImGui::Text("Rendering: / ms/frame (%.1f FPS, sleeping: / ms)", ImGui::GetIO().Framerate);
+        }
+
         ImGui::End();
     }
 
@@ -450,7 +467,7 @@ bool window::should_close() const {
     return (glfwWindowShouldClose(glfw_window) != 0);
 }
 
-window::window(window&& window) noexcept {
+window::window(window&& window) noexcept : nubs_resolution(1) {
     *this = move(window);
 }
 
@@ -473,6 +490,7 @@ window& window::operator=(window&& window) noexcept {
     control_buffer = move(window.control_buffer);
     nubs = move(window.nubs);
     nubs_resolution = move(window.nubs_resolution);
+    slider_resolution = exchange(window.slider_resolution, 0);
 
     return *this;
 }

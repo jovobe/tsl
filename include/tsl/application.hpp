@@ -25,6 +25,9 @@ public:
 
     static application& get_instance();
 
+    uint32_t get_last_num_frames() const;
+    uint32_t get_last_sleep() const;
+
     void create_window(string title, uint32_t width, uint32_t height);
     void run();
 
@@ -33,6 +36,8 @@ public:
 
 private:
     map<GLFWwindow*, window> windows;
+    uint32_t last_num_frames;
+    uint32_t last_sleep;
 
     const float FPS_TARGET = 60;
 

@@ -6,7 +6,7 @@ namespace tsl {
 template<typename T>
 class resolution {
 public:
-    resolution() : data(1) {};
+    explicit resolution(T start) : data(start) {};
     void increment();
     void decrement();
     T get() const;
