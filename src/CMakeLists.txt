@@ -6,6 +6,8 @@ add_executable(tsl_main
     camera.cpp
     nubs.cpp
     grid.cpp
+    gl_buffer.cpp
+    opengl.cpp
 )
 
 target_include_directories(tsl_main PRIVATE

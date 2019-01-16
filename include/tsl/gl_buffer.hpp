@@ -2,10 +2,12 @@
 #define TSL_GL_BUFFER_HPP
 
 #include <vector>
+#include <optional>
 
 #include <glm/glm.hpp>
 
 using std::vector;
+using std::optional;
 
 using glm::vec3;
 
@@ -14,6 +16,9 @@ namespace tsl {
 struct gl_buffer {
     vector<vec3> vertex_buffer;
     vector<uint32_t> index_buffer;
+    optional<vector<vec3>> normal_buffer;
+
+    vector<vec3> get_combined_vec_data() const;
 };
 
 }

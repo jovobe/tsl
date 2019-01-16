@@ -106,4 +106,8 @@ void camera::reset_position() {
     up = INITIAL_UP;
 }
 
+vec3 camera::get_pos() const {
+    return pos;
+}
+
 }

@@ -57,6 +57,7 @@ private:
     int slider_resolution;
 
     GLuint program;
+    GLuint phong_program;
     GLuint surface_vertex_array;
     GLuint surface_vertex_buffer;
     GLuint surface_index_buffer;

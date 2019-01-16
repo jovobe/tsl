@@ -12,7 +12,7 @@
 
 #include <tsl/window.hpp>
 #include <tsl/application.hpp>
-#include <tsl/read_file.hpp>
+#include <tsl/opengl.hpp>
 #include <tsl/nubs.hpp>
 
 #include <string>
@@ -94,110 +94,8 @@ window::window(string title, uint32_t width, uint32_t height) :
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
 
-    // Vertex shader
-    auto vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    auto vertex_shader_text = read_file("shader/vertex.glsl");
-//    cout << vertex_shader_text << endl;
-    // TODO: why variable?
-    auto tmp1 = vertex_shader_text.c_str();
-    glShaderSource(vertex_shader, 1, &tmp1, nullptr);
-    glCompileShader(vertex_shader);
-    GLint res;
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &res);
-    cout << "vertex compile status: " << res << endl;
-    if (res == GL_FALSE) {
-        GLint max_length = 0;
-        glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &max_length);
-
-        vector<GLchar> error_log(static_cast<unsigned long>(max_length));
-        glGetShaderInfoLog(vertex_shader, max_length, &max_length, &error_log[0]);
-        string log(error_log.begin(), error_log.end());
-
-        // pop null terminator
-        log.pop_back();
-
-        cout << "Compiling shader failed:\n" << log << endl;
-
-        glDeleteShader(vertex_shader); // Don't leak the shader.
-        exit(1);
-    }
-
-    // Fragment shader
-    auto fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    auto fragment_shader_text = read_file("shader/fragment.glsl");
-    tmp1 = fragment_shader_text.c_str();
-    glShaderSource(fragment_shader, 1, &tmp1, nullptr);
-    glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &res);
-    cout << "fragment compile status: " << res << endl;
-    if (res == GL_FALSE) {
-        GLint max_length = 0;
-        glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &max_length);
-
-        vector<GLchar> error_log(static_cast<unsigned long>(max_length));
-        glGetShaderInfoLog(fragment_shader, max_length, &max_length, &error_log[0]);
-        string log(error_log.begin(), error_log.end());
-
-        // pop null terminator
-        log.pop_back();
-
-        cout << "Compiling shader failed:\n" << log << endl;
-
-        glDeleteShader(fragment_shader); // Don't leak the shader.
-        exit(1);
-    }
-
-    program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-    GLint is_linked = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &is_linked);
-    cout << "program link status: " << is_linked << endl;
-    if (is_linked == GL_FALSE)
-    {
-        GLint max_length = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &max_length);
-
-        // The maxLength includes the NULL character
-        std::vector<GLchar> info_log(static_cast<unsigned long>(max_length));
-        glGetProgramInfoLog(program, max_length, &max_length, &info_log[0]);
-
-        // We don't need the program anymore.
-        glDeleteProgram(program);
-        // Don't leak shaders either.
-        glDeleteShader(vertex_shader);
-        glDeleteShader(fragment_shader);
-
-        string log(info_log.begin(), info_log.end());
-
-        // pop null terminator
-        log.pop_back();
-
-        cout << "Linking program failed:\n" << log << endl;
-
-        // In this simple program, we'll just leave
-        exit(1);
-    }
-
-    // Always detach shaders after a successful link.
-    glDetachShader(program, vertex_shader);
-    glDetachShader(program, fragment_shader);
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    // Vertex data
-//    surface_buffer.vertex_buffer = {
-//        vec3(0.5f, 0.5f, 0.0f),
-//        vec3(0.5f, -0.5f, 0.0f),
-//        vec3(-0.5f, -0.5f, 0.0f),
-//        vec3(-0.5f, 0.5f, 0.0f)
-//    };
-//    surface_buffer.index_buffer = {
-//        0, 1, 3,
-//        1, 2, 3
-//    };
+    program = create_program("shader/vertex.glsl", "shader/fragment.glsl");
+    phong_program = create_program("shader/phong/vertex.glsl", "shader/phong/fragment.glsl");
 
     nubs = get_example_data_1();
 //    auto data = get_example_data_2();
@@ -231,6 +129,8 @@ window::window(string title, uint32_t width, uint32_t height) :
 //    auto vcolor_location = glGetAttribLocation(program, "color_in");
 //    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
 //    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void window::glfw_key_callback(int key, int scancode, int action, int mods) {
@@ -403,23 +303,27 @@ void window::render() {
     glfwMakeContextCurrent(glfw_window);
     camera.handle_moving_direction(get_mouse_pos());
 
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glUseProgram(program);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // projection
     auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 100.0f);
     auto view = camera.get_view_matrix();
     auto model = rotate(mat4(1.0f), radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
-    auto mvp = projection * view * model;
-    auto mvp_location = glGetUniformLocation(program, "MVP");
-    glUniformMatrix4fv(mvp_location, 1, GL_FALSE, value_ptr(mvp));
-
-    auto color_location = glGetUniformLocation(program, "color_in");
-    glUniformMatrix4fv(color_location, 1, GL_FALSE, value_ptr(mvp));
-    glUniform3fv(color_location, 1, value_ptr(vec3(0, 1, 0)));
+    auto vp = projection * view;
 
     if (surface_mode) {
+        glUseProgram(phong_program);
+
+        auto vp_location_phong = glGetUniformLocation(phong_program, "VP");
+        auto m_location_phong = glGetUniformLocation(phong_program, "M");
+        auto color_location_phong = glGetUniformLocation(phong_program, "color_in");
+        auto camera_location = glGetUniformLocation(phong_program, "camera_pos");
+
+        glUniformMatrix4fv(vp_location_phong, 1, GL_FALSE, value_ptr(vp));
+        glUniformMatrix4fv(m_location_phong, 1, GL_FALSE, value_ptr(model));
+        glUniform3fv(color_location_phong, 1, value_ptr(vec3(0, 1, 0)));
+        glUniform3fv(camera_location, 1, value_ptr(camera.get_pos()));
+
         glBindVertexArray(surface_vertex_array);
         if (wireframe_mode) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -430,7 +334,16 @@ void window::render() {
     }
 
     if (control_mode) {
+        glUseProgram(program);
+
+        auto vp_location = glGetUniformLocation(program, "VP");
+        auto m_location = glGetUniformLocation(program, "M");
+        auto color_location = glGetUniformLocation(program, "color_in");
+
+        glUniformMatrix4fv(vp_location, 1, GL_FALSE, value_ptr(vp));
+        glUniformMatrix4fv(m_location, 1, GL_FALSE, value_ptr(model));
         glUniform3fv(color_location, 1, value_ptr(vec3(1, 0, 0)));
+
         glBindVertexArray(control_vertex_array);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(control_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
@@ -477,6 +390,7 @@ window& window::operator=(window&& window) noexcept {
     width = exchange(window.width, 0);
     height = exchange(window.height, 0);
     program = exchange(window.program, 0);
+    phong_program = exchange(window.phong_program, 0);
     surface_vertex_array = exchange(window.surface_vertex_array, 0);
     surface_vertex_buffer = exchange(window.surface_vertex_buffer, 0);
     surface_index_buffer = exchange(window.surface_index_buffer, 0);
@@ -503,19 +417,25 @@ mouse_pos window::get_mouse_pos() const {
 }
 
 void window::load_nubs_data_to_gpu() const {
+    auto vec_data = surface_buffer.get_combined_vec_data();
+
     glBindVertexArray(surface_vertex_array);
 
     glBindBuffer(GL_ARRAY_BUFFER, surface_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, surface_buffer.vertex_buffer.size() * sizeof(vec3), surface_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vec_data.size() * sizeof(vec3), vec_data.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, surface_buffer.index_buffer.size() * sizeof(uint32_t), surface_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // TODO: perhaps this is not necessary?
     // pointer binding
-    auto vpos_location = glGetAttribLocation(program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    auto vpos_location = glGetAttribLocation(phong_program, "pos_in");
+    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) 0);
     glEnableVertexAttribArray(static_cast<GLuint>(vpos_location));
+
+    auto vnormal_location = glGetAttribLocation(phong_program, "normal_in");
+    glVertexAttribPointer(static_cast<GLuint>(vnormal_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) (sizeof(vec3)));
+    glEnableVertexAttribArray(static_cast<GLuint>(vnormal_location));
 
 //    auto vcolor_location = glGetAttribLocation(program, "color_in");
 //    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));

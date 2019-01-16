@@ -52,6 +52,7 @@ public:
     void reset_curos_pos();
     void reset_last_move_time();
     void reset_position();
+    vec3 get_pos() const;
 
 private:
     vec3 pos;
