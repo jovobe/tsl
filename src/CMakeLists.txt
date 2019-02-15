@@ -11,15 +11,11 @@ add_executable(tsl_main
 )
 
 target_include_directories(tsl_main PRIVATE
-    ${GLEW_INCLUDE_DIRS}
-    ${GLM_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIR}
 )
 
 target_link_libraries(tsl_main
+    ${CONAN_LIBS}
     ${OPENGL_LIBRARIES}
-    ${GLEW_LIBRARIES}
-    glfw
-    glm
     imgui
 )

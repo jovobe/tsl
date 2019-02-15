@@ -1,6 +1,7 @@
 # tsl
 
-
+## conan
+- add remote: `conan remote add conan-bintray https://api.bintray.com/conan/bincrafters/public-conan`
 
 ---
 

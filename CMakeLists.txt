@@ -1,27 +1,23 @@
 cmake_minimum_required(VERSION 3.12)
 project(tsl VERSION 1.0.0 LANGUAGES CXX)
 
-# Check for dependencies
-#if(NOT IS_DIRECTORY "${CMAKE_SOURCE_DIR}/ext/nanogui/ext/glfw")
-#    message(FATAL_ERROR "The TSL dependency repositories (NanoGUI, GLFW, etc.) are missing! "
-#            "You probably did not clone the project with --recursive. It is possible to recover "
-#            "by calling \"git submodule update --init --recursive\"")
-#endif()
-
 set(CMAKE_CXX_STANDARD 17)
 
+# conan
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
 # deps
-find_package(glfw3 3.2 REQUIRED)
-find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(glm REQUIRED)
 
 # imgui
 add_subdirectory(ext/imgui)
 include_directories(ext/imgui)
 
 # application
-include_directories(include)
+set(TSL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+
+include_directories(${TSL_INCLUDE_DIR})
 add_subdirectory(src)
 add_subdirectory(test)
 
