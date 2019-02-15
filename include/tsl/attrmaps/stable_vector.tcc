@@ -1,9 +1,11 @@
 #include <sstream>
+#include <functional>
 
 #include <tsl/util/panic.hpp>
 
 using std::nullopt;
 using std::stringstream;
+using std::reference_wrapper;
 
 namespace tsl {
 
@@ -91,10 +93,11 @@ template<typename handle_t, typename elem_t>
 void stable_vector<handle_t, elem_t>::clear()
 {
     elements.clear();
+    used_count = 0;
 }
 
 template<typename handle_t, typename elem_t>
-optional<elem_t&> stable_vector<handle_t, elem_t>::get(handle_type handle)
+optional<reference_wrapper<elem_t>> stable_vector<handle_t, elem_t>::get(handle_type handle)
 {
     if (handle.get_idx() >= size() || !elements[handle.get_idx()])
     {
@@ -104,7 +107,7 @@ optional<elem_t&> stable_vector<handle_t, elem_t>::get(handle_type handle)
 }
 
 template<typename handle_t, typename elem_t>
-optional<const elem_t&> stable_vector<handle_t, elem_t>::get(handle_type handle) const
+optional<reference_wrapper<const elem_t>> stable_vector<handle_t, elem_t>::get(handle_type handle) const
 {
     if (handle.get_idx() >= size() || !elements[handle.get_idx()])
     {

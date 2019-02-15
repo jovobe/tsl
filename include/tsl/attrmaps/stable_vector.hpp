@@ -3,12 +3,14 @@
 
 #include <optional>
 #include <vector>
+#include <functional>
 
 #include <tsl/util/base_handle.hpp>
 #include <tsl/geometry/handles.hpp>
 
 using std::optional;
 using std::vector;
+using std::reference_wrapper;
 
 namespace tsl {
 
@@ -149,7 +151,7 @@ public:
      * Returns `none` if the element was deleted or if the handle is out of
      * bounds.
      */
-    optional<element_type&> get(handle_type handle);
+    optional<reference_wrapper<element_type>> get(handle_type handle);
 
     /**
      * @brief Returns the element referred to by `handle`.
@@ -157,7 +159,7 @@ public:
      * Returns `none` if the element was deleted or if the handle is out of
      * bounds.
      */
-    optional<const element_type&> get(handle_type handle) const;
+    optional<reference_wrapper<const element_type>> get(handle_type handle) const;
 
     /**
      * @brief Set a value for the existing `handle`.
