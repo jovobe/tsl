@@ -65,6 +65,9 @@ public:
     optional<reference_wrapper<const value_t>> get(handle_t key) const final;
     size_t num_values() const final;
 
+    attribute_map_iterator_ptr<handle_t> begin() const final;
+    attribute_map_iterator_ptr<handle_t> end() const final;
+
     /**
      * @see stable_vector::reserve(size_t)
      */
@@ -74,6 +77,28 @@ private:
     /// The underlying storage
     stable_vector<handle_t, value_t> vec;
     optional<value_t> default_value;
+};
+
+template<typename handle_t, typename value_t>
+class vector_map_iterator : public attribute_map_iterator<handle_t>
+{
+    static_assert(
+        std::is_base_of<base_handle<index>, handle_t>::value,
+        "handle_t must inherit from base_handle!"
+    );
+
+public:
+    explicit vector_map_iterator(stable_vector_iterator<handle_t, value_t> iter);
+    ~vector_map_iterator() override;
+
+    attribute_map_iterator<handle_t>& operator++() final;
+    bool operator==(const attribute_map_iterator<handle_t>& other) const final;
+    bool operator!=(const attribute_map_iterator<handle_t>& other) const final;
+    handle_t operator*() const final;
+    std::unique_ptr<attribute_map_iterator<handle_t>> clone() const final;
+
+private:
+    stable_vector_iterator<handle_t, value_t> iter;
 };
 
 }

@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <tsl/attrmaps/attribute_map.hpp>
 #include <tsl/attrmaps/vector_map.hpp>
@@ -33,6 +34,14 @@ struct hash<test_handle> {
 
 struct dummy {
     uint32_t val = 0;
+
+    bool operator==(const dummy& other) const {
+        return val == other.val;
+    }
+
+    bool operator!=(const dummy& other) const {
+        return val != other.val;
+    }
 };
 
 template<class T>
@@ -90,7 +99,7 @@ TYPED_TEST(AttributeMapTest, WholeInterface) {
     EXPECT_EQ(1, map.num_values());
     EXPECT_TRUE(map.contains_key(handle));
 
-    EXPECT_EQ(temp.val, map[handle].val);
+    EXPECT_EQ(temp, map[handle]);
     map[handle].val = 21;
     EXPECT_EQ(21, map[handle].val);
 
@@ -111,6 +120,28 @@ TYPED_TEST(AttributeMapTest, WholeInterface) {
     map.clear();
     EXPECT_FALSE(map.contains_key(handle));
     EXPECT_EQ(0, map.num_values());
+}
+
+TYPED_TEST(AttributeMapTest, Iterator) {
+    vector<dummy> dummies;
+    dummies.insert(dummies.begin(), {dummy{42}, dummy{21}, dummy{7}});
+    vector<test_handle> handles;
+    handles.insert(handles.begin(), {test_handle(0), test_handle(1), test_handle(2)});
+    attribute_map<test_handle, dummy>& map = *(this->map);
+
+    map.insert(handles[0], dummies[0]);
+    map.insert(handles[1], dummies[1]);
+    map.insert(handles[2], dummies[2]);
+
+    vector<test_handle> expected_handles;
+    vector<dummy> expected_dummies;
+    for (auto&& h: map) {
+        expected_handles.push_back(h);
+        expected_dummies.push_back(map[h]);
+    }
+
+    ASSERT_THAT(handles, ::testing::UnorderedElementsAreArray(expected_handles));
+    ASSERT_THAT(dummies, ::testing::UnorderedElementsAreArray(expected_dummies));
 }
 
 TYPED_TEST_CASE(AttributeMapWithDefaultTest, Implementations);
@@ -153,6 +184,28 @@ TYPED_TEST(AttributeMapWithDefaultTest, WholeInterface) {
     map.clear();
     EXPECT_FALSE(map.contains_key(handle));
     EXPECT_EQ(0, map.num_values());
+}
+
+TYPED_TEST(AttributeMapWithDefaultTest, Iterator) {
+    vector<dummy> dummies;
+    dummies.insert(dummies.begin(), {dummy{42}, dummy{21}, dummy{7}});
+    vector<test_handle> handles;
+    handles.insert(handles.begin(), {test_handle(0), test_handle(1), test_handle(2)});
+    attribute_map<test_handle, dummy>& map = *(this->map);
+
+    map.insert(handles[0], dummies[0]);
+    map.insert(handles[1], dummies[1]);
+    map.insert(handles[2], dummies[2]);
+
+    vector<test_handle> expected_handles;
+    vector<dummy> expected_dummies;
+    for (auto&& h: map) {
+        expected_handles.push_back(h);
+        expected_dummies.push_back(map[h]);
+    }
+
+    ASSERT_THAT(handles, ::testing::UnorderedElementsAreArray(expected_handles));
+    ASSERT_THAT(dummies, ::testing::UnorderedElementsAreArray(expected_dummies));
 }
 
 #pragma clang diagnostic pop

@@ -59,6 +59,9 @@ public:
     optional<reference_wrapper<const value_t>> get(handle_t key) const final;
     size_t num_values() const final;
 
+    attribute_map_iterator_ptr<handle_t> begin() const final;
+    attribute_map_iterator_ptr<handle_t> end() const final;
+
     /**
      * @brief Allocates space for at least `new_cap` more elements.
      */
@@ -67,6 +70,23 @@ public:
 private:
     unordered_map<handle_t, value_t> map;
     optional<value_t> default_value;
+};
+
+template<typename handle_t, typename value_t>
+class hash_map_iterator : public attribute_map_iterator<handle_t>
+{
+public:
+    explicit hash_map_iterator(typename unordered_map<handle_t, value_t>::const_iterator iter);
+    ~hash_map_iterator() override;
+
+    attribute_map_iterator<handle_t>& operator++() final;
+    bool operator==(const attribute_map_iterator<handle_t>& other) const final;
+    bool operator!=(const attribute_map_iterator<handle_t>& other) const final;
+    handle_t operator*() const final;
+    std::unique_ptr<attribute_map_iterator<handle_t>> clone() const final;
+
+private:
+    typename unordered_map<handle_t, value_t>::const_iterator iter;
 };
 
 }

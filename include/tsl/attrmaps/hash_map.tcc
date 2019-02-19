@@ -115,14 +115,75 @@ size_t hash_map<handle_t, value_t>::num_values() const
 }
 
 template<typename handle_t, typename value_t>
+attribute_map_iterator_ptr<handle_t> hash_map<handle_t, value_t>::begin() const
+{
+    return attribute_map_iterator_ptr<handle_t>(
+        std::make_unique<hash_map_iterator<handle_t, value_t>>(map.begin())
+    );
+}
+
+template<typename handle_t, typename value_t>
+attribute_map_iterator_ptr<handle_t> hash_map<handle_t, value_t>::end() const
+{
+    return attribute_map_iterator_ptr<handle_t>(
+        std::make_unique<hash_map_iterator<handle_t, value_t>>(map.end())
+    );
+}
+
+template<typename handle_t, typename value_t>
 void hash_map<handle_t, value_t>::reserve(size_t new_cap)
 {
     map.reserve(new_cap);
 }
 
 template<typename handle_t, typename value_t>
-hash_map<handle_t, value_t>::~hash_map() {
+hash_map<handle_t, value_t>::~hash_map() = default;
 
+template<typename handle_t, typename value_t>
+hash_map_iterator<handle_t, value_t>::hash_map_iterator(
+    typename unordered_map<handle_t, value_t>::const_iterator iter
+)
+    : iter(iter)
+{}
+
+template<typename handle_t, typename value_t>
+attribute_map_iterator<handle_t>& hash_map_iterator<handle_t, value_t>::operator++()
+{
+    ++iter;
+    return *this;
 }
+
+template<typename handle_t, typename value_t>
+bool hash_map_iterator<handle_t, value_t>::operator==(
+    const attribute_map_iterator<handle_t>& other
+) const
+{
+    auto cast = dynamic_cast<const hash_map_iterator<handle_t, value_t>*>(&other);
+    return cast && iter == cast->iter;
+}
+
+template<typename handle_t, typename value_t>
+bool hash_map_iterator<handle_t, value_t>::operator!=(
+    const attribute_map_iterator<handle_t>& other
+) const
+{
+    auto cast = dynamic_cast<const hash_map_iterator<handle_t, value_t>*>(&other);
+    return !cast || iter != cast->iter;
+}
+
+template<typename handle_t, typename value_t>
+handle_t hash_map_iterator<handle_t, value_t>::operator*() const
+{
+    return (*iter).first;
+}
+
+template<typename handle_t, typename value_t>
+std::unique_ptr<attribute_map_iterator<handle_t>> hash_map_iterator<handle_t, value_t>::clone() const
+{
+    return std::make_unique<hash_map_iterator>(*this);
+}
+
+template<typename handle_t, typename value_t>
+hash_map_iterator<handle_t, value_t>::~hash_map_iterator() = default;
 
 }

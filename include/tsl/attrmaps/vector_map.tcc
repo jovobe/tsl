@@ -91,6 +91,23 @@ size_t vector_map<handle_t, value_t>::num_values() const
     return vec.num_used();
 }
 
+
+template<typename handle_t, typename value_t>
+attribute_map_iterator_ptr<handle_t> vector_map<handle_t, value_t>::begin() const
+{
+    return attribute_map_iterator_ptr<handle_t>(
+        std::make_unique<vector_map_iterator<handle_t, value_t>>(vec.begin())
+    );
+}
+
+template<typename handle_t, typename value_t>
+attribute_map_iterator_ptr<handle_t> vector_map<handle_t, value_t>::end() const
+{
+    return attribute_map_iterator_ptr<handle_t>(
+        std::make_unique<vector_map_iterator<handle_t, value_t>>(vec.end())
+    );
+}
+
 template<typename handle_t, typename value_t>
 void vector_map<handle_t, value_t>::reserve(size_t new_cap)
 {
@@ -98,8 +115,52 @@ void vector_map<handle_t, value_t>::reserve(size_t new_cap)
 }
 
 template<typename handle_t, typename value_t>
-vector_map<handle_t, value_t>::~vector_map() {
+vector_map<handle_t, value_t>::~vector_map() = default;
 
-};
+
+template<typename handle_t, typename value_t>
+vector_map_iterator<handle_t, value_t>::vector_map_iterator(stable_vector_iterator<handle_t, value_t> iter)
+    : iter(iter)
+{}
+
+template<typename handle_t, typename value_t>
+attribute_map_iterator<handle_t>& vector_map_iterator<handle_t, value_t>::operator++()
+{
+    ++iter;
+    return *this;
+}
+
+template<typename handle_t, typename value_t>
+bool vector_map_iterator<handle_t, value_t>::operator==(
+    const attribute_map_iterator<handle_t>& other
+) const
+{
+    auto cast = dynamic_cast<const vector_map_iterator<handle_t, value_t>*>(&other);
+    return cast && iter == cast->iter;
+}
+
+template<typename handle_t, typename value_t>
+bool vector_map_iterator<handle_t, value_t>::operator!=(
+    const attribute_map_iterator<handle_t>& other
+) const
+{
+    auto cast = dynamic_cast<const vector_map_iterator<handle_t, value_t>*>(&other);
+    return !cast || iter != cast->iter;
+}
+
+template<typename handle_t, typename value_t>
+handle_t vector_map_iterator<handle_t, value_t>::operator*() const
+{
+    return *iter;
+}
+
+template<typename handle_t, typename value_t>
+std::unique_ptr<attribute_map_iterator<handle_t>> vector_map_iterator<handle_t, value_t>::clone() const
+{
+    return std::make_unique<vector_map_iterator>(*this);
+}
+
+template<typename handle_t, typename value_t>
+vector_map_iterator<handle_t, value_t>::~vector_map_iterator() = default;
 
 }

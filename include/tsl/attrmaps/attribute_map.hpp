@@ -12,6 +12,9 @@ using std::reference_wrapper;
 
 namespace tsl {
 
+// Forward declarations
+template<typename> class attribute_map_iterator_ptr;
+
 /**
  * @brief Interface for attribute maps.
  *
@@ -105,6 +108,24 @@ public:
     virtual size_t num_values() const = 0;
 
     /**
+     * @brief Returns an iterator over all keys of this map. The order of
+     *        iteration is unspecified.
+     *
+     * You can simply iterate over all keys of this map with a range-based
+     * for-loop:
+     *
+     * \code{.cpp}
+     *     for (auto handle: attribute_map) { ... }
+     * \endcode
+     */
+    virtual attribute_map_iterator_ptr<handle_t> begin() const = 0;
+
+    /**
+     * @brief Returns an iterator to the end of all keys.
+     */
+    virtual attribute_map_iterator_ptr<handle_t> end() const = 0;
+
+    /**
      * @brief Returns the value associated with the given key or panics
      *        if there is no associated value.
      *
@@ -126,6 +147,69 @@ public:
 
     virtual ~attribute_map() = 0;
 };
+
+/**
+ * @brief Iterator over keys of an attribute map.
+ *
+ * This is an interface that has to be implemented by the concrete iterators
+ * for the implementors of `attribute_map`.
+ */
+template<typename handle_t>
+class attribute_map_iterator
+{
+    static_assert(
+        std::is_base_of<base_handle<index>, handle_t>::value,
+        "handle_t must inherit from base_handle!"
+    );
+
+public:
+    /// Advances the iterator once. Using the dereference operator afterwards
+    /// will yield the next handle.
+    virtual attribute_map_iterator& operator++() = 0;
+    virtual bool operator==(const attribute_map_iterator& other) const = 0;
+    virtual bool operator!=(const attribute_map_iterator& other) const = 0;
+
+    virtual ~attribute_map_iterator() = 0;
+
+    /// Returns the current handle.
+    virtual handle_t operator*() const = 0;
+    virtual std::unique_ptr<attribute_map_iterator> clone() const = 0;
+};
+
+/**
+ * @brief Simple convinience wrapper for unique_ptr<attribute_map_iterator>
+ *
+ * The unique_ptr is needed to return an abstract class. This `ptr` class
+ * enables the user to easily use this smart pointer as iterator.
+ */
+template<typename handle_t>
+class attribute_map_iterator_ptr
+{
+    static_assert(
+        std::is_base_of<base_handle<index>, handle_t>::value,
+        "handle_t must inherit from base_handle!"
+    );
+
+public:
+    explicit attribute_map_iterator_ptr(std::unique_ptr<attribute_map_iterator<handle_t>> iter)
+        : iter(std::move(iter)) {}
+    attribute_map_iterator_ptr(const attribute_map_iterator_ptr& iterator_ptr);
+    attribute_map_iterator_ptr(attribute_map_iterator_ptr&& iterator_ptr) noexcept;
+
+    ~attribute_map_iterator_ptr();
+
+    attribute_map_iterator_ptr& operator=(const attribute_map_iterator_ptr& iterator_ptr);
+    attribute_map_iterator_ptr& operator=(attribute_map_iterator_ptr&& iterator_ptr) noexcept;
+
+    attribute_map_iterator_ptr& operator++();
+    bool operator==(const attribute_map_iterator_ptr& other) const;
+    bool operator!=(const attribute_map_iterator_ptr& other) const;
+    handle_t operator*() const;
+
+private:
+    std::unique_ptr<attribute_map_iterator<handle_t>> iter;
+};
+
 
 }
 
