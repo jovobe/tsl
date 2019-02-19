@@ -9,6 +9,8 @@
 
 using namespace tsl;
 
+namespace tsl_tests {
+
 class HalfEdgeMeshTestWithCubeData : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -299,12 +301,14 @@ TEST_F(HalfEdgeMeshTest, VertexIterator) {
     auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
     auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
 
+    vector<vertex_handle> expected_handles;
+    expected_handles.insert(expected_handles.begin(), {v0, v1, v2, v3});
     vector<vertex_handle> vertex_handles;
-    vertex_handles.insert(vertex_handles.begin(), {v3, v2, v1, v0});
     for (auto&& vh: mesh.get_vertices()) {
-        EXPECT_EQ(vertex_handles.back(), vh);
-        vertex_handles.pop_back();
+        vertex_handles.push_back(vh);
     }
+
+    ASSERT_THAT(expected_handles, ::testing::UnorderedElementsAreArray(vertex_handles));
 }
 
 TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
@@ -328,7 +332,7 @@ TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
     //       (v2) ====== (v3)
     face_handles.push_back(mesh.add_face({v0, v1, v2, v3}));
 
-    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[0]), ::testing::ElementsAre(v1, v2, v3, v0));
+    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[0]), ::testing::UnorderedElementsAre(v0, v1, v2, v3));
 
     // Add the following face (f1):
     //
@@ -340,8 +344,8 @@ TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
     //       (v5) ====== (v2) ====== (v3)
     face_handles.push_back(mesh.add_face({v1, v4, v5, v2}));
 
-    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[0]), ::testing::ElementsAre(v1, v2, v3, v0));
-    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[1]), ::testing::ElementsAre(v4, v5, v2, v1));
+    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[0]), ::testing::UnorderedElementsAre(v0, v1, v2, v3));
+    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[1]), ::testing::UnorderedElementsAre(v1, v2, v4, v5));
 }
 
 // TODO: Implement orientability check in `half_edge_mesh::add_face()`
@@ -384,18 +388,19 @@ TEST_F(HalfEdgeMeshTest, FaceIterator) {
     //                    ||    f2    ||
     //                    ||          ||
     //                   (v6) ====== (v7)
-    vector<face_handle> face_handles;
-    face_handles.push_back(mesh.add_face({v0, v1, v2, v3}));
-    face_handles.push_back(mesh.add_face({v1, v4, v5, v2}));
-    face_handles.push_back(mesh.add_face({v3, v2, v6, v7}));
+    vector<face_handle> expected_handles;
+    expected_handles.push_back(mesh.add_face({v0, v1, v2, v3}));
+    expected_handles.push_back(mesh.add_face({v1, v4, v5, v2}));
+    expected_handles.push_back(mesh.add_face({v3, v2, v6, v7}));
 
     EXPECT_EQ(3, mesh.num_faces());
 
-    std::reverse(face_handles.begin(), face_handles.end());
+    vector<face_handle> face_handles;
     for (auto&& fh: mesh.get_faces()) {
-        EXPECT_EQ(face_handles.back(), fh);
-        face_handles.pop_back();
+        face_handles.push_back(fh);
     }
+
+    ASSERT_THAT(expected_handles, ::testing::UnorderedElementsAreArray(face_handles));
 }
 
 TEST_F(HalfEdgeMeshTest, EdgeIterator) {
@@ -413,15 +418,15 @@ TEST_F(HalfEdgeMeshTest, EdgeIterator) {
     //        ||          ||
     //       (v2) ====== (v3)
     mesh.add_face({v0, v1, v2, v3});
-    vector<vertex_handle> vertex_handles;
-    vertex_handles.insert(vertex_handles.begin(), {v1, v0, v2, v1, v3, v2, v0, v3});
-    std::reverse(vertex_handles.begin(), vertex_handles.end());
+    vector<vertex_handle> expected_handles;
+    expected_handles.insert(expected_handles.begin(), {v0, v0, v1, v1, v2, v2, v3, v3});
 
+    vector<vertex_handle> vertex_handles;
     for (auto&& eh: mesh.get_edges()) {
-        auto vertex = mesh.get_vertices_of_half_edge(eh)[0];
-        EXPECT_EQ(vertex_handles.back(), vertex);
-        vertex_handles.pop_back();
+        vertex_handles.push_back(mesh.get_vertices_of_half_edge(eh)[0]);
     }
+
+    ASSERT_THAT(expected_handles, ::testing::UnorderedElementsAreArray(vertex_handles));
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, IsFaceInsertionValidNonManifoldTripleEdge) {
@@ -440,7 +445,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfFace) {
     auto v1 = vertex_handles[1];
     auto v2 = vertex_handles[2];
     auto v3 = vertex_handles[3];
-    ASSERT_THAT(vertices, ::testing::ElementsAre(v1, v2, v3, v0));
+    ASSERT_THAT(vertices, ::testing::UnorderedElementsAre(v0, v1, v2, v3));
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, NumFacesEdgesVertices) {
@@ -454,7 +459,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfEdgeAndGetEdgeBetween) {
     auto v3 = vertex_handles[3];
     auto edge_handle = mesh.get_edge_between(v2, v3);
     auto vertices = mesh.get_vertices_of_edge(edge_handle.unwrap());
-    ASSERT_THAT(vertices, ::testing::ElementsAre(v3, v2));
+    ASSERT_THAT(vertices, ::testing::UnorderedElementsAre(v2, v3));
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfEdge) {
@@ -464,7 +469,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfEdge) {
     auto f2 = optional_face_handle(face_handles[2]);
     auto edge_handle = mesh.get_edge_between(v2, v3);
     auto faces = mesh.get_faces_of_edge(edge_handle.unwrap());
-    ASSERT_THAT(faces, ::testing::ElementsAre(f0, f2));
+    ASSERT_THAT(faces, ::testing::UnorderedElementsAre(f0, f2));
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexFourEdges) {
@@ -482,7 +487,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexFourEdges) {
     auto edge_27 = mesh.get_edge_between(v2, v7).unwrap();
     auto edge_23 = mesh.get_edge_between(v2, v3).unwrap();
 
-    ASSERT_THAT(edges, ::testing::ElementsAre(edge_23, edge_27, edge_25, edge_21));
+    ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_21, edge_23, edge_25, edge_27));
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexThreeEdges) {
@@ -498,7 +503,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexThreeEdges) {
     auto edge_03 = mesh.get_edge_between(v0, v3).unwrap();
     auto edge_021 = mesh.get_edge_between(v0, v21).unwrap();
 
-    ASSERT_THAT(edges, ::testing::ElementsAre(edge_01, edge_021, edge_03));
+    ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_01, edge_03, edge_021));
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, GetFaceBetween) {
@@ -520,6 +525,8 @@ TEST_F(HalfEdgeMeshTestWithCubeData, NumAdjacentFaces) {
     auto v3 = vertex_handles[3];
     auto edge_handle = mesh.get_edge_between(v2, v3);
     EXPECT_EQ(2, mesh.num_adjacent_faces(edge_handle.unwrap()));
+}
+
 }
 
 #pragma clang diagnostic pop

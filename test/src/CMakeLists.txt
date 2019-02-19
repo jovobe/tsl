@@ -1,5 +1,5 @@
 add_executable(tsl_tests
-    ../main.cpp
+    main.cpp
     geometry/half_edge_mesh_tests.cpp
     attrmaps/stable_vector_tests.cpp
     attrmaps/attribute_map_tests.cpp
