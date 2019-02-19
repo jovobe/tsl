@@ -259,7 +259,17 @@ TEST_F(HalfEdgeMeshTest, IsFaceInsertionValidSameVertices) {
     auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
 
     EXPECT_TRUE(mesh.is_face_insertion_valid({v1, v2, v3, v4}));
+
+    // Add the following face (f1):
+    //
+    //       (v2) ====== (v1)
+    //        ||          ||
+    //        ||          ||
+    //        ||    f1    ||
+    //        ||          ||
+    //       (v3) ====== (v4)
     mesh.add_face({v1, v2, v3, v4});
+
     EXPECT_FALSE(mesh.is_face_insertion_valid({v1, v2, v3, v4}));
     EXPECT_FALSE(mesh.is_face_insertion_valid({v2, v1, v4, v3}));
     EXPECT_FALSE(mesh.is_face_insertion_valid({v1, v1, v3, v4}));
@@ -281,6 +291,137 @@ TEST_F(HalfEdgeMeshTest, GetVertexPosition) {
 
     v2_pos.x = 42.0f;
     EXPECT_EQ(vec3(42.0f, 2.0f, 3.0f), v2_pos);
+}
+
+TEST_F(HalfEdgeMeshTest, VertexIterator) {
+    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    vector<vertex_handle> vertex_handles;
+    vertex_handles.insert(vertex_handles.begin(), {v3, v2, v1, v0});
+    for (auto&& vh: mesh.get_vertices()) {
+        EXPECT_EQ(vertex_handles.back(), vh);
+        vertex_handles.pop_back();
+    }
+}
+
+TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
+    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v5 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    vector<face_handle> face_handles;
+
+    // Add the following face (f0):
+    //
+    //       (v1) ====== (v0)
+    //        ||          ||
+    //        ||          ||
+    //        ||    f0    ||
+    //        ||          ||
+    //       (v2) ====== (v3)
+    face_handles.push_back(mesh.add_face({v0, v1, v2, v3}));
+
+    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[0]), ::testing::ElementsAre(v1, v2, v3, v0));
+
+    // Add the following face (f1):
+    //
+    //       (v4) ====== (v1) ====== (v0)
+    //        ||          ||          ||
+    //        ||          ||          ||
+    //        ||    f1    ||    f0    ||
+    //        ||          ||          ||
+    //       (v5) ====== (v2) ====== (v3)
+    face_handles.push_back(mesh.add_face({v1, v4, v5, v2}));
+
+    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[0]), ::testing::ElementsAre(v1, v2, v3, v0));
+    ASSERT_THAT(mesh.get_vertices_of_face(face_handles[1]), ::testing::ElementsAre(v4, v5, v2, v1));
+}
+
+// TODO: Implement orientability check in `half_edge_mesh::add_face()`
+TEST_F(HalfEdgeMeshTest, Orientability) {
+    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v5 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    mesh.add_face({v0, v1, v2, v3});
+
+    // This should panic, because it will break the orientability of the mesh
+//    ASSERT_THROW(mesh.add_face({v1, v2, v4, v5}), panic_exception);
+}
+
+TEST_F(HalfEdgeMeshTest, FaceIterator) {
+    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v5 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v6 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v7 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    // Create the following mesh:
+    //
+    //       (v4) ====== (v1) ====== (v0)
+    //        ||          ||          ||
+    //        ||          ||          ||
+    //        ||    f1    ||    f0    ||
+    //        ||          ||          ||
+    //       (v5) ====== (v2) ====== (v3)
+    //                    ||          ||
+    //                    ||          ||
+    //                    ||    f2    ||
+    //                    ||          ||
+    //                   (v6) ====== (v7)
+    vector<face_handle> face_handles;
+    face_handles.push_back(mesh.add_face({v0, v1, v2, v3}));
+    face_handles.push_back(mesh.add_face({v1, v4, v5, v2}));
+    face_handles.push_back(mesh.add_face({v3, v2, v6, v7}));
+
+    EXPECT_EQ(3, mesh.num_faces());
+
+    std::reverse(face_handles.begin(), face_handles.end());
+    for (auto&& fh: mesh.get_faces()) {
+        EXPECT_EQ(face_handles.back(), fh);
+        face_handles.pop_back();
+    }
+}
+
+TEST_F(HalfEdgeMeshTest, EdgeIterator) {
+    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    // Add the following face (f0):
+    //
+    //       (v1) ====== (v0)
+    //        ||          ||
+    //        ||          ||
+    //        ||    f0    ||
+    //        ||          ||
+    //       (v2) ====== (v3)
+    mesh.add_face({v0, v1, v2, v3});
+    vector<vertex_handle> vertex_handles;
+    vertex_handles.insert(vertex_handles.begin(), {v1, v0, v2, v1, v3, v2, v0, v3});
+    std::reverse(vertex_handles.begin(), vertex_handles.end());
+
+    for (auto&& eh: mesh.get_edges()) {
+        auto vertex = mesh.get_vertices_of_half_edge(eh)[0];
+        EXPECT_EQ(vertex_handles.back(), vertex);
+        vertex_handles.pop_back();
+    }
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, IsFaceInsertionValidNonManifoldTripleEdge) {

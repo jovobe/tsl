@@ -1,7 +1,5 @@
 #include <algorithm>
 
-#include <tsl/geometry/half_edge_mesh.hpp>
-
 using std::min;
 using std::tuple;
 using std::get;
@@ -267,6 +265,11 @@ array<vertex_handle, 2> half_edge_mesh::get_vertices_of_edge(edge_handle edge_h)
 {
     auto one_edge_h = half_edge_handle::one_half_of(edge_h);
     auto one_edge = get_e(one_edge_h);
+    return { one_edge.target, get_e(one_edge.twin).target };
+}
+
+array<vertex_handle, 2> half_edge_mesh::get_vertices_of_half_edge(half_edge_handle edge_h) const {
+    auto one_edge = get_e(edge_h);
     return { one_edge.target, get_e(one_edge.twin).target };
 }
 
@@ -559,6 +562,106 @@ optional_half_edge_handle half_edge_mesh::find_edge_around_vertex(half_edge_hand
     });
 
     return out;
+}
+
+template<typename handle_t, typename elem_t>
+hem_iterator<handle_t, elem_t>& hem_iterator<handle_t, elem_t>::operator++()
+{
+    ++iterator;
+    return *this;
+}
+
+template<typename handle_t, typename elem_t>
+bool hem_iterator<handle_t, elem_t>::operator==(const hem_iterator<handle_t, elem_t>& other) const
+{
+    return iterator == other.iterator;
+}
+
+template<typename handle_t, typename elem_t>
+bool hem_iterator<handle_t, elem_t>::operator!=(const hem_iterator<handle_t, elem_t>& other) const
+{
+    return iterator != other.iterator;
+}
+
+template<typename handle_t, typename elem_t>
+handle_t hem_iterator<handle_t, elem_t>::operator*() const
+{
+    return *iterator;
+}
+
+hem_iterator<vertex_handle, half_edge_vertex> half_edge_mesh::vertices_begin() const
+{
+    return hem_iterator<vertex_handle, half_edge_vertex>(vertices.begin());
+}
+
+hem_iterator<vertex_handle, half_edge_vertex> half_edge_mesh::vertices_end() const
+{
+    return hem_iterator<vertex_handle, half_edge_vertex>(vertices.end());
+}
+
+hem_iterator<face_handle, half_edge_face> half_edge_mesh::faces_begin() const
+{
+    return hem_iterator<face_handle, half_edge_face>(faces.begin());
+}
+
+hem_iterator<face_handle, half_edge_face> half_edge_mesh::faces_end() const
+{
+    return hem_iterator<face_handle, half_edge_face>(faces.end());
+}
+
+hem_iterator<half_edge_handle, half_edge> half_edge_mesh::edges_begin() const
+{
+    return hem_iterator<half_edge_handle, half_edge>(edges.begin());
+}
+
+hem_iterator<half_edge_handle, half_edge> half_edge_mesh::edges_end() const
+{
+    return hem_iterator<half_edge_handle, half_edge>(edges.end());
+}
+
+hem_face_iterator_proxy half_edge_mesh::get_faces() const
+{
+    return hem_face_iterator_proxy(*this);
+}
+
+hem_edge_iterator_proxy half_edge_mesh::get_edges() const
+{
+    return hem_edge_iterator_proxy(*this);
+}
+
+hem_vertex_iterator_proxy half_edge_mesh::get_vertices() const
+{
+    return hem_vertex_iterator_proxy(*this);
+}
+
+hem_iterator<face_handle, half_edge_face> hem_face_iterator_proxy::begin() const
+{
+    return mesh.faces_begin();
+}
+
+hem_iterator<face_handle, half_edge_face> hem_face_iterator_proxy::end() const
+{
+    return mesh.faces_end();
+}
+
+hem_iterator<half_edge_handle, half_edge> hem_edge_iterator_proxy::begin() const
+{
+    return mesh.edges_begin();
+}
+
+hem_iterator<half_edge_handle, half_edge> hem_edge_iterator_proxy::end() const
+{
+    return mesh.edges_end();
+}
+
+hem_iterator<vertex_handle, half_edge_vertex> hem_vertex_iterator_proxy::begin() const
+{
+    return mesh.vertices_begin();
+}
+
+hem_iterator<vertex_handle, half_edge_vertex> hem_vertex_iterator_proxy::end() const
+{
+    return mesh.vertices_end();
 }
 
 }

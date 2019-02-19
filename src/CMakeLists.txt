@@ -8,7 +8,6 @@ add_executable(tsl_main
     grid.cpp
     gl_buffer.cpp
     opengl.cpp
-    geometry/half_edge_mesh.cpp
 )
 
 target_include_directories(tsl_main PRIVATE
@@ -19,8 +18,4 @@ target_link_libraries(tsl_main
     ${CONAN_LIBS}
     ${OPENGL_LIBRARIES}
     imgui
-)
-
-add_library(tsl SHARED STATIC
-    geometry/half_edge_mesh.cpp
 )

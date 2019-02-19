@@ -16,6 +16,25 @@ using std::pair;
 
 namespace tsl {
 
+template<typename handle_t, typename elem_t>
+class hem_iterator
+{
+public:
+    explicit hem_iterator(stable_vector_iterator<handle_t, elem_t> iterator) : iterator(iterator) {};
+    hem_iterator& operator++();
+    bool operator==(const hem_iterator<handle_t, elem_t>& other) const;
+    bool operator!=(const hem_iterator<handle_t, elem_t>& other) const;
+    handle_t operator*() const;
+
+private:
+    stable_vector_iterator<handle_t, elem_t> iterator;
+};
+
+// Forward declaration
+class hem_face_iterator_proxy;
+class hem_edge_iterator_proxy;
+class hem_vertex_iterator_proxy;
+
 /**
  * @brief Half-edge data structure.
  *
@@ -95,6 +114,13 @@ public:
     array<vertex_handle, 2> get_vertices_of_edge(edge_handle edge_h) const;
 
     /**
+     * @brief Get the two vertices of an half edge.
+     *
+     * The order of the vertices is not specified
+     */
+    array<vertex_handle, 2> get_vertices_of_half_edge(half_edge_handle edge_h) const;
+
+    /**
      * @brief Get the two faces of an edge.
      *
      * The order of the faces is not specified
@@ -167,6 +193,34 @@ public:
      *        returned. None otherwise.
      */
     optional_edge_handle get_edge_between(vertex_handle ah, vertex_handle bh) const;
+
+    hem_iterator<vertex_handle, half_edge_vertex> vertices_begin() const;
+    hem_iterator<vertex_handle, half_edge_vertex> vertices_end() const;
+    hem_iterator<face_handle, half_edge_face> faces_begin() const;
+    hem_iterator<face_handle, half_edge_face> faces_end() const;
+    hem_iterator<half_edge_handle, half_edge> edges_begin() const;
+    hem_iterator<half_edge_handle, half_edge> edges_end() const;
+
+    /**
+     * @brief Method for usage in range-based for-loops.
+     *
+     * Returns a simple proxy object that uses `faces_begin()` and `faces_end()`.
+     */
+    virtual hem_face_iterator_proxy get_faces() const;
+
+    /**
+     * @brief Method for usage in range-based for-loops.
+     *
+     * Returns a simple proxy object that uses `edges_begin()` and `edges_end()`.
+     */
+    virtual hem_edge_iterator_proxy get_edges() const;
+
+    /**
+     * @brief Method for usage in range-based for-loops.
+     *
+     * Returns a simple proxy object that uses `vertices_begin()` and `vertices_end()`.
+     */
+    virtual hem_vertex_iterator_proxy get_vertices() const;
 
 private:
     stable_vector<half_edge_handle, edge> edges;
@@ -264,6 +318,44 @@ private:
     optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred) const;
 };
 
+class hem_face_iterator_proxy
+{
+public:
+    hem_iterator<face_handle, half_edge_face> begin() const;
+    hem_iterator<face_handle, half_edge_face> end() const;
+
+private:
+    explicit hem_face_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
+    const half_edge_mesh& mesh;
+    friend half_edge_mesh;
+};
+
+class hem_edge_iterator_proxy
+{
+public:
+    hem_iterator<half_edge_handle, half_edge> begin() const;
+    hem_iterator<half_edge_handle, half_edge> end() const;
+
+private:
+    explicit hem_edge_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
+    const half_edge_mesh& mesh;
+    friend half_edge_mesh;
+};
+
+class hem_vertex_iterator_proxy
+{
+public:
+    hem_iterator<vertex_handle, half_edge_vertex> begin() const;
+    hem_iterator<vertex_handle, half_edge_vertex> end() const;
+
+private:
+    explicit hem_vertex_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
+    const half_edge_mesh& mesh;
+    friend half_edge_mesh;
+};
+
 }
+
+#include <tsl/geometry/half_edge_mesh.tcc>
 
 #endif //TSL_HALF_EDGE_MESH_HPP
