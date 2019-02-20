@@ -90,6 +90,11 @@ public:
     size_t num_edges() const;
 
     /**
+     * @brief Returns the number of half edges in the mesh.
+     */
+    size_t num_half_edges() const;
+
+    /**
      * @brief Get the position of the given vertex.
      */
     vec3 get_vertex_position(vertex_handle handle) const;
@@ -145,6 +150,64 @@ public:
     void get_edges_of_vertex(vertex_handle handle, vector<edge_handle>& edges_out) const;
 
     /**
+     * @brief Get a list of ingoing half edges around the given vertex.
+     *
+     * The edge handles are written into the `edges_out` vector. This is done
+     * to reduce the number of heap allocations if this method is called in
+     * a loop. If you are not calling it in a loop or can't, for some reason,
+     * take advantages of this method's signature, you can call the other
+     * overload of this method which just returns the vector. Such convinient.
+     *
+     * Note: you probably should remember to `clear()` the vector before
+     * passing it into this method.
+     *
+     * @param edges_out The handles of the edges around `handle` will be written
+     *                 into this vector in clockwise order.
+     */
+    void get_half_edges_of_vertex(vertex_handle handle, vector<half_edge_handle>& edges_out) const;
+
+    /**
+     * @brief Get a list of edges around the given vertex.
+     *
+     * This method is implemented using the method
+     * `get_edges_of_vertex(vertex_handle, vector<edge_handle>&)`. If you are
+     * calling this method in a loop, you should probably call the more manual
+     * method (with the out vector) to avoid useless heap allocations.
+     *
+     * @return The edge-handles in counter-clockwise order.
+     */
+    vector<edge_handle> get_edges_of_vertex(vertex_handle handle) const;
+
+    /**
+     * @brief Get a list of ingoing half edges around the given vertex.
+     *
+     * This method is implemented using the method
+     * `get_half_edges_of_vertex(vertex_handle, vector<edge_handle>&)`. If you are
+     * calling this method in a loop, you should probably call the more manual
+     * method (with the out vector) to avoid useless heap allocations.
+     *
+     * @return The edge-handles in counter-clockwise order.
+     */
+    vector<half_edge_handle> get_half_edges_of_vertex(vertex_handle handle) const;
+
+    /**
+     * @brief Get inner half edges of face in counter clockwise order
+     */
+    vector<half_edge_handle> get_half_edges_of_face(face_handle face_handle) const;
+
+    /**
+     * @brief If the two given vertices are connected by an edge, it is
+     *        returned. None otherwise.
+     */
+    optional_edge_handle get_edge_between(vertex_handle ah, vertex_handle bh) const;
+
+    /**
+     * @brief If the two given vertices are connected by an edge, the half edge
+     *        targeting `bh` is returned. None otherwise.
+     */
+    optional_half_edge_handle get_half_edge_between(vertex_handle ah, vertex_handle bh) const;
+
+    /**
      * @brief Check whether or not inserting a face between the given vertices
      *        would be valid.
      *
@@ -175,24 +238,6 @@ public:
      * This functions always returns one of 0, 1 or 2.
      */
     uint8_t num_adjacent_faces(edge_handle handle) const;
-
-    /**
-     * @brief Get a list of edges around the given vertex.
-     *
-     * This method is implemented using the pure virtual method
-     * `get_edges_of_vertex(vertex_handle, vector<edge_handle>&)`. If you are
-     * calling this method in a loop, you should probably call the more manual
-     * method (with the out vector) to avoid useless heap allocations.
-     *
-     * @return The edge-handles in counter-clockwise order.
-     */
-    vector<edge_handle> get_edges_of_vertex(vertex_handle handle) const;
-
-    /**
-     * @brief If the two given vertices are connected by an edge, it is
-     *        returned. None otherwise.
-     */
-    optional_edge_handle get_edge_between(vertex_handle ah, vertex_handle bh) const;
 
     hem_iterator<vertex_handle, half_edge_vertex> vertices_begin() const;
     hem_iterator<vertex_handle, half_edge_vertex> vertices_end() const;
@@ -274,6 +319,27 @@ private:
      *         second one points from v2h to v1h.
      */
     pair<half_edge_handle, half_edge_handle> add_edge_pair(vertex_handle v1h, vertex_handle v2h);
+
+    /**
+     * @brief Circulates over the inner edges of the given face `fh` in counter clockwise order,
+     *        calling the `visitor` for each inner edge of the face.
+     *
+     * The edges are visited in clockwise order. The iteration stops if all inner
+     * edges were visited once or if the visitor returns `false`. It has to
+     * return `true` to keep circulating.
+     */
+    template <typename visitor_t>
+    void circulate_in_face(face_handle fh, visitor_t visitor) const;
+
+    /**
+     * @brief Circulates over the inner edges of the face `start_edge_h.face`, calling the
+     *        `visitor` for each inner edge of the face.
+     *
+     * This works exactly as the other overload, but specifically starts at the
+     * edge `start_edge_h` instead of `face.edge`.
+     */
+    template <typename visitor_t>
+    void circulate_in_face(half_edge_handle start_edge_h, visitor_t visitor) const;
 
     /**
      * @brief Circulates around the vertex `vh`, calling the `visitor` for each

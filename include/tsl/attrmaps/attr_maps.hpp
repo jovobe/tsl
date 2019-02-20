@@ -49,17 +49,20 @@ template<typename handle_t, typename value_t> using sparse_attr_map = hash_map<h
 
 // ---------------------------------------------------------------------------
 // Handle-specific aliases
-template<typename value_t> using edge_map     = attribute_map<edge_handle, value_t>;
+template<typename value_t> using edge_map       = attribute_map<edge_handle, value_t>;
+template<typename value_t> using half_edge_map  = attribute_map<half_edge_handle, value_t>;
 template<typename value_t> using face_map     = attribute_map<face_handle, value_t>;
 template<typename value_t> using vertex_map   = attribute_map<vertex_handle, value_t>;
 
 // ---------------------------------------------------------------------------
 // Handle- and implementation-specific aliases
 template<typename value_t> using dense_edge_map        = dense_attr_map<edge_handle, value_t>;
+template<typename value_t> using dense_half_edge_map        = dense_attr_map<half_edge_handle, value_t>;
 template<typename value_t> using dense_face_map        = dense_attr_map<face_handle, value_t>;
 template<typename value_t> using dense_vertex_map      = dense_attr_map<vertex_handle, value_t>;
 
 template<typename value_t> using sparse_edge_map       = sparse_attr_map<edge_handle, value_t>;
+template<typename value_t> using sparse_half_edge_map       = sparse_attr_map<half_edge_handle, value_t>;
 template<typename value_t> using sparse_face_map       = sparse_attr_map<face_handle, value_t>;
 template<typename value_t> using sparse_vertex_map     = sparse_attr_map<vertex_handle, value_t>;
 

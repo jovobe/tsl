@@ -238,6 +238,11 @@ size_t half_edge_mesh::num_edges() const
     return edges.num_used() / 2;
 }
 
+size_t half_edge_mesh::num_half_edges() const
+{
+    return edges.num_used();
+}
+
 vec3 half_edge_mesh::get_vertex_position(vertex_handle handle) const
 {
     return get_v(handle).pos;
@@ -250,15 +255,14 @@ vec3& half_edge_mesh::get_vertex_position(vertex_handle handle)
 
 vector<vertex_handle> half_edge_mesh::get_vertices_of_face(face_handle handle) const
 {
-    auto face = get_f(handle);
-
-    vector<vertex_handle> out;
-    out.push_back(get_e(face.edge).target);
-    for (half_edge_handle eh = get_e(face.edge).next; eh != face.edge; eh = get_e(eh).next) {
-        out.push_back(get_e(eh).target);
-    }
-
-    return out;
+    vector<vertex_handle> vertices_out;
+    vertices_out.reserve(4);
+    circulate_in_face(handle, [&vertices_out, this](auto eh)
+    {
+        vertices_out.push_back(get_e(eh).target);
+        return true;
+    });
+    return vertices_out;
 }
 
 array<vertex_handle, 2> half_edge_mesh::get_vertices_of_edge(edge_handle edge_h) const
@@ -290,6 +294,73 @@ void half_edge_mesh::get_edges_of_vertex(
         edges_out.push_back(half_to_full_edge_handle(eh));
         return true;
     });
+}
+
+void half_edge_mesh::get_half_edges_of_vertex(
+    vertex_handle handle,
+    vector<half_edge_handle>& edges_out
+) const
+{
+    circulate_around_vertex(handle, [&edges_out, this](auto eh)
+    {
+        edges_out.push_back(eh);
+        return true;
+    });
+}
+
+vector<edge_handle> half_edge_mesh::get_edges_of_vertex(vertex_handle handle) const
+{
+    vector<edge_handle> out;
+    get_edges_of_vertex(handle, out);
+    return out;
+}
+
+vector<half_edge_handle> half_edge_mesh::get_half_edges_of_vertex(vertex_handle handle) const
+{
+    vector<half_edge_handle> out;
+    get_half_edges_of_vertex(handle, out);
+    return out;
+}
+
+vector<half_edge_handle> half_edge_mesh::get_half_edges_of_face(face_handle face_handle) const {
+    vector<half_edge_handle> edges_out;
+    edges_out.reserve(4);
+    circulate_in_face(face_handle, [&edges_out, this](auto eh)
+    {
+        edges_out.push_back(eh);
+        return true;
+    });
+    return edges_out;
+}
+
+optional_edge_handle half_edge_mesh::get_edge_between(vertex_handle ah, vertex_handle bh) const
+{
+    // Go through all edges of vertex `a` until we find an edge that is also
+    // connected to vertex `b`.
+    for (auto eh: get_edges_of_vertex(ah))
+    {
+        auto endpoints = get_vertices_of_edge(eh);
+        if (endpoints[0] == bh || endpoints[1] == bh)
+        {
+            return optional_edge_handle(eh);
+        }
+    }
+    return optional_edge_handle();
+}
+
+optional_half_edge_handle half_edge_mesh::get_half_edge_between(vertex_handle ah, vertex_handle bh) const
+{
+    // Go through all edges of vertex `a` until we find an edge that is also
+    // connected to vertex `b`.
+    for (auto eh: get_half_edges_of_vertex(ah))
+    {
+        auto edge = get_e(eh);
+        if (get_e(edge.twin).target == bh)
+        {
+            return optional_half_edge_handle(edge.twin);
+        }
+    }
+    return optional_half_edge_handle();
 }
 
 // TODO: this does not detect non-manifold edges!
@@ -336,6 +407,8 @@ bool half_edge_mesh::is_face_insertion_valid(const vector<vertex_handle>& handle
     return true;
 }
 
+// TODO: This is more compilcated! what if a face of v0, v1, v2, v3 exists and we try to create a face
+//       with v0-v6? Search for more edge cases!
 optional_face_handle half_edge_mesh::get_face_between(const vector<vertex_handle>& handles) const
 {
     if (handles.size() < 4) {
@@ -373,28 +446,6 @@ uint8_t half_edge_mesh::num_adjacent_faces(edge_handle handle) const
 {
     auto faces = get_faces_of_edge(handle);
     return static_cast<uint8_t>((faces[0] ? 1 : 0) + (faces[1] ? 1 : 0));
-}
-
-vector<edge_handle> half_edge_mesh::get_edges_of_vertex(vertex_handle handle) const
-{
-    vector<edge_handle> out;
-    get_edges_of_vertex(handle, out);
-    return out;
-}
-
-optional_edge_handle half_edge_mesh::get_edge_between(vertex_handle ah, vertex_handle bh) const
-{
-    // Go through all edges of vertex `a` until we find an edge that is also
-    // connected to vertex `b`.
-    for (auto eh: get_edges_of_vertex(ah))
-    {
-        auto endpoints = get_vertices_of_edge(eh);
-        if (endpoints[0] == bh || endpoints[1] == bh)
-        {
-            return optional_edge_handle(eh);
-        }
-    }
-    return optional_edge_handle();
 }
 
 typename half_edge_mesh::edge&
@@ -497,6 +548,34 @@ pair<half_edge_handle, half_edge_handle> half_edge_mesh::add_edge_pair(vertex_ha
     b_inserted.target = v1h;
 
     return std::make_pair(ah, bh);
+}
+
+template <typename visitor_t>
+void half_edge_mesh::circulate_in_face(face_handle fh, visitor_t visitor) const
+{
+    circulate_in_face(get_f(fh).edge, visitor);
+}
+
+template <typename visitor_t>
+void half_edge_mesh::circulate_in_face(half_edge_handle start_edge_h, visitor_t visitor) const
+{
+    auto loop_edge_h = start_edge_h;
+
+    while (true)
+    {
+        // Call the visitor and stop, if the visitor tells us to.
+        if (!visitor(loop_edge_h))
+        {
+            break;
+        }
+
+        // Advance to next edge and stop if it is the start edge.
+        loop_edge_h = get_e(loop_edge_h).next;
+        if (loop_edge_h == start_edge_h)
+        {
+            break;
+        }
+    }
 }
 
 template <typename visitor_t>

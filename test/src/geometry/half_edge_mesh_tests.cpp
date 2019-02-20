@@ -308,7 +308,7 @@ TEST_F(HalfEdgeMeshTest, VertexIterator) {
         vertex_handles.push_back(vh);
     }
 
-    ASSERT_THAT(expected_handles, ::testing::UnorderedElementsAreArray(vertex_handles));
+    ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
 TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
@@ -400,7 +400,7 @@ TEST_F(HalfEdgeMeshTest, FaceIterator) {
         face_handles.push_back(fh);
     }
 
-    ASSERT_THAT(expected_handles, ::testing::UnorderedElementsAreArray(face_handles));
+    ASSERT_THAT(face_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
 TEST_F(HalfEdgeMeshTest, EdgeIterator) {
@@ -426,7 +426,7 @@ TEST_F(HalfEdgeMeshTest, EdgeIterator) {
         vertex_handles.push_back(mesh.get_vertices_of_half_edge(eh)[0]);
     }
 
-    ASSERT_THAT(expected_handles, ::testing::UnorderedElementsAreArray(vertex_handles));
+    ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, IsFaceInsertionValidNonManifoldTripleEdge) {
@@ -452,6 +452,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, NumFacesEdgesVertices) {
     EXPECT_EQ(24, mesh.num_faces());
     EXPECT_EQ(26, mesh.num_vertices());
     EXPECT_EQ(48, mesh.num_edges());
+    EXPECT_EQ(96, mesh.num_half_edges());
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfEdgeAndGetEdgeBetween) {
@@ -459,6 +460,14 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfEdgeAndGetEdgeBetween) {
     auto v3 = vertex_handles[3];
     auto edge_handle = mesh.get_edge_between(v2, v3);
     auto vertices = mesh.get_vertices_of_edge(edge_handle.unwrap());
+    ASSERT_THAT(vertices, ::testing::UnorderedElementsAre(v2, v3));
+}
+
+TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgeBetween) {
+    auto v2 = vertex_handles[2];
+    auto v3 = vertex_handles[3];
+    auto edge_handle = mesh.get_half_edge_between(v2, v3);
+    auto vertices = mesh.get_vertices_of_half_edge(edge_handle.unwrap());
     ASSERT_THAT(vertices, ::testing::UnorderedElementsAre(v2, v3));
 }
 
@@ -490,6 +499,24 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexFourEdges) {
     ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_21, edge_23, edge_25, edge_27));
 }
 
+TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexFourEdges) {
+    auto v2 = vertex_handles[2];
+    auto edges = mesh.get_half_edges_of_vertex(v2);
+    EXPECT_EQ(4, edges.size());
+
+    auto v1 = vertex_handles[1];
+    auto v5 = vertex_handles[5];
+    auto v7 = vertex_handles[7];
+    auto v3 = vertex_handles[3];
+
+    auto edge_21 = mesh.get_half_edge_between(v1, v2).unwrap();
+    auto edge_25 = mesh.get_half_edge_between(v5, v2).unwrap();
+    auto edge_27 = mesh.get_half_edge_between(v7, v2).unwrap();
+    auto edge_23 = mesh.get_half_edge_between(v3, v2).unwrap();
+
+    ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_21, edge_23, edge_25, edge_27));
+}
+
 TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexThreeEdges) {
     auto v0 = vertex_handles[0];
     auto edges = mesh.get_edges_of_vertex(v0);
@@ -502,6 +529,22 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexThreeEdges) {
     auto edge_01 = mesh.get_edge_between(v0, v1).unwrap();
     auto edge_03 = mesh.get_edge_between(v0, v3).unwrap();
     auto edge_021 = mesh.get_edge_between(v0, v21).unwrap();
+
+    ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_01, edge_03, edge_021));
+}
+
+TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexThreeEdges) {
+    auto v0 = vertex_handles[0];
+    auto edges = mesh.get_half_edges_of_vertex(v0);
+    EXPECT_EQ(3, edges.size());
+
+    auto v1 = vertex_handles[1];
+    auto v3 = vertex_handles[3];
+    auto v21 = vertex_handles[21];
+
+    auto edge_01 = mesh.get_half_edge_between(v1, v0).unwrap();
+    auto edge_03 = mesh.get_half_edge_between(v3, v0).unwrap();
+    auto edge_021 = mesh.get_half_edge_between(v21, v0).unwrap();
 
     ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_01, edge_03, edge_021));
 }
@@ -525,6 +568,20 @@ TEST_F(HalfEdgeMeshTestWithCubeData, NumAdjacentFaces) {
     auto v3 = vertex_handles[3];
     auto edge_handle = mesh.get_edge_between(v2, v3);
     EXPECT_EQ(2, mesh.num_adjacent_faces(edge_handle.unwrap()));
+}
+
+TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfFace) {
+    auto f0 = face_handles[0];
+    auto half_edges = mesh.get_half_edges_of_face(f0);
+    EXPECT_EQ(4, half_edges.size());
+
+    vector<half_edge_handle> expected_handles;
+    expected_handles.push_back(mesh.get_half_edge_between(vertex_handles[0], vertex_handles[1]).unwrap());
+    expected_handles.push_back(mesh.get_half_edge_between(vertex_handles[1], vertex_handles[2]).unwrap());
+    expected_handles.push_back(mesh.get_half_edge_between(vertex_handles[2], vertex_handles[3]).unwrap());
+    expected_handles.push_back(mesh.get_half_edge_between(vertex_handles[3], vertex_handles[0]).unwrap());
+
+    ASSERT_THAT(half_edges, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
 }
