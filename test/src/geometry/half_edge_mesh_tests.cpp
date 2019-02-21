@@ -422,7 +422,7 @@ TEST_F(HalfEdgeMeshTest, EdgeIterator) {
     expected_handles.insert(expected_handles.begin(), {v0, v0, v1, v1, v2, v2, v3, v3});
 
     vector<vertex_handle> vertex_handles;
-    for (auto&& eh: mesh.get_edges()) {
+    for (auto&& eh: mesh.get_half_edges()) {
         vertex_handles.push_back(mesh.get_vertices_of_half_edge(eh)[0]);
     }
 

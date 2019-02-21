@@ -10,6 +10,10 @@ add_executable(tsl_main
     opengl.cpp
 )
 
+add_library(tsl SHARED STATIC
+    geometry/half_edge_mesh.cpp
+)
+
 target_include_directories(tsl_main PRIVATE
     ${OPENGL_INCLUDE_DIR}
 )
@@ -18,4 +22,5 @@ target_link_libraries(tsl_main
     ${CONAN_LIBS}
     ${OPENGL_LIBRARIES}
     imgui
+    tsl
 )

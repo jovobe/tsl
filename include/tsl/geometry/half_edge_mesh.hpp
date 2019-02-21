@@ -32,7 +32,7 @@ private:
 
 // Forward declaration
 class hem_face_iterator_proxy;
-class hem_edge_iterator_proxy;
+class hem_half_edge_iterator_proxy;
 class hem_vertex_iterator_proxy;
 
 /**
@@ -208,6 +208,11 @@ public:
     optional_half_edge_handle get_half_edge_between(vertex_handle ah, vertex_handle bh) const;
 
     /**
+     * @brief Get handle of the twin half edge of the given handle
+     */
+    half_edge_handle get_twin(half_edge_handle handle) const;
+
+    /**
      * @brief Check whether or not inserting a face between the given vertices
      *        would be valid.
      *
@@ -243,8 +248,8 @@ public:
     hem_iterator<vertex_handle, half_edge_vertex> vertices_end() const;
     hem_iterator<face_handle, half_edge_face> faces_begin() const;
     hem_iterator<face_handle, half_edge_face> faces_end() const;
-    hem_iterator<half_edge_handle, half_edge> edges_begin() const;
-    hem_iterator<half_edge_handle, half_edge> edges_end() const;
+    hem_iterator<half_edge_handle, half_edge> half_edges_begin() const;
+    hem_iterator<half_edge_handle, half_edge> half_edges_end() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
@@ -256,9 +261,9 @@ public:
     /**
      * @brief Method for usage in range-based for-loops.
      *
-     * Returns a simple proxy object that uses `edges_begin()` and `edges_end()`.
+     * Returns a simple proxy object that uses `half_edges_begin()` and `half_edges_end()`.
      */
-    virtual hem_edge_iterator_proxy get_edges() const;
+    virtual hem_half_edge_iterator_proxy get_half_edges() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
@@ -396,14 +401,14 @@ private:
     friend half_edge_mesh;
 };
 
-class hem_edge_iterator_proxy
+class hem_half_edge_iterator_proxy
 {
 public:
     hem_iterator<half_edge_handle, half_edge> begin() const;
     hem_iterator<half_edge_handle, half_edge> end() const;
 
 private:
-    explicit hem_edge_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
+    explicit hem_half_edge_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
     const half_edge_mesh& mesh;
     friend half_edge_mesh;
 };

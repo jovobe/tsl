@@ -7,4 +7,5 @@ add_executable(tsl_tests
 
 target_link_libraries(tsl_tests
     ${CONAN_LIBS}
+    tsl
 )
