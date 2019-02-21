@@ -28,7 +28,7 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
     // = Create broken edges
     // =======================================================================
     // Handles for the inner edges of the face. The edges represented by those
-    // handles do not contain a valid `next` pointer yet.
+    // handles do not contain a valid `next` and `prev` pointer yet.
     vector<half_edge_handle> inner_handles;
     inner_handles.reserve(handles.size());
     for (size_t i = 1; i < handles.size(); ++i) {
@@ -55,9 +55,9 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
     }
 
     // =======================================================================
-    // = Fix next handles and set outgoing handles if not set yet
+    // = Fix next and prev handles and set outgoing handles if not set yet
     // =======================================================================
-    // Fixing the `next` handles is the most difficult part of this method. In
+    // Fixing the `next` and `prev` handles is the most difficult part of this method. In
     // order to tackle it we deal with each corner of this face on its own.
     // For each corner we look at the corner-vertex and the in-going and
     // out-going edge (both edges are on the outside of this face!).
@@ -104,16 +104,22 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
                 auto e_end_h = find_edge_around_vertex(vh, [&, this](auto edge_h)
                 {
                     return !get_e(edge_h).face;
-                }).unwrap();
+                }).expect("a non-manifold part in the mesh has been found");
 
                 auto e_start_h = get_e(e_end_h).next;
+                auto& e_start = get_e(e_start_h);
+
                 e_in.next = e_start_h;
+                e_start.prev = e_in_h;
+
                 get_e(e_end_h).next = e_out_h;
+                e_out.prev = e_end_h;
             }
             else
             {
                 // `e_in` and `e_out` are the only edges of the vertex.
                 e_in.next = e_out_h;
+                e_out.prev = e_in_h;
             }
         }
             // --> Case (B): only the ingoing edge is part of a face
@@ -124,58 +130,44 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
             //
             // We have to find the edge which `next` handle pointed to the
             // outer edge of the one face we are adjacent to (called
-            // `old_next`. This is an inner edge of our face. This edge also
-            // has to be a boundary edge or else we are dealing with a
-            // non-manifold mesh again.
-            //
-            // Since we already know that `v.outgoing` does exist,
-            // `find_edge_around_vertex` returning `none` means that `v` does
-            // not an edge which `next` handle points to `old_next`. But this
-            // has to be true in a non-broken HEM. So we will panic if this
-            // condition is violated.
-            auto eh = find_edge_around_vertex(vh, [&, this](auto edge_h)
-            {
-                auto old_next = e_in.twin;
-                return !get_e(edge_h).face && get_e(edge_h).next == old_next;
-            }).expect("new face would add a non-manifold edge");
+            // `old_next`. This is an inner edge of our face.
+            auto eh = get_e(e_in.twin).prev;
 
             get_e(eh).next = e_out_h;
+            e_out.prev = eh;
         }
             // --> Case (C): only the outgoing edge is part of a face
         else if (!e_in.face && e_out.face)
         {
             // This is correct, because the old next pointer are still present!
-            e_in.next = get_e(e_out.twin).next;
+            auto old_out_h = get_e(e_out.twin).next;
+            e_in.next = old_out_h;
+            get_e(old_out_h).prev = e_in_h;
         }
             // --> Case (D): both edges are already part of another face
         else if (e_in.face && e_out.face)
         {
             // Here, two fan blades around `v` will be connected. Both blades
             // need to be in the right order for this to work. The order is
-            // given by the `next` handles of the edges with the target `v`.
+            // given by the `next` and `prev` handles of the edges with the target `v`.
             // By following those handles (and `twin` handles), we can
             // circulate around `v`.
             //
             // When circulating, both fan blades need to be next to each other.
-            // If that's not the case, we need to fix a few `next` handles. Not
+            // If that's not the case, we need to fix a few `next` and `prev` handles. Not
             // being in the right order is caused by case (A), but it can't be
             // avoided there. Only when connecting the blades here, we can know
-            // how to create the `next` circle.
+            // how to create the `next` and `prev` circle.
             if (get_e(e_out.twin).next != e_in.twin)
             {
                 // Here we need to conceptually delete one fan blade from the
-                // `next` circle around `v` and re-insert it into the right
+                // `next` and `prev` circle around `v` and re-insert it into the right
                 // position. We choose to "move" the fan blade starting with
                 // `e_in`.
                 //
-                // The most difficult part is to find the edge that points to
-                // `e_in.twin`. We could reach it easily if we would store
-                // `previous` handles; finding it without those handles is
-                // possible by circulating around the vertex.
-                auto inactive_blade_end_h = find_edge_around_vertex(vh, [&, this](auto edge_h)
-                {
-                    return get_e(edge_h).next == e_in.twin;
-                }).unwrap();
+                // We search the edge that points to
+                // `e_in.twin`.
+                auto inactive_blade_end_h = get_e(e_in.twin).prev;
 
                 // Instead of pointing to `e_in.twin`, it needs to "skip" the
                 // `e_in` blade and point to the blade afterwards. So we need to
@@ -189,29 +181,36 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
                     }
                 ).unwrap();
 
-                // We can finally set the next pointer to skip the `e_in`
+                // We can finally set the next and prev pointer to skip the `e_in`
                 // blade. After this line, circulating around `v` will work
                 // but skip the whole `e_in` blade.
                 get_e(inactive_blade_end_h).next = get_e(e_in_blade_end_h).next;
+                get_e(get_e(e_in_blade_end_h).next).prev = inactive_blade_end_h;
 
                 // Now we need to re-insert it again. Fortunately, this is
                 // easier. After this line, the circle is broken, but it will
-                // be repaired by repairing the `next` handles within the face
+                // be repaired by repairing the `next` and `prev` handles within the face
                 // later.
                 get_e(e_in_blade_end_h).next = get_e(e_out.twin).next;
+                get_e(get_e(e_out.twin).next).prev = e_in_blade_end_h;
             }
         }
     }
 
-    // Set `next` handle of inner edges. This is an easy step, but we can't
-    // do it earlier, since the old `next` handles are required by the
-    // previous "fix next handles" step.
-    for (size_t i = 0; i < (inner_handles.size() - 1); ++i) {
+    // Set `next` and `prev` handle of inner edges. This is an easy step, but we can't
+    // do it earlier, since the old `next` and `prev` handles are required by the
+    // previous "fix next and prev handles" step.
+    auto& e_inner_first = get_e(inner_handles.front());
+    e_inner_first.next = inner_handles[1];
+    e_inner_first.prev = inner_handles.back();
+    for (size_t i = 1; i < (inner_handles.size() - 1); ++i) {
         auto& e_inner = get_e(inner_handles[i]);
         e_inner.next = inner_handles[i + 1];
+        e_inner.prev = inner_handles[i - 1];
     }
     auto& e_inner_last = get_e(inner_handles.back());
     e_inner_last.next = inner_handles.front();
+    e_inner_last.prev = inner_handles[inner_handles.size() - 2];
 
     // Set outgoing-handles if they are not set yet.
     for (size_t i = 0; i < handles.size(); ++i) {
@@ -367,6 +366,10 @@ optional_half_edge_handle half_edge_mesh::get_half_edge_between(vertex_handle ah
 
 half_edge_handle half_edge_mesh::get_twin(half_edge_handle handle) const {
     return get_e(handle).twin;
+}
+
+half_edge_handle half_edge_mesh::get_prev(half_edge_handle handle) const {
+    return get_e(handle).prev;
 }
 
 // TODO: this does not detect non-manifold edges!

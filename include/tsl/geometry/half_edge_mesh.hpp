@@ -213,6 +213,11 @@ public:
     half_edge_handle get_twin(half_edge_handle handle) const;
 
     /**
+     * @brief Get handle of the previous half edge of the given handle
+     */
+    half_edge_handle get_prev(half_edge_handle handle) const;
+
+    /**
      * @brief Check whether or not inserting a face between the given vertices
      *        would be valid.
      *

@@ -14,10 +14,12 @@ struct half_edge
     /// The vertex this edge points to.
     vertex_handle target;
 
-    /// The next edge of the face, ordered counter-clockwise. Viewed a different
-    /// way: it's the next edge when walking clockwise around the source
-    /// vertex.
+    /// The next edge of the face, ordered counter-clockwise.
     half_edge_handle next;
+
+    /// The previous edge of the face, ordered counter-clockwise. Or in other words:
+    /// the next edge of the face, ordered clockwise.
+    half_edge_handle prev;
 
     /// The twin edge.
     half_edge_handle twin;
@@ -26,7 +28,7 @@ private:
     /**
      * @brief Initializes all fields with dummy values (unsafe, thus private).
      */
-    half_edge() : target(0), next(0), twin(0) {}
+    half_edge() : target(0), next(0), prev(0), twin(0) {}
 
     /// Several methods of HEM need to invoke the unsafe ctor.
     friend class half_edge_mesh;
