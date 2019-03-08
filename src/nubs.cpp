@@ -10,7 +10,7 @@ using std::min;
 
 namespace tsl {
 
-nubs get_example_data_1() {
+nubs nubs::get_example_data_1() {
 
     nubs out;
     out.p = 2;
@@ -39,7 +39,7 @@ nubs get_example_data_1() {
     return out;
 }
 
-nubs get_example_data_2() {
+nubs nubs::get_example_data_2() {
 
     nubs out;
     out.p = 2;
@@ -66,7 +66,7 @@ nubs get_example_data_2() {
     return out;
 }
 
-nubs get_example_data_3() {
+nubs nubs::get_example_data_3() {
     nubs out = get_example_data_1();
 
     out.p = 3;
@@ -78,7 +78,7 @@ nubs get_example_data_3() {
     return out;
 }
 
-nubs get_example_data_4() {
+nubs nubs::get_example_data_4() {
 
     nubs out;
     out.p = 3;

@@ -97,10 +97,10 @@ window::window(string title, uint32_t width, uint32_t height) :
     program = create_program("shader/vertex.glsl", "shader/fragment.glsl");
     phong_program = create_program("shader/phong/vertex.glsl", "shader/phong/fragment.glsl");
 
-    nubs = get_example_data_1();
-//    auto data = get_example_data_2();
-//    auto data = get_example_data_3();
-//    auto data = get_example_data_4();
+    nubs = nubs::get_example_data_1();
+//    auto data = nubs::get_example_data_2();
+//    auto data = nubs::get_example_data_3();
+//    auto data = nubs::get_example_data_4();
 
     // surface
     glGenVertexArrays(1, &surface_vertex_array);

@@ -60,12 +60,12 @@ struct nubs {
     size_t get_v_span(float v) const;
     vector<float> get_u_basis_funs(size_t span, float u) const;
     vector<float> get_v_basis_funs(size_t span, float v) const;
-};
 
-nubs get_example_data_1();
-nubs get_example_data_2();
-nubs get_example_data_3();
-nubs get_example_data_4();
+    static nubs get_example_data_1();
+    static nubs get_example_data_2();
+    static nubs get_example_data_3();
+    static nubs get_example_data_4();
+};
 
 }
 
