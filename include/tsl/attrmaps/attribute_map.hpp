@@ -1,6 +1,7 @@
 #ifndef TSL_ATTRIBUTE_MAP_HPP
 #define TSL_ATTRIBUTE_MAP_HPP
 
+#include <memory>
 #include <optional>
 #include <functional>
 
