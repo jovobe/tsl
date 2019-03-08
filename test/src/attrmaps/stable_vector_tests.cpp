@@ -10,7 +10,7 @@
 
 using namespace tsl;
 
-namespace tsl_tests{
+namespace tsl_tests {
 
 class StableVectorTest : public ::testing::Test {
 protected:
