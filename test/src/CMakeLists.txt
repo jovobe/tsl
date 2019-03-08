@@ -3,6 +3,7 @@ add_executable(tsl_tests
     geometry/half_edge_mesh_tests.cpp
     attrmaps/stable_vector_tests.cpp
     attrmaps/attribute_map_tests.cpp
+    tsplines_tests.cpp
     geometry/line_tests.cpp
 )
 
