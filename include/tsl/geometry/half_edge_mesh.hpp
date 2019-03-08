@@ -16,6 +16,11 @@ using std::pair;
 
 namespace tsl {
 
+enum class direction {
+    ingoing,
+    outgoing
+};
+
 template<typename handle_t, typename elem_t>
 class hem_iterator
 {
@@ -105,6 +110,11 @@ public:
     vec3& get_vertex_position(vertex_handle handle);
 
     /**
+     * @brief Returns the number of direct neighbours of the vertex.
+     */
+    index get_valence(vertex_handle handle) const;
+
+    /**
      * @brief Get the vertices surrounding the given face.
      *
      * @return The vertex-handles in counter-clockwise order.
@@ -133,6 +143,11 @@ public:
     array<optional_face_handle, 2> get_faces_of_edge(edge_handle edge_h) const;
 
     /**
+     * @brief Get the face of a half edge.
+     */
+    optional_face_handle get_face_of_half_edge(half_edge_handle edge_h) const;
+
+    /**
      * @brief Get a list of edges around the given vertex.
      *
      * The edge handles are written into the `edges_out` vector. This is done
@@ -150,7 +165,8 @@ public:
     void get_edges_of_vertex(vertex_handle handle, vector<edge_handle>& edges_out) const;
 
     /**
-     * @brief Get a list of ingoing half edges around the given vertex.
+     * @brief Get a list of half edges around the given vertex. If the edges are in
+     *        or outgoing is determined by the way parameter.
      *
      * The edge handles are written into the `edges_out` vector. This is done
      * to reduce the number of heap allocations if this method is called in
@@ -164,7 +180,9 @@ public:
      * @param edges_out The handles of the edges around `handle` will be written
      *                 into this vector in clockwise order.
      */
-    void get_half_edges_of_vertex(vertex_handle handle, vector<half_edge_handle>& edges_out) const;
+    void get_half_edges_of_vertex(vertex_handle handle,
+                                  vector<half_edge_handle>& edges_out,
+                                  direction way = direction::ingoing) const;
 
     /**
      * @brief Get a list of edges around the given vertex.
@@ -174,21 +192,22 @@ public:
      * calling this method in a loop, you should probably call the more manual
      * method (with the out vector) to avoid useless heap allocations.
      *
-     * @return The edge-handles in counter-clockwise order.
+     * @return The edge-handles in clockwise order.
      */
     vector<edge_handle> get_edges_of_vertex(vertex_handle handle) const;
 
     /**
-     * @brief Get a list of ingoing half edges around the given vertex.
+     * @brief Get a list of half edges around the given vertex. If the edges are in
+     *        or outgoing is determined by the way parameter.
      *
      * This method is implemented using the method
-     * `get_half_edges_of_vertex(vertex_handle, vector<edge_handle>&)`. If you are
+     * `get_half_edges_of_vertex(vertex_handle, vector<edge_handle>&, direction)`. If you are
      * calling this method in a loop, you should probably call the more manual
      * method (with the out vector) to avoid useless heap allocations.
      *
-     * @return The edge-handles in counter-clockwise order.
+     * @return The edge-handles in clockwise order.
      */
-    vector<half_edge_handle> get_half_edges_of_vertex(vertex_handle handle) const;
+    vector<half_edge_handle> get_half_edges_of_vertex(vertex_handle handle, direction way = direction::ingoing) const;
 
     /**
      * @brief Get inner half edges of face in counter clockwise order
@@ -208,6 +227,12 @@ public:
     optional_half_edge_handle get_half_edge_between(vertex_handle ah, vertex_handle bh) const;
 
     /**
+     * @brief If the two given faces are neighbours, the half edge between them (connectd to ah)
+     *        is returned. None otherwise.
+     */
+    optional_half_edge_handle get_half_edge_between(face_handle ah, face_handle bh) const;
+
+    /**
      * @brief Get handle of the twin half edge of the given handle
      */
     half_edge_handle get_twin(half_edge_handle handle) const;
@@ -216,6 +241,11 @@ public:
      * @brief Get handle of the previous half edge of the given handle
      */
     half_edge_handle get_prev(half_edge_handle handle) const;
+
+    /**
+     * @brief Get handle of the next half edge of the given handle
+     */
+    half_edge_handle get_next(half_edge_handle handle) const;
 
     /**
      * @brief Check whether or not inserting a face between the given vertices
@@ -353,7 +383,8 @@ private:
 
     /**
      * @brief Circulates around the vertex `vh`, calling the `visitor` for each
-     *        ingoing edge of the vertex.
+     *        edge of the vertex. If the in or outgoing edges are visited is
+     *        determined by the way parameter.
      *
      * The edges are visited in clockwise order. The iteration stops if all
      * edges were visited once or if the visitor returns `false`. It has to
@@ -361,37 +392,41 @@ private:
      * this method does nothing.
      */
     template <typename visitor_t>
-    void circulate_around_vertex(vertex_handle vh, visitor_t visitor) const;
+    void circulate_around_vertex(vertex_handle vh, visitor_t visitor, direction way = direction::ingoing) const;
 
     /**
-     * @brief Circulates around the vertex `start_edge_h.target`, calling the
-     *        `visitor` for each ingoing edge of the vertex.
+     * @brief Circulates around the vertex, calling the
+     *        `visitor` for each edge of the vertex. If the in or outgoing edges are visited is
+     *        determined by the way parameter.
      *
-     * This works exactly as the other overload, but specifically starts at the
-     * edge `start_edge_h` instead of `vh.outgoing.twin`.
+     * IMPORTANT: The start_edge has to match the direction of the way parameter!
      */
     template <typename visitor_t>
-    void circulate_around_vertex(half_edge_handle start_edge_h, visitor_t visitor) const;
+    void circulate_around_vertex(half_edge_handle start_edge_h, visitor_t visitor, direction way = direction::ingoing) const;
 
     /**
-     * @brief Iterates over all ingoing edges of one vertex, returning the
-     *        first edge that satisfies the given predicate.
+     * @brief Iterates over all edges of one vertex, returning the
+     *        first edge that satisfies the given predicate. If the
+     *        in or outgoing edges are visited is determined by the way parameter.
      *
      * @return Returns None if `v` does not have an outgoing edge or if no
      *         edge in the circle satisfies the predicate.
      */
     template <typename pred_t>
-    optional_half_edge_handle find_edge_around_vertex(vertex_handle vh, pred_t pred) const;
+    optional_half_edge_handle
+    find_edge_around_vertex(vertex_handle vh, pred_t pred, direction way = direction::ingoing) const;
 
     /**
-     * @brief Iterates over all ingoing edges of the vertex `start_edge.target`,
-     *        starting at the edge `start_edge_h`, returning the first edge that
-     *        satisfies the given predicate.
+     * @brief Iterates over all edges of the vertex, returning the first edge that
+     *        satisfies the given predicate. If the in or outgoing edges are visited is
+     *        determined by the way parameter.
+     *
+     * IMPORTANT: The start_edge has to match the direction of the way parameter!
      *
      * @return Returns None if no edge in the circle satisfies the predicate.
      */
     template <typename pred_t>
-    optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred) const;
+    optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred, direction way = direction::ingoing) const;
 };
 
 class hem_face_iterator_proxy

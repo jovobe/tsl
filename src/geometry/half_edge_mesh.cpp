@@ -104,7 +104,7 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
                 auto e_end_h = find_edge_around_vertex(vh, [&, this](auto edge_h)
                 {
                     return !get_e(edge_h).face;
-                }).expect("a non-manifold part in the mesh has been found");
+                }, direction::ingoing).expect("a non-manifold part in the mesh has been found");
 
                 auto e_start_h = get_e(e_end_h).next;
                 auto& e_start = get_e(e_start_h);
@@ -178,7 +178,8 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
                     [&, this](auto edge_h)
                     {
                         return !get_e(edge_h).face;
-                    }
+                    },
+                    direction::ingoing
                 ).unwrap();
 
                 // We can finally set the next and prev pointer to skip the `e_in`
@@ -254,6 +255,16 @@ vec3& half_edge_mesh::get_vertex_position(vertex_handle handle)
     return get_v(handle).pos;
 }
 
+index half_edge_mesh::get_valence(vertex_handle handle) const
+{
+    index valence = 0;
+    circulate_around_vertex(handle, [&, this](auto ingoing_edge_h) {
+        valence += 1;
+        return true;
+    });
+    return valence;
+}
+
 vector<vertex_handle> half_edge_mesh::get_vertices_of_face(face_handle handle) const
 {
     vector<vertex_handle> vertices_out;
@@ -285,6 +296,11 @@ array<optional_face_handle, 2> half_edge_mesh::get_faces_of_edge(edge_handle edg
     return { one_edge.face, get_e(one_edge.twin).face };
 }
 
+optional_face_handle half_edge_mesh::get_face_of_half_edge(half_edge_handle edge_h) const {
+    auto edge = get_e(edge_h);
+    return edge.face;
+}
+
 void half_edge_mesh::get_edges_of_vertex(
     vertex_handle handle,
     vector<edge_handle>& edges_out
@@ -299,14 +315,15 @@ void half_edge_mesh::get_edges_of_vertex(
 
 void half_edge_mesh::get_half_edges_of_vertex(
     vertex_handle handle,
-    vector<half_edge_handle>& edges_out
+    vector<half_edge_handle>& edges_out,
+    direction way
 ) const
 {
     circulate_around_vertex(handle, [&edges_out, this](auto eh)
     {
         edges_out.push_back(eh);
         return true;
-    });
+    }, way);
 }
 
 vector<edge_handle> half_edge_mesh::get_edges_of_vertex(vertex_handle handle) const
@@ -316,10 +333,10 @@ vector<edge_handle> half_edge_mesh::get_edges_of_vertex(vertex_handle handle) co
     return out;
 }
 
-vector<half_edge_handle> half_edge_mesh::get_half_edges_of_vertex(vertex_handle handle) const
+vector<half_edge_handle> half_edge_mesh::get_half_edges_of_vertex(vertex_handle handle, direction way) const
 {
     vector<half_edge_handle> out;
-    get_half_edges_of_vertex(handle, out);
+    get_half_edges_of_vertex(handle, out, way);
     return out;
 }
 
@@ -338,7 +355,7 @@ optional_edge_handle half_edge_mesh::get_edge_between(vertex_handle ah, vertex_h
 {
     // Go through all edges of vertex `a` until we find an edge that is also
     // connected to vertex `b`.
-    for (auto eh: get_edges_of_vertex(ah))
+    for (auto&& eh: get_edges_of_vertex(ah))
     {
         auto endpoints = get_vertices_of_edge(eh);
         if (endpoints[0] == bh || endpoints[1] == bh)
@@ -353,7 +370,7 @@ optional_half_edge_handle half_edge_mesh::get_half_edge_between(vertex_handle ah
 {
     // Go through all edges of vertex `a` until we find an edge that is also
     // connected to vertex `b`.
-    for (auto eh: get_half_edges_of_vertex(ah))
+    for (auto&& eh: get_half_edges_of_vertex(ah))
     {
         auto edge = get_e(eh);
         if (get_e(edge.twin).target == bh)
@@ -364,12 +381,32 @@ optional_half_edge_handle half_edge_mesh::get_half_edge_between(vertex_handle ah
     return optional_half_edge_handle();
 }
 
+optional_half_edge_handle half_edge_mesh::get_half_edge_between(face_handle ah, face_handle bh) const
+{
+    optional_half_edge_handle out;
+    circulate_in_face(ah, [&, this](auto eh)
+    {
+        auto& twin = get_e(get_e(eh).twin);
+        if (twin.face && twin.face.unwrap() == bh) {
+            out = optional_half_edge_handle(eh);
+            return false;
+        }
+        return true;
+    });
+
+    return out;
+}
+
 half_edge_handle half_edge_mesh::get_twin(half_edge_handle handle) const {
     return get_e(handle).twin;
 }
 
 half_edge_handle half_edge_mesh::get_prev(half_edge_handle handle) const {
     return get_e(handle).prev;
+}
+
+half_edge_handle half_edge_mesh::get_next(half_edge_handle handle) const {
+    return get_e(handle).next;
 }
 
 // TODO: this does not detect non-manifold edges!
@@ -505,7 +542,7 @@ optional_half_edge_handle half_edge_mesh::edge_between(vertex_handle from_h, ver
     auto ingoing_edge = find_edge_around_vertex(from_h, [&, this](auto current_edge_h)
     {
         return get_e(get_e(current_edge_h).twin).target == to_h;
-    });
+    }, direction::ingoing);
     if (ingoing_edge)
     {
         return optional_half_edge_handle(get_e(ingoing_edge.unwrap()).twin);
