@@ -130,7 +130,7 @@ void application::run() {
         }
 
         // render all windows
-        for (auto& [k, w] : windows) {
+        for (auto&& [k, w] : windows) {
             if (w.should_close()) {
                 to_close.push_back(k);
             }
@@ -140,7 +140,7 @@ void application::run() {
 
         // close requested windows
         if (!to_close.empty()) {
-            for (auto& w: to_close) {
+            for (auto&& w: to_close) {
                 windows.erase(w);
             }
             to_close.clear();
