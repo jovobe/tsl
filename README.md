@@ -1,7 +1,15 @@
 # tsl
 
-## conan
+## build
+- `mkdir build && cd build`
+
+### deps (conan)
 - add remote: `conan remote add conan-bintray https://api.bintray.com/conan/bincrafters/public-conan`
+- build deps: `conan install .. --build`
+
+### tsl
+- `cmake .. -DCMAKE_BUILD_TYPE=Release`
+- `cmake --build .`
 
 ---
 
