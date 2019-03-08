@@ -12,6 +12,8 @@ add_executable(tsl_main
 
 add_library(tsl SHARED STATIC
     geometry/half_edge_mesh.cpp
+    geometry/line.cpp
+    geometry/rectangle.cpp
 )
 
 target_include_directories(tsl_main PRIVATE
