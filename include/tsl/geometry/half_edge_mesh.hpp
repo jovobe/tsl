@@ -4,6 +4,8 @@
 #include <vector>
 #include <array>
 #include <utility>
+#include <memory>
+#include <algorithm>
 
 #include <tsl/attrmaps/stable_vector.hpp>
 #include "half_edge.hpp"
@@ -13,6 +15,8 @@
 using std::vector;
 using std::array;
 using std::pair;
+using std::unique_ptr;
+using std::move;
 
 namespace tsl {
 
@@ -21,23 +25,39 @@ enum class direction {
     outgoing
 };
 
-template<typename handle_t, typename elem_t>
+template<typename handle_t>
 class hem_iterator
 {
+    static_assert(
+        std::is_base_of<base_handle<index>, handle_t>::value,
+        "handle_t must inherit from base_handle!"
+    );
 public:
-    explicit hem_iterator(stable_vector_iterator<handle_t, elem_t> iterator) : iterator(iterator) {};
-    hem_iterator& operator++();
-    bool operator==(const hem_iterator<handle_t, elem_t>& other) const;
-    bool operator!=(const hem_iterator<handle_t, elem_t>& other) const;
+    virtual hem_iterator& operator++() = 0;
+    virtual bool operator==(const hem_iterator& other) const = 0;
+    virtual bool operator!=(const hem_iterator& other) const = 0;
+    virtual handle_t operator*() const = 0;
+    virtual ~hem_iterator() = default;
+};
+
+template<typename handle_t>
+class hem_iterator_ptr
+{
+public:
+    explicit hem_iterator_ptr(unique_ptr<hem_iterator<handle_t>> iter) : iter(move(iter)) {};
+    hem_iterator_ptr& operator++();
+    bool operator==(const hem_iterator_ptr& other) const;
+    bool operator!=(const hem_iterator_ptr& other) const;
     handle_t operator*() const;
 
 private:
-    stable_vector_iterator<handle_t, elem_t> iterator;
+    unique_ptr<hem_iterator<handle_t>> iter;
 };
 
 // Forward declaration
 class hem_face_iterator_proxy;
 class hem_half_edge_iterator_proxy;
+class hem_edge_iterator_proxy;
 class hem_vertex_iterator_proxy;
 
 /**
@@ -279,12 +299,14 @@ public:
      */
     uint8_t num_adjacent_faces(edge_handle handle) const;
 
-    hem_iterator<vertex_handle, half_edge_vertex> vertices_begin() const;
-    hem_iterator<vertex_handle, half_edge_vertex> vertices_end() const;
-    hem_iterator<face_handle, half_edge_face> faces_begin() const;
-    hem_iterator<face_handle, half_edge_face> faces_end() const;
-    hem_iterator<half_edge_handle, half_edge> half_edges_begin() const;
-    hem_iterator<half_edge_handle, half_edge> half_edges_end() const;
+    hem_iterator_ptr<vertex_handle> vertices_begin() const;
+    hem_iterator_ptr<vertex_handle> vertices_end() const;
+    hem_iterator_ptr<face_handle> faces_begin() const;
+    hem_iterator_ptr<face_handle> faces_end() const;
+    hem_iterator_ptr<half_edge_handle> half_edges_begin() const;
+    hem_iterator_ptr<half_edge_handle> half_edges_end() const;
+    hem_iterator_ptr<edge_handle> edges_begin() const;
+    hem_iterator_ptr<edge_handle> edges_end() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
@@ -299,6 +321,13 @@ public:
      * Returns a simple proxy object that uses `half_edges_begin()` and `half_edges_end()`.
      */
     virtual hem_half_edge_iterator_proxy get_half_edges() const;
+
+    /**
+     * @brief Method for usage in range-based for-loops.
+     *
+     * Returns a simple proxy object that uses `edges_begin()` and `edges_end()`.
+     */
+    virtual hem_edge_iterator_proxy get_edges() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
@@ -427,13 +456,18 @@ private:
      */
     template <typename pred_t>
     optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred, direction way = direction::ingoing) const;
+
+    // ========================================================================
+    // = Friends
+    // ========================================================================
+    friend class hem_edge_iterator;
 };
 
 class hem_face_iterator_proxy
 {
 public:
-    hem_iterator<face_handle, half_edge_face> begin() const;
-    hem_iterator<face_handle, half_edge_face> end() const;
+    hem_iterator_ptr<face_handle> begin() const;
+    hem_iterator_ptr<face_handle> end() const;
 
 private:
     explicit hem_face_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
@@ -444,8 +478,8 @@ private:
 class hem_half_edge_iterator_proxy
 {
 public:
-    hem_iterator<half_edge_handle, half_edge> begin() const;
-    hem_iterator<half_edge_handle, half_edge> end() const;
+    hem_iterator_ptr<half_edge_handle> begin() const;
+    hem_iterator_ptr<half_edge_handle> end() const;
 
 private:
     explicit hem_half_edge_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
@@ -453,16 +487,59 @@ private:
     friend half_edge_mesh;
 };
 
+class hem_edge_iterator_proxy
+{
+public:
+    hem_iterator_ptr<edge_handle> begin() const;
+    hem_iterator_ptr<edge_handle> end() const;
+
+private:
+    explicit hem_edge_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
+    const half_edge_mesh& mesh;
+    friend half_edge_mesh;
+};
+
 class hem_vertex_iterator_proxy
 {
 public:
-    hem_iterator<vertex_handle, half_edge_vertex> begin() const;
-    hem_iterator<vertex_handle, half_edge_vertex> end() const;
+    hem_iterator_ptr<vertex_handle> begin() const;
+    hem_iterator_ptr<vertex_handle> end() const;
 
 private:
     explicit hem_vertex_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
     const half_edge_mesh& mesh;
     friend half_edge_mesh;
+};
+
+template<typename handle_t, typename elem_t>
+class hem_fev_iterator : public hem_iterator<handle_t>
+{
+public:
+    explicit hem_fev_iterator(stable_vector_iterator<handle_t, elem_t> iterator) : iterator(iterator) {};
+    hem_fev_iterator& operator++();
+    bool operator==(const hem_iterator<handle_t>& other) const;
+    bool operator!=(const hem_iterator<handle_t>& other) const;
+    handle_t operator*() const;
+
+private:
+    stable_vector_iterator<handle_t, elem_t> iterator;
+};
+
+class hem_edge_iterator : public hem_iterator<edge_handle>
+{
+public:
+    explicit hem_edge_iterator(
+        stable_vector_iterator<half_edge_handle, half_edge> iterator,
+        const half_edge_mesh& mesh
+    ) : iterator(iterator), mesh(mesh) {};
+    hem_edge_iterator& operator++();
+    bool operator==(const hem_iterator<edge_handle>& other) const;
+    bool operator!=(const hem_iterator<edge_handle>& other) const;
+    edge_handle operator*() const;
+
+private:
+    stable_vector_iterator<half_edge_handle, half_edge> iterator;
+    const half_edge_mesh& mesh;
 };
 
 }

@@ -100,24 +100,51 @@ optional_half_edge_handle half_edge_mesh::find_edge_around_vertex(half_edge_hand
 }
 
 template<typename handle_t, typename elem_t>
-hem_iterator <handle_t, elem_t>& hem_iterator<handle_t, elem_t>::operator++() {
+hem_fev_iterator <handle_t, elem_t>& hem_fev_iterator<handle_t, elem_t>::operator++() {
     ++iterator;
     return *this;
 }
 
 template<typename handle_t, typename elem_t>
-bool hem_iterator<handle_t, elem_t>::operator==(const hem_iterator <handle_t, elem_t>& other) const {
-    return iterator == other.iterator;
+bool hem_fev_iterator<handle_t, elem_t>::operator==(const hem_iterator<handle_t>& other) const {
+    auto cast = dynamic_cast<const hem_fev_iterator<handle_t, elem_t>*>(&other);
+    return cast && iterator == cast->iterator;
 }
 
 template<typename handle_t, typename elem_t>
-bool hem_iterator<handle_t, elem_t>::operator!=(const hem_iterator <handle_t, elem_t>& other) const {
-    return iterator != other.iterator;
+bool hem_fev_iterator<handle_t, elem_t>::operator!=(const hem_iterator<handle_t>& other) const {
+    auto cast = dynamic_cast<const hem_fev_iterator<handle_t, elem_t>*>(&other);
+    return cast && iterator != cast->iterator;
 }
 
 template<typename handle_t, typename elem_t>
-handle_t hem_iterator<handle_t, elem_t>::operator*() const {
+handle_t hem_fev_iterator<handle_t, elem_t>::operator*() const {
     return *iterator;
+}
+
+template<typename handle_t>
+hem_iterator_ptr<handle_t>& hem_iterator_ptr<handle_t>::operator++()
+{
+    ++(*iter);
+    return *this;
+}
+
+template<typename handle_t>
+bool hem_iterator_ptr<handle_t>::operator==(const hem_iterator_ptr<handle_t>& other) const
+{
+    return *iter == *other.iter;
+}
+
+template<typename handle_t>
+bool hem_iterator_ptr<handle_t>::operator!=(const hem_iterator_ptr<handle_t>& other) const
+{
+    return *iter != *other.iter;
+}
+
+template<typename handle_t>
+handle_t hem_iterator_ptr<handle_t>::operator*() const
+{
+    return **iter;
 }
 
 }

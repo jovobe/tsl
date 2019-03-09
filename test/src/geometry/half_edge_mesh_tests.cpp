@@ -295,22 +295,6 @@ TEST_F(HalfEdgeMeshTest, GetVertexPosition) {
     EXPECT_EQ(vec3(42.0f, 2.0f, 3.0f), v2_pos);
 }
 
-TEST_F(HalfEdgeMeshTest, VertexIterator) {
-    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-
-    vector<vertex_handle> expected_handles;
-    expected_handles.insert(expected_handles.begin(), {v0, v1, v2, v3});
-    vector<vertex_handle> vertex_handles;
-    for (auto&& vh: mesh.get_vertices()) {
-        vertex_handles.push_back(vh);
-    }
-
-    ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
-}
-
 TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
     auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
     auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
@@ -364,6 +348,22 @@ TEST_F(HalfEdgeMeshTest, Orientability) {
 //    ASSERT_THROW(mesh.add_face({v1, v2, v4, v5}), panic_exception);
 }
 
+TEST_F(HalfEdgeMeshTest, VertexIterator) {
+    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    vector<vertex_handle> expected_handles;
+    expected_handles.insert(expected_handles.begin(), {v0, v1, v2, v3});
+    vector<vertex_handle> vertex_handles;
+    for (auto&& vh: mesh.get_vertices()) {
+        vertex_handles.push_back(vh);
+    }
+
+    ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
+}
+
 TEST_F(HalfEdgeMeshTest, FaceIterator) {
     auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
     auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
@@ -403,7 +403,7 @@ TEST_F(HalfEdgeMeshTest, FaceIterator) {
     ASSERT_THAT(face_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
-TEST_F(HalfEdgeMeshTest, EdgeIterator) {
+TEST_F(HalfEdgeMeshTest, HalfEdgeIterator) {
     auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
     auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
     auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
@@ -424,6 +424,32 @@ TEST_F(HalfEdgeMeshTest, EdgeIterator) {
     vector<vertex_handle> vertex_handles;
     for (auto&& eh: mesh.get_half_edges()) {
         vertex_handles.push_back(mesh.get_vertices_of_half_edge(eh)[0]);
+    }
+
+    ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
+}
+
+TEST_F(HalfEdgeMeshTest, EdgeIterator) {
+    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+
+    // Add the following face (f0):
+    //
+    //       (v1) ====== (v0)
+    //        ||          ||
+    //        ||          ||
+    //        ||    f0    ||
+    //        ||          ||
+    //       (v2) ====== (v3)
+    mesh.add_face({v0, v1, v2, v3});
+    vector<vertex_handle> expected_handles;
+    expected_handles.insert(expected_handles.begin(), {v0, v1, v2, v3});
+
+    vector<vertex_handle> vertex_handles;
+    for (auto&& eh: mesh.get_edges()) {
+        vertex_handles.push_back(mesh.get_vertices_of_edge(eh)[0]);
     }
 
     ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
