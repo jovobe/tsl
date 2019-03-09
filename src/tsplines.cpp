@@ -564,23 +564,56 @@ vec3 tmesh::get_surface_point_of_face(float u, float v, face_handle f) const {
 }
 
 float tmesh::get_basis_fun(float u, const array<float, 5>& knot_vector) const {
-    // Degree of curve
-    uint8_t p = 3;
+    // TODO: We assume i = 0 this is possibly not correct and we need to search i instead of assuming 0...
 
-    // TODO: Check this! It is most likely wrong...
+    // We use the recurrence formula for b-splines and assume a fixed degree of 3. The calculation triangle for
+    // the basis functions looks like this, if we want to find N_0,3:
+    //
+    //                   N_0,3
+    //                  /     \
+    //                 /       \
+    //               N_0,2     N_1,2
+    //               / \       /  \
+    //              /   \     /    \
+    //             0     N_1,1     N_2,1
+    //            / \    / \       /  \
+    //           /   \  /   \     /    \
+    //          0      0     N_2,0      0
+    //
+
+    float n20 = 1.0f;
+
+    // right part needed
+    float n11 = ((knot_vector[1+1+1] - u) / (knot_vector[1+1+1] - knot_vector[1+1])) * n20;
+    float n02 = ((knot_vector[0+2+1] - u) / (knot_vector[0+2+1] - knot_vector[0+1])) * n11;
+
+    // left part needed
+    float n21 = ((u - knot_vector[2]) / (knot_vector[2+1] - knot_vector[2])) * n20;
+
+    // both parts needed
+    float n12_left = ((u - knot_vector[1]) / (knot_vector[1+2] - knot_vector[1]));
+    float n12_right = ((knot_vector[1+2+1] - u) / (knot_vector[1+2+1] - knot_vector[1+1]));
+    float n12 = n12_left * n11 + n12_right * n21;
+
+    float n03_left = ((u - knot_vector[0]) / (knot_vector[0+3] - knot_vector[0]));
+    float n03_right = ((knot_vector[0+3+1] - u) / (knot_vector[0+3+1] - knot_vector[0+1]));
+    float n03 = n03_left * n02 + n03_right * n12;
+
+    return n03;
+
+    /*
     float out = 1.0f;
     for (uint8_t i = 1; i <= p; ++i) {
         out = ((u - knot_vector[0]) / (knot_vector[i] - knot_vector[0])) * out;
     }
 
-    /*
     float n80 = 1;
     float n81 = ((u - knot_vector[0]) / (knot_vector[1] - knot_vector[0])) * n80;
     float n82 = ((u - knot_vector[0]) / (knot_vector[2] - knot_vector[0])) * n81;
     float n83 = ((u - knot_vector[0]) / (knot_vector[3] - knot_vector[0])) * n82;
-     */
 
     return out;
+     */
 }
 
 pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_vertex_handle& handle) const {
