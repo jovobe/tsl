@@ -4,12 +4,16 @@
 #include <GLFW/glfw3.h>
 
 #include <string>
+#include <vector>
 
 using std::string;
+using std::vector;
 
 namespace tsl {
 
-GLuint create_program(const string& vertex_shader_path, const string& fragment_shader_path);
+GLuint create_program(vector<GLuint> shaders);
+
+GLuint create_shader(const string& shader_path, GLenum shader_type);
 
 }
 

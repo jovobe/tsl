@@ -23,3 +23,9 @@ add_subdirectory(test)
 
 configure_file(shader/vertex.glsl shader/vertex.glsl COPYONLY)
 configure_file(shader/fragment.glsl shader/fragment.glsl COPYONLY)
+
+configure_file(shader/phong/vertex.glsl shader/phong/vertex.glsl COPYONLY)
+configure_file(shader/phong/fragment.glsl shader/phong/fragment.glsl COPYONLY)
+
+configure_file(shader/polygon/geometry.glsl shader/polygon/geometry.glsl COPYONLY)
+configure_file(shader/vertex/geometry.glsl shader/vertex/geometry.glsl COPYONLY)

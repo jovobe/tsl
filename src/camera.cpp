@@ -110,4 +110,8 @@ vec3 camera::get_pos() const {
     return pos;
 }
 
+vec3 camera::get_up() const {
+    return up;
+}
+
 }

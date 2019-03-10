@@ -8,6 +8,7 @@ add_executable(tsl_main
     grid.cpp
     gl_buffer.cpp
     opengl.cpp
+    rendering/half_edge_mesh.cpp
 )
 
 add_library(tsl SHARED STATIC

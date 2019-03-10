@@ -9,8 +9,8 @@
 #include <tsl/application.hpp>
 #include <tsl/camera.hpp>
 #include <tsl/gl_buffer.hpp>
-#include <tsl/nubs.hpp>
 #include <tsl/resolution.hpp>
+#include <tsl/tsplines.hpp>
 
 using std::string;
 
@@ -56,7 +56,8 @@ private:
 
     int slider_resolution;
 
-    GLuint program;
+    GLuint vertex_program;
+    GLuint polygon_program;
     GLuint phong_program;
     GLuint surface_vertex_array;
     GLuint surface_vertex_buffer;
@@ -66,8 +67,8 @@ private:
     GLuint control_vertex_buffer;
     GLuint control_index_buffer;
 
-    resolution<uint32_t> nubs_resolution;
-    struct nubs nubs;
+    resolution<uint32_t> surface_resolution;
+    struct tmesh tmesh;
 
     class camera camera;
 
@@ -75,8 +76,8 @@ private:
 //    friend void application::create_window(string title, uint32_t width, uint32_t height);
     friend class application;
 
-    void load_nubs_data_to_gpu() const;
-    void update_nubs_buffer();
+    void load_surface_data_to_gpu() const;
+    void update_surface_buffer();
 };
 
 }

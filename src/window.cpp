@@ -13,7 +13,8 @@
 #include <tsl/window.hpp>
 #include <tsl/application.hpp>
 #include <tsl/opengl.hpp>
-#include <tsl/nubs.hpp>
+#include <tsl/tsplines.hpp>
+#include <tsl/rendering/half_edge_mesh.hpp>
 
 #include <string>
 #include <iostream>
@@ -45,7 +46,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     wireframe_mode(false),
     control_mode(true),
     surface_mode(true),
-    nubs_resolution(1),
+    surface_resolution(1),
     slider_resolution(1)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -94,20 +95,33 @@ window::window(string title, uint32_t width, uint32_t height) :
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
 
-    program = create_program("shader/vertex.glsl", "shader/fragment.glsl");
-    phong_program = create_program("shader/phong/vertex.glsl", "shader/phong/fragment.glsl");
+    auto vertex_shader = create_shader("shader/vertex.glsl", GL_VERTEX_SHADER);
+    auto fragment_shader = create_shader("shader/fragment.glsl", GL_FRAGMENT_SHADER);
+    auto polygon_geometry_shader = create_shader("shader/polygon/geometry.glsl", GL_GEOMETRY_SHADER);
+    auto vertex_geometry_shader = create_shader("shader/vertex/geometry.glsl", GL_GEOMETRY_SHADER);
 
-    nubs = nubs::get_example_data_1();
-//    auto data = nubs::get_example_data_2();
-//    auto data = nubs::get_example_data_3();
-//    auto data = nubs::get_example_data_4();
+    auto phong_vertex_shader = create_shader("shader/phong/vertex.glsl", GL_VERTEX_SHADER);
+    auto phong_fragment_shader = create_shader("shader/phong/fragment.glsl", GL_FRAGMENT_SHADER);
+
+    polygon_program = create_program({vertex_shader, fragment_shader, polygon_geometry_shader});
+    vertex_program = create_program({vertex_shader, fragment_shader, vertex_geometry_shader});
+    phong_program = create_program({phong_vertex_shader, phong_fragment_shader});
+
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+    glDeleteShader(polygon_geometry_shader);
+    glDeleteShader(vertex_geometry_shader);
+    glDeleteShader(phong_vertex_shader);
+    glDeleteShader(phong_fragment_shader);
+
+    tmesh = tsplines::get_example_data_1();
 
     // surface
     glGenVertexArrays(1, &surface_vertex_array);
     glGenBuffers(1, &surface_vertex_buffer);
     glGenBuffers(1, &surface_index_buffer);
 
-    update_nubs_buffer();
+    update_surface_buffer();
 
     // control polygon
     glGenVertexArrays(1, &control_vertex_array);
@@ -122,11 +136,15 @@ window::window(string title, uint32_t width, uint32_t height) :
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_buffer.index_buffer.size() * sizeof(uint32_t), control_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // pointer binding
-    auto control_vpos_location = glGetAttribLocation(program, "pos");
+    auto control_vpos_location = glGetAttribLocation(polygon_program, "pos");
     glVertexAttribPointer(static_cast<GLuint>(control_vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     glEnableVertexAttribArray(static_cast<GLuint>(control_vpos_location));
 
-//    auto vcolor_location = glGetAttribLocation(program, "color_in");
+    auto control_vertrex_vpos_location = glGetAttribLocation(vertex_program, "pos");
+    glVertexAttribPointer(static_cast<GLuint>(control_vertrex_vpos_location), 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    glEnableVertexAttribArray(static_cast<GLuint>(control_vertrex_vpos_location));
+
+//    auto vcolor_location = glGetAttribLocation(polygon_program, "color_in");
 //    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
 //    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
 
@@ -178,16 +196,16 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     break;
                 // TODO: switch to keyboard layout independent version! (use `glfwSetCharCallback`)
                 case GLFW_KEY_RIGHT_BRACKET:
-                    nubs_resolution.increment();
+                    surface_resolution.increment();
                     slider_resolution += 1;
-                    update_nubs_buffer();
+                    update_surface_buffer();
                     break;
                 case GLFW_KEY_SLASH:
-                    nubs_resolution.decrement();
+                    surface_resolution.decrement();
                     if (slider_resolution > 1) {
                         slider_resolution -= 1;
                     }
-                    update_nubs_buffer();
+                    update_surface_buffer();
                     break;
                 default:
                     break;
@@ -281,8 +299,8 @@ void window::render() {
         ImGui::Checkbox("Show surface", &surface_mode);
 
         if (ImGui::SliderInt("Resolution", &slider_resolution, 1, 40)) {
-            nubs_resolution.set(static_cast<uint32_t>(slider_resolution));
-            update_nubs_buffer();
+            surface_resolution.set(static_cast<uint32_t>(slider_resolution));
+            update_surface_buffer();
         }
 
         auto& app = application::get_instance();
@@ -334,19 +352,43 @@ void window::render() {
     }
 
     if (control_mode) {
-        glUseProgram(program);
+        // Render control polygon
+        glDepthMask(GL_FALSE);
+        glUseProgram(polygon_program);
 
-        auto vp_location = glGetUniformLocation(program, "VP");
-        auto m_location = glGetUniformLocation(program, "M");
-        auto color_location = glGetUniformLocation(program, "color_in");
+        auto vp_location = glGetUniformLocation(polygon_program, "VP");
+        auto m_location = glGetUniformLocation(polygon_program, "M");
+        auto color_location = glGetUniformLocation(polygon_program, "color_in");
+        auto camera_location = glGetUniformLocation(polygon_program, "camera_pos");
 
         glUniformMatrix4fv(vp_location, 1, GL_FALSE, value_ptr(vp));
         glUniformMatrix4fv(m_location, 1, GL_FALSE, value_ptr(model));
         glUniform3fv(color_location, 1, value_ptr(vec3(1, 0, 0)));
+        glUniform3fv(camera_location, 1, value_ptr(camera.get_pos()));
 
         glBindVertexArray(control_vertex_array);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(control_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawElements(GL_LINES, static_cast<GLsizei>(control_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+        glDepthMask(GL_TRUE);
+
+        // Render vertices
+        glUseProgram(vertex_program);
+
+        auto vertex_vp_location = glGetUniformLocation(vertex_program, "VP");
+        auto vertex_m_location = glGetUniformLocation(vertex_program, "M");
+        auto vertex_color_location = glGetUniformLocation(vertex_program, "color_in");
+        auto vertex_camera_location = glGetUniformLocation(vertex_program, "camera_pos");
+        auto vertex_camera_up_location = glGetUniformLocation(vertex_program, "camera_up");
+
+        glUniformMatrix4fv(vertex_vp_location, 1, GL_FALSE, value_ptr(vp));
+        glUniformMatrix4fv(vertex_m_location, 1, GL_FALSE, value_ptr(model));
+        glUniform3fv(vertex_color_location, 1, value_ptr(vec3(0, 0, 1)));
+        glUniform3fv(vertex_camera_location, 1, value_ptr(camera.get_pos()));
+        glUniform3fv(vertex_camera_up_location, 1, value_ptr(camera.get_up()));
+
+        glBindVertexArray(control_vertex_array);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(control_buffer.vertex_buffer.size()));
     }
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -380,7 +422,7 @@ bool window::should_close() const {
     return (glfwWindowShouldClose(glfw_window) != 0);
 }
 
-window::window(window&& window) noexcept : nubs_resolution(1) {
+window::window(window&& window) noexcept : surface_resolution(1) {
     *this = move(window);
 }
 
@@ -389,7 +431,8 @@ window& window::operator=(window&& window) noexcept {
     title = move(window.title);
     width = exchange(window.width, 0);
     height = exchange(window.height, 0);
-    program = exchange(window.program, 0);
+    polygon_program = exchange(window.polygon_program, 0);
+    vertex_program = exchange(window.vertex_program, 0);
     phong_program = exchange(window.phong_program, 0);
     surface_vertex_array = exchange(window.surface_vertex_array, 0);
     surface_vertex_buffer = exchange(window.surface_vertex_buffer, 0);
@@ -402,8 +445,7 @@ window& window::operator=(window&& window) noexcept {
     surface_mode = exchange(window.surface_mode, false);
     surface_buffer = move(window.surface_buffer);
     control_buffer = move(window.control_buffer);
-    nubs = move(window.nubs);
-    nubs_resolution = move(window.nubs_resolution);
+    surface_resolution = move(window.surface_resolution);
     slider_resolution = exchange(window.slider_resolution, 0);
 
     return *this;
@@ -416,7 +458,7 @@ mouse_pos window::get_mouse_pos() const {
     return mouse_pos(x_pos, y_pos);
 }
 
-void window::load_nubs_data_to_gpu() const {
+void window::load_surface_data_to_gpu() const {
     auto vec_data = surface_buffer.get_combined_vec_data();
 
     glBindVertexArray(surface_vertex_array);
@@ -437,17 +479,18 @@ void window::load_nubs_data_to_gpu() const {
     glVertexAttribPointer(static_cast<GLuint>(vnormal_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) (sizeof(vec3)));
     glEnableVertexAttribArray(static_cast<GLuint>(vnormal_location));
 
-//    auto vcolor_location = glGetAttribLocation(program, "color_in");
+//    auto vcolor_location = glGetAttribLocation(polygon_program, "color_in");
 //    glVertexAttribPointer(static_cast<GLuint>(vcolor_location), 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (sizeof(float) * 3));
 //    glEnableVertexAttribArray(static_cast<GLuint>(vcolor_location));
 }
 
-void window::update_nubs_buffer() {
-    auto grid = nubs.get_grid(nubs_resolution.get());
+void window::update_surface_buffer() {
+    // TODO: Get real resolution
+    auto grid = tmesh.get_grid(20);
     surface_buffer = grid.get_render_buffer();
-    control_buffer = nubs.P.get_render_buffer();
+    control_buffer = get_buffer(tmesh.mesh);
 
-    load_nubs_data_to_gpu();
+    load_surface_data_to_gpu();
 }
 
 }

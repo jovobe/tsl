@@ -53,6 +53,7 @@ public:
     void reset_last_move_time();
     void reset_position();
     vec3 get_pos() const;
+    vec3 get_up() const;
 
 private:
     vec3 pos;
