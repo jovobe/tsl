@@ -1,4 +1,7 @@
 # tsl
+Library for representation and manipulation of generalised T-Spline surfaces written in C++.
+
+[![CircleCI](https://circleci.com/gh/jovobe/tsl.svg?style=svg)](https://circleci.com/gh/jovobe/tsl)
 
 ## build
 - `mkdir build && cd build`

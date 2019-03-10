@@ -1,0 +1,36 @@
+version: 2.1
+
+executors:
+  ubuntu-build:
+    description: "A regular build executor based on ubuntu image"
+    docker:
+      - image: jovobe/tsl-build-docker-test:latest
+    working_directory: /source
+
+jobs:
+  build:
+    executor: ubuntu-build
+    steps:
+      - checkout
+      - run: cd /build && cmake /source -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build /build
+      - persist_to_workspace:
+          root: /build
+          paths:
+            - test/bin/tsl_tests
+
+  test:
+    executor: ubuntu-build
+    steps:
+      - attach_workspace:
+          at: /build
+      - run: /build/test/bin/tsl_tests
+
+workflows:
+  version: 2.1
+  build_and_test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
