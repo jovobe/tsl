@@ -611,8 +611,10 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetFaceBetween) {
     EXPECT_EQ(f1, mesh.get_face_between({v2, v5, v4, v1}).unwrap());
     EXPECT_EQ(f1, mesh.get_face_between({v2, v1, v4, v5}).unwrap());
 
+#ifndef NDEBUG
     // This should throw an exception, because the order of the vertices is messed up
     ASSERT_THROW(mesh.get_face_between({v1, v5, v4, v2}).unwrap(), panic_exception);
+#endif
 }
 
 TEST_F(HalfEdgeMeshTestWithCubeData, NumAdjacentFaces) {
