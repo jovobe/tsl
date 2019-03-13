@@ -725,15 +725,13 @@ bool double_indexed_vertex_handle::operator!=(const double_indexed_vertex_handle
 }
 
 vec2 transform::apply(const vec2& vec) const {
-    // TODO: validate implementation
     return f * rotate(r, vec) + t;
 }
 
 transform transform::apply(const transform& trans) const {
-    // TODO: validate implementation
     auto scale = f * trans.f;
     auto rotate = static_cast<uint8_t>((r + trans.r) % 4);
-    auto translate = t + trans.t;
+    auto translate = apply(trans.t);
     return transform(scale, rotate, translate);
 }
 
