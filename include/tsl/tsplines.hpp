@@ -87,6 +87,8 @@ enum class tag {
 struct tmesh {
 
     inline static const string EXPECT_NO_BORDER = "tried to determine support of basis functions for border face - this is not implemented!";
+    // TODO: Make degree dynamic
+    inline static const uint8_t DEGREE = 3;
 
     half_edge_mesh mesh;
     dense_half_edge_map<float> knots;

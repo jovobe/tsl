@@ -419,11 +419,14 @@ tmesh::determine_support_of_basis_functions(
     const unordered_map<double_indexed_vertex_handle, float>& knot_vectors
 ) const {
     dense_face_map<vector<tuple<indexed_vertex_handle, transform>>> out;
-    dense_face_map<bool> tagged(false);
     out.reserve(mesh.num_faces());
-    tagged.reserve(mesh.num_faces());
 
     for (auto&& [k, v] : handles) {
+        // TODO: Reset tagged map instead of recreating it every handle
+        sparse_face_map<bool> tagged(false);
+        // Reserve space for (in case of degree = 3 at least 8) faces
+        tagged.reserve(DEGREE * DEGREE);
+
         auto [h, q] = v;
         queue<tuple<half_edge_handle, transform>> bfs_queue;
 
