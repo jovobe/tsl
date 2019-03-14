@@ -138,6 +138,8 @@ struct tmesh {
      * The returned index is wrapped by the valence of the vertex belonging to the given handle.
      */
     uint32_t get_wrapped_offset_index(const indexed_vertex_handle& handle, int32_t offset) const;
+    uint32_t get_extended_valence(const vertex_handle handle) const;
+    bool is_extraordinary(const vertex_handle handle) const;
 
     regular_grid get_grid(uint32_t resolution) const;
     vec3 get_surface_point_of_face(float u, float v, face_handle f) const;
@@ -152,6 +154,7 @@ vec2 rotate(uint8_t times, const vec2& vec);
 
 struct tsplines {
     static tmesh get_example_data_1();
+    static tmesh get_example_data_2(uint32_t size);
 };
 
 }

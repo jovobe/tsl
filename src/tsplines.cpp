@@ -251,6 +251,29 @@ tmesh tsplines::get_example_data_1() {
     return out;
 }
 
+tmesh tsplines::get_example_data_2(uint32_t size) {
+    const double EDGE_LENGTH = 1.0;
+
+    tmesh out;
+    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size);
+
+    // Set corners and knots
+    out.knots = dense_half_edge_map<float>(1.0f);
+    out.corners = dense_half_edge_map<bool>(true);
+
+    // Calc basis funs
+    auto [uv, dir] = out.determine_local_coordinate_systems();
+    auto transitions = out.determine_edge_transitions(uv, dir);
+    auto [handles, transforms] = out.setup_basis_function_handles_and_transitions(uv, dir);
+    auto knot_vectors = out.determine_knot_vectors(handles);
+
+    out.handles = handles;
+    out.knot_vectors = knot_vectors;
+    out.support_map = out.determine_support_of_basis_functions(handles, transforms, transitions, uv, knot_vectors);
+
+    return out;
+}
+
 tuple<dense_half_edge_map<vec2>, dense_half_edge_map<uint8_t>>
 tmesh::determine_local_coordinate_systems() const {
     dense_half_edge_map<vec2> uv;
@@ -682,8 +705,24 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
 }
 
 uint32_t tmesh::get_wrapped_offset_index(const indexed_vertex_handle& handle, int32_t offset) const {
-    auto valence = mesh.get_valence(handle.vertex);
+    auto valence = get_extended_valence(handle.vertex);
     return ((valence + handle.index) + offset) % valence;
+}
+
+uint32_t tmesh::get_extended_valence(const vertex_handle handle) const {
+    auto edges = mesh.get_half_edges_of_vertex(handle, direction::ingoing);
+    uint32_t valence = 0;
+    for (auto&& e: edges) {
+        valence += 1;
+        if (!corners[e]) {
+            valence += 1;
+        }
+    }
+    return valence;
+}
+
+bool tmesh::is_extraordinary(const vertex_handle handle) const {
+    return get_extended_valence(handle) != 4;
 }
 
 vec2 rotate(uint8_t times, const vec2& vec) {

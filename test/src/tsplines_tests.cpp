@@ -131,8 +131,53 @@ protected:
 };
 
 TEST_F(TmeshTest, DetermineLocalCoordinateSystems) {
+    // TODO: Do real testing here!
     auto data = tsplines::get_example_data_1();
     auto grid = data.get_grid(10);
+}
+
+class TmeshWithTfaceTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // Create half edge mesh with t face:
+        //         v0 ==== v1 ==== v2
+        //         ||      ||      ||
+        //         ||  f0  ||  f1  ||
+        //         ||      ||      ||
+        //         v3 ==== v4 ==== v5
+        //         ||              ||
+        //         ||      f2      ||
+        //         ||              ||
+        //         v6 ============ v7
+
+        auto& hem = mesh.mesh;
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+        vertex_handles.push_back(hem.add_vertex(vec3(0.0f, 0.0f, 0.0f)));
+
+        face_handles.push_back(hem.add_face({vertex_handles[1], vertex_handles[0], vertex_handles[3], vertex_handles[4]}));
+        face_handles.push_back(hem.add_face({vertex_handles[2], vertex_handles[1], vertex_handles[4], vertex_handles[5]}));
+        face_handles.push_back(hem.add_face({vertex_handles[5], vertex_handles[4], vertex_handles[3], vertex_handles[6], vertex_handles[7]}));
+
+        mesh.corners = dense_half_edge_map<bool>(true);
+
+        // Get half edge between v5 and v4 which is connected to f2
+        auto he = hem.get_half_edge_between(vertex_handles[5], vertex_handles[4]).unwrap();
+        mesh.corners[he] = false;
+    }
+
+    tmesh mesh;
+    vector<vertex_handle> vertex_handles;
+    vector<face_handle> face_handles;
+};
+
+TEST_F(TmeshWithTfaceTest, GetExtendedValence) {
+    EXPECT_EQ(4, mesh.get_extended_valence(vertex_handles[4]));
 }
 
 }
