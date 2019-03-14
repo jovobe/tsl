@@ -649,6 +649,36 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgeBetweenFaces) {
     EXPECT_EQ(eeh, eh);
 }
 
+TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfFace) {
+    auto f0 = face_handles[0];
+    auto half_edges = mesh.get_half_edges_of_face(f0);
+    EXPECT_EQ(4, half_edges.size());
+
+    auto v0 = vertex_handles[0];
+    auto v1 = vertex_handles[1];
+    auto v2 = vertex_handles[2];
+    auto v3 = vertex_handles[3];
+
+    auto edge_01 = mesh.get_half_edge_between(v0, v1).unwrap();
+    auto edge_12 = mesh.get_half_edge_between(v1, v2).unwrap();
+    auto edge_23 = mesh.get_half_edge_between(v2, v3).unwrap();
+    auto edge_30 = mesh.get_half_edge_between(v3, v0).unwrap();
+
+    ASSERT_THAT(half_edges, ::testing::UnorderedElementsAre(edge_01, edge_12, edge_23, edge_30));
+}
+
+TEST_F(HalfEdgeMeshTestWithCubeData, GetNeighboursOfFace) {
+    auto f0 = face_handles[0];
+    auto neighbours = mesh.get_neighbours_of_face(f0);
+    EXPECT_EQ(4, neighbours.size());
+
+    auto f1 = face_handles[1];
+    auto f2 = face_handles[2];
+    auto f13 = face_handles[13];
+    auto f18 = face_handles[18];
+    ASSERT_THAT(neighbours, ::testing::UnorderedElementsAre(f1, f2, f13, f18));
+}
+
 }
 
 #pragma clang diagnostic pop

@@ -253,6 +253,37 @@ public:
     optional_half_edge_handle get_half_edge_between(face_handle ah, face_handle bh) const;
 
     /**
+     * @brief Get face handles of the neighbours of the requested face.
+     *
+     * The face handles are written into the `faces_out` vector. This is done
+     * to reduce the number of heap allocations if this method is called in
+     * a loop. If you are not calling it in a loop or can't, for some reason,
+     * take advantages of this method's signature, you can call the other
+     * overload of this method which just returns the vector. Such convinient.
+     *
+     * Note: you probably should remember to `clear()` the vector before
+     * passing it into this method.
+     *
+     * @param faces_out The face-handles of the neighbours of `handle` will be
+     *                 written into this vector in counter-clockwise order.
+     *                 There are at most four neighbours of a face, so this
+     *                 method will push 0, 1, 2 or 3 handles to `faces_out`.
+     */
+    void get_neighbours_of_face(face_handle handle, vector<face_handle>& faces_out) const;
+
+    /**
+     * @brief Get face handles of the neighbours of the requested face.
+     *
+     * This method is implemented using the method
+     * `get_neighbours_of_face(face_handle, vector<face_handle>&)`. If you are
+     * calling this method in a loop, you should probably call the more manual
+     * method (with the out vector) to avoid useless heap allocations.
+     *
+     * @return The face-handles of the neighbours in counter-clockwise order.
+     */
+    virtual vector<face_handle> get_neighbours_of_face(face_handle handle) const;
+
+    /**
      * @brief Get handle of the twin half edge of the given handle
      */
     half_edge_handle get_twin(half_edge_handle handle) const;
@@ -266,6 +297,11 @@ public:
      * @brief Get handle of the next half edge of the given handle
      */
     half_edge_handle get_next(half_edge_handle handle) const;
+
+    /**
+     * @brief Get handle of the vertex the given half edge handle points to.
+     */
+    vertex_handle get_target(half_edge_handle handle) const;
 
     /**
      * @brief Check whether or not inserting a face between the given vertices
@@ -313,28 +349,33 @@ public:
      *
      * Returns a simple proxy object that uses `faces_begin()` and `faces_end()`.
      */
-    virtual hem_face_iterator_proxy get_faces() const;
+    hem_face_iterator_proxy get_faces() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
      *
      * Returns a simple proxy object that uses `half_edges_begin()` and `half_edges_end()`.
      */
-    virtual hem_half_edge_iterator_proxy get_half_edges() const;
+    hem_half_edge_iterator_proxy get_half_edges() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
      *
      * Returns a simple proxy object that uses `edges_begin()` and `edges_end()`.
      */
-    virtual hem_edge_iterator_proxy get_edges() const;
+    hem_edge_iterator_proxy get_edges() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
      *
      * Returns a simple proxy object that uses `vertices_begin()` and `vertices_end()`.
      */
-    virtual hem_vertex_iterator_proxy get_vertices() const;
+    hem_vertex_iterator_proxy get_vertices() const;
+
+    /**
+     * @brief Creates a half edge mesh as a cube
+     */
+    static half_edge_mesh as_cube(double edge_length, uint32_t vertices_per_edge);
 
 private:
     stable_vector<half_edge_handle, edge> edges;
