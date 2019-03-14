@@ -524,8 +524,13 @@ aa_rectangle tmesh::get_parametric_domain(
     auto [nh, nq] = handles.at(neighbouring_index);
     auto nface_h = mesh.get_face_of_half_edge(nh).expect(EXPECT_NO_BORDER);
 
-    auto separating_edge = mesh.get_half_edge_between(face_h, nface_h).expect(EXPECT_NO_BORDER);
-    auto scale_factor = fac(separating_edge);
+    float scale_factor = 1.0f;
+
+    // Only calc the scale factor, if we are NOT at a t-joint
+    if (nq == tag::positive_u) {
+        auto separating_edge = mesh.get_half_edge_between(face_h, nface_h).expect(EXPECT_NO_BORDER);
+        scale_factor = fac(separating_edge);
+    }
 
     double_indexed_vertex_handle index_knot_vector1_level2(handle.vertex, wrapped_index, 1);
     double_indexed_vertex_handle index_knot_vector2_level2(handle.vertex, wrapped_index, 2);
@@ -647,25 +652,25 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
     // Note on variable names: a number i at the end means "domain + i" and a _i number means "domain - i"
 
     // Get half edge and face corresponding to the current handle
-    auto edge_h0 = get<0>(handles.at(handle));
+    auto [edge_h0, tag0] = handles.at(handle);
     auto face_h0 = mesh.get_face_of_half_edge(edge_h0).expect(EXPECT_NO_BORDER);
 
     // Get half edge and face handle for index + 1 cw
     auto index1 = get_wrapped_offset_index(handle, 1);
     indexed_vertex_handle handle1(handle.vertex, index1);
-    auto edge_h1 = get<0>(handles.at(handle1));
+    auto [edge_h1, tag1] = handles.at(handle1);
     auto face_h1 = mesh.get_face_of_half_edge(edge_h1).expect(EXPECT_NO_BORDER);
 
     // Get half edge and face handle for index - 1 cw (which is + 1 ccw)
     auto index_1 = get_wrapped_offset_index(handle, -1);
     indexed_vertex_handle handle_1(handle.vertex, index_1);
-    auto edge_h_1 = get<0>(handles.at(handle_1));
+    auto [edge_h_1, tag_1] = handles.at(handle_1);
     auto face_h_1 = mesh.get_face_of_half_edge(edge_h_1).expect(EXPECT_NO_BORDER);
 
     // Get half edge and face handle for index - 2 cw (which is + 2 ccw)
     auto index_2 = get_wrapped_offset_index(handle, -2);
     indexed_vertex_handle handle_2(handle.vertex, index_2);
-    auto edge_h_2 = get<0>(handles.at(handle_2));
+    auto [edge_h_2, tag_2] = handles.at(handle_2);
     auto face_h_2 = mesh.get_face_of_half_edge(edge_h_2).expect(EXPECT_NO_BORDER);
 
     // Get two knot values for current handle
@@ -673,16 +678,22 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
     auto knot02 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, handle.index, 2));
 
     // Get transformation from values from hindex + 1 into domain of handle
-    auto edge_bewteen_0_and1 = mesh.get_half_edge_between(face_h0, face_h1).expect(EXPECT_NO_BORDER);
-    auto transform_01 = fac(edge_bewteen_0_and1);
+    float transform_01 = 1.0f;
+    if (tag1 == tag::positive_u) {
+        auto edge_bewteen_0_and1 = mesh.get_half_edge_between(face_h0, face_h1).expect(EXPECT_NO_BORDER);
+        transform_01 = fac(edge_bewteen_0_and1);
+    }
 
     // Get two knot values for handle with index + 1 and transform them into the domain of the current handle
     auto knot11 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, index1, 1)) * transform_01;
     auto knot12 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, index1, 2)) * transform_01;
 
     // Get transformation from values from hindex - 1 into domain of handle
-    auto edge_bewteen_0_and_1 = mesh.get_half_edge_between(face_h0, face_h_1).expect(EXPECT_NO_BORDER);
-    auto transform_0_1 = fac(edge_bewteen_0_and_1);
+    float transform_0_1 = 1.0f;
+    if (tag_1 == tag::positive_u) {
+        auto edge_bewteen_0_and_1 = mesh.get_half_edge_between(face_h0, face_h_1).expect(EXPECT_NO_BORDER);
+        transform_0_1 = fac(edge_bewteen_0_and_1);
+    }
 
     // Get two knot values for handle with index - 1 and transform them into the domain of the current handle
     auto knot_11 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, index_1, 1)) * transform_0_1;
@@ -690,8 +701,11 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
 
     // For the transition from index - 2 into domain of handle we need two transitions: -2 to -1 and -1 to handle
     // Get transformation from values from hindex - 2 into index - 1
-    auto edge_bewteen__1_and_2 = mesh.get_half_edge_between(face_h_1, face_h_2).expect(EXPECT_NO_BORDER);
-    auto transform__1_2 = fac(edge_bewteen__1_and_2);
+    float transform__1_2 = 1.0f;
+    if (tag_2 == tag::positive_u) {
+        auto edge_bewteen__1_and_2 = mesh.get_half_edge_between(face_h_1, face_h_2).expect(EXPECT_NO_BORDER);
+        transform__1_2 = fac(edge_bewteen__1_and_2);
+    }
     auto transform_0_2 = transform_0_1 * transform__1_2;
 
     // Get two knot values for handle with index - 2 and transform them into the domain of the current handle
