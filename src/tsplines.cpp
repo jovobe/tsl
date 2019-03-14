@@ -327,8 +327,16 @@ tmesh::setup_basis_function_handles_and_transitions(const dense_half_edge_map<ve
     transforms.reserve(mesh.num_vertices());
 
     for (auto&& vh: mesh.get_vertices()) {
+        // TODO: Perhaps skip extraordinary vertices as well?
+
         uint32_t i = 0;
         for (auto&& eh: mesh.get_half_edges_of_vertex(vh, direction::outgoing)) {
+            // TODO: Check, if this should be done or not (will be commented out until this is clarified)
+            // Skip extraordinary vertices
+//            if (is_extraordinary(mesh.get_target(mesh.get_next(eh)))) {
+//                continue;
+//            }
+
             handles.insert({indexed_vertex_handle(vh, i), {eh, tag::positive_u}});
             auto r = static_cast<uint8_t>(4 - dir[eh]);
             auto t = -rotate(r, uv[mesh.get_prev(eh)]);
@@ -550,6 +558,24 @@ regular_grid tmesh::get_grid(uint32_t resolution) const {
     float step_v = static_cast<float>(v_max) / (v_max - 1);
 
     for (auto&& fh: mesh.get_faces()) {
+
+        // TODO: Get correct distance to extraordinary vertex and then skip faces below distance
+        // Skip faces containing an extraordinary vertex
+//        vector<face_handle> faces_to_check;
+//        mesh.get_neighbours_of_face(fh, faces_to_check);
+//        faces_to_check.push_back(fh);
+//        auto skip = false;
+//        for (auto&& cfh: faces_to_check) {
+//            for (auto&& vh: mesh.get_vertices_of_face(cfh)) {
+//                if (is_extraordinary(vh)) {
+//                    skip = true;
+//                }
+//            }
+//        }
+//        if (skip) {
+//            continue;
+//        }
+
         float current_u = 0;
         float current_v = 0;
         for (uint32_t v = 0; v < v_max; ++v) {
