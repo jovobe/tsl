@@ -7,7 +7,7 @@ out vec4 fragment_color;
 
 uniform vec3 camera_pos;
 
-vec3 light_pos = vec3(0, 3, 3);
+vec3 light_pos = vec3(-5, 10, 10);
 vec3 light_color = vec3(1);
 float light_power = 1.0;
 float specular_power = 0.25;
