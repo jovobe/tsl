@@ -566,26 +566,26 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
     float step_v = static_cast<float>(v_max) / (v_max - 1);
 
     for (auto&& fh: mesh.get_faces()) {
+        // TODO: Get correct distance to extraordinary vertex and then skip faces below distance
+        // Skip faces containing an extraordinary vertex
+        vector<face_handle> faces_to_check;
+//        mesh.get_neighbours_of_face(fh, faces_to_check);
+        faces_to_check.push_back(fh);
+        auto skip = false;
+        for (auto&& cfh: faces_to_check) {
+            for (auto&& vh: mesh.get_vertices_of_face(cfh)) {
+                if (is_extraordinary(vh)) {
+                    skip = true;
+                }
+            }
+        }
+        if (skip) {
+            continue;
+        }
+
         out.emplace_back();
         auto& grid = out.back();
         grid.points.reserve(static_cast<size_t>(v_max));
-
-        // TODO: Get correct distance to extraordinary vertex and then skip faces below distance
-        // Skip faces containing an extraordinary vertex
-//        vector<face_handle> faces_to_check;
-//        mesh.get_neighbours_of_face(fh, faces_to_check);
-//        faces_to_check.push_back(fh);
-//        auto skip = false;
-//        for (auto&& cfh: faces_to_check) {
-//            for (auto&& vh: mesh.get_vertices_of_face(cfh)) {
-//                if (is_extraordinary(vh)) {
-//                    skip = true;
-//                }
-//            }
-//        }
-//        if (skip) {
-//            continue;
-//        }
 
         float current_u = 0;
         float current_v = 0;
