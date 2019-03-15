@@ -24,6 +24,8 @@ struct regular_grid {
     gl_buffer add_to_render_buffer(gl_buffer& buffer) const;
 };
 
+gl_multi_buffer get_multi_render_buffer(const vector<regular_grid>& grids);
+
 }
 
 #endif //TSL_GRID_HPP
