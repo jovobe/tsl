@@ -144,7 +144,6 @@ struct tmesh {
     vector<regular_grid> get_grids(uint32_t resolution) const;
     regular_grid get_grid(uint32_t resolution) const;
     vec3 get_surface_point_of_face(float u, float v, face_handle f) const;
-    float get_basis_fun(float u, const array<float, 5>& knot_vector) const;
 };
 
 /**
@@ -154,6 +153,9 @@ struct tmesh {
 vec2 rotate(uint8_t times, const vec2& vec);
 
 struct tsplines {
+    static float get_basis_fun(float u, const array<float, 5>& knot_vector);
+    static optional<uint8_t> get_span(float u, const array<float, 5>& knot_vector);
+
     static tmesh get_example_data_1();
     static tmesh get_example_data_2(uint32_t size);
 };

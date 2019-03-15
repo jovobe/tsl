@@ -618,8 +618,8 @@ vec3 tmesh::get_surface_point_of_face(float u, float v, face_handle f) const {
         auto p = mesh.get_vertex_position(index.vertex);
         auto transformed = trans.apply(in);
 
-        auto u_basis = get_basis_fun(transformed.x, uv);
-        auto v_basis = get_basis_fun(transformed.y, vv);
+        auto u_basis = tsplines::get_basis_fun(transformed.x, uv);
+        auto v_basis = tsplines::get_basis_fun(transformed.y, vv);
 
         c += u_basis * v_basis * p;
         d += u_basis * v_basis;
@@ -628,11 +628,46 @@ vec3 tmesh::get_surface_point_of_face(float u, float v, face_handle f) const {
     return c / d;
 }
 
-float tmesh::get_basis_fun(float u, const array<float, 5>& knot_vector) const {
-    // TODO: We assume i = 0 this is possibly not correct and we need to search i instead of assuming 0...
+float tsplines::get_basis_fun(float u, const array<float, 5>& knot_vector) {
+    // Get the span in the knot_vector (the span is called i in the recurrence formula for b-splines)
+    auto span = get_span(u, knot_vector);
+    // Check if basis function is relevant
+    if (!span) {
+        return 0.0f;
+    }
+
+    // Unwrap the optional for shorter usage
+    auto i = *span;
+
+    float n00 = 0.0f;
+    float n10 = 0.0f;
+    float n20 = 0.0f;
+    float n30 = 0.0f;
 
     // We use the recurrence formula for b-splines and assume a fixed degree of 3. The calculation triangle for
-    // the basis functions looks like this, if we want to find N_0,3:
+    // the basis functions is shown for each span, if we want to find N_0,3:
+    switch (i) {
+        case 0: {
+            n00 = 1.0f;
+            break;
+        }
+        case 1: {
+            n10 = 1.0f;
+            break;
+        }
+        case 2: {
+            n20 = 1.0f;
+            break;
+        }
+        case 3: {
+            n30 = 1.0f;
+            break;
+        }
+        default:
+            panic("unhandled span in tsplines::get_basis_fun!");
+    }
+
+    // Calc N_0,3 using the set basis functions
     //
     //                   N_0,3
     //                  /     \
@@ -640,45 +675,58 @@ float tmesh::get_basis_fun(float u, const array<float, 5>& knot_vector) const {
     //               N_0,2     N_1,2
     //               / \       /  \
     //              /   \     /    \
-    //             0     N_1,1     N_2,1
+    //          N_0,1     N_1,1     N_2,1
     //            / \    / \       /  \
     //           /   \  /   \     /    \
-    //          0      0     N_2,0      0
+    //       N_0,0   N_1,0   N_2,0    N_3,0
     //
 
-    float n20 = 1.0f;
+    // Layer N_x,1
+    float n01_left = ((u - knot_vector[0]) / (knot_vector[0+1] - knot_vector[0]));
+    float n01_right = ((knot_vector[0+1+1] - u) / (knot_vector[0+1+1] - knot_vector[0+1]));
+    float n01 = n01_left * n00 + n01_right * n10;
 
-    // right part needed
-    float n11 = ((knot_vector[1+1+1] - u) / (knot_vector[1+1+1] - knot_vector[1+1])) * n20;
-    float n02 = ((knot_vector[0+2+1] - u) / (knot_vector[0+2+1] - knot_vector[0+1])) * n11;
+    float n11_left = ((u - knot_vector[1]) / (knot_vector[1+1] - knot_vector[1]));
+    float n11_right = ((knot_vector[1+1+1] - u) / (knot_vector[1+1+1] - knot_vector[1+1]));
+    float n11 = n11_left * n10 + n11_right * n20;
 
-    // left part needed
-    float n21 = ((u - knot_vector[2]) / (knot_vector[2+1] - knot_vector[2])) * n20;
+    float n21_left = ((u - knot_vector[2]) / (knot_vector[2+1] - knot_vector[2]));
+    float n21_right = ((knot_vector[2+1+1] - u) / (knot_vector[2+1+1] - knot_vector[2+1]));
+    float n21 = n21_left * n20 + n21_right * n30;
 
-    // both parts needed
+    // Layer N_x,2
+    float n02_left = ((u - knot_vector[0]) / (knot_vector[0+2] - knot_vector[0]));
+    float n02_right = ((knot_vector[0+2+1] - u) / (knot_vector[0+2+1] - knot_vector[0+1]));
+    float n02 = n02_left * n01 + n02_right * n11;
+
     float n12_left = ((u - knot_vector[1]) / (knot_vector[1+2] - knot_vector[1]));
     float n12_right = ((knot_vector[1+2+1] - u) / (knot_vector[1+2+1] - knot_vector[1+1]));
     float n12 = n12_left * n11 + n12_right * n21;
 
+    // Layer N_x,3
     float n03_left = ((u - knot_vector[0]) / (knot_vector[0+3] - knot_vector[0]));
     float n03_right = ((knot_vector[0+3+1] - u) / (knot_vector[0+3+1] - knot_vector[0+1]));
     float n03 = n03_left * n02 + n03_right * n12;
 
     return n03;
+}
 
-    /*
-    float out = 1.0f;
-    for (uint8_t i = 1; i <= p; ++i) {
-        out = ((u - knot_vector[0]) / (knot_vector[i] - knot_vector[0])) * out;
+optional<uint8_t> tsplines::get_span(float u, const array<float, 5>& knot_vector) {
+    if (u < knot_vector[0] || u >= knot_vector[4]) {
+        return nullopt;
     }
-
-    float n80 = 1;
-    float n81 = ((u - knot_vector[0]) / (knot_vector[1] - knot_vector[0])) * n80;
-    float n82 = ((u - knot_vector[0]) / (knot_vector[2] - knot_vector[0])) * n81;
-    float n83 = ((u - knot_vector[0]) / (knot_vector[3] - knot_vector[0])) * n82;
-
-    return out;
-     */
+    auto low = 0;
+    auto high = 4;
+    auto mid = static_cast<uint8_t>((low + high) / 2);
+    while (u < knot_vector[mid] || u >= knot_vector[mid+1]) {
+        if (u < knot_vector[mid]) {
+            high = mid;
+        } else {
+            low = mid;
+        }
+        mid = static_cast<uint8_t>((low + high) / 2);
+    }
+    return mid;
 }
 
 pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_vertex_handle& handle) const {
