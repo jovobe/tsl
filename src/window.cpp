@@ -348,7 +348,13 @@ void window::render() {
         } else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(surface_buffer.index_buffer.size()), GL_UNSIGNED_INT, (void*) (sizeof(float) * 0));
+        glMultiDrawElements(
+            GL_TRIANGLES,
+            surface_buffer.counts.data(),
+            GL_UNSIGNED_INT,
+            (void**) surface_buffer.indices.data(),
+            static_cast<GLsizei>(surface_buffer.counts.size())
+        );
     }
 
     if (control_mode) {
@@ -486,8 +492,8 @@ void window::load_surface_data_to_gpu() const {
 
 void window::update_surface_buffer() {
     // TODO: Get real resolution
-    auto grid = tmesh.get_grid(20);
-    surface_buffer = grid.get_render_buffer();
+    auto grids = tmesh.get_grids(20);
+    surface_buffer = get_multi_render_buffer(grids);
     control_buffer = get_buffer(tmesh.mesh);
 
     load_surface_data_to_gpu();

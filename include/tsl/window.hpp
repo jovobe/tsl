@@ -48,7 +48,7 @@ private:
     bool control_mode;
     bool surface_mode;
 
-    gl_buffer surface_buffer;
+    gl_multi_buffer surface_buffer;
     gl_buffer control_buffer;
 
     // TODO: wrap this in a smart pointer
