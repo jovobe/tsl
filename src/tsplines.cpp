@@ -550,14 +550,25 @@ aa_rectangle tmesh::get_parametric_domain(
 
 regular_grid tmesh::get_grid(uint32_t resolution) const {
     regular_grid out;
+
+    // TODO: Implement
+
+    return out;
+}
+
+vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
+    vector<regular_grid> out;
+    out.reserve(mesh.num_faces());
     auto u_max = resolution;
     auto v_max = resolution;
-    out.points.reserve(static_cast<size_t>(v_max));
 
     float step_u = static_cast<float>(u_max) / (u_max - 1);
     float step_v = static_cast<float>(v_max) / (v_max - 1);
 
     for (auto&& fh: mesh.get_faces()) {
+        out.emplace_back();
+        auto& grid = out.back();
+        grid.points.reserve(static_cast<size_t>(v_max));
 
         // TODO: Get correct distance to extraordinary vertex and then skip faces below distance
         // Skip faces containing an extraordinary vertex
@@ -586,12 +597,9 @@ regular_grid tmesh::get_grid(uint32_t resolution) const {
                 row.push_back(get_surface_point_of_face(min(current_u / u_max, 1.0f), min(current_v / v_max, 1.0f), fh));
                 current_u += step_u;
             }
-            out.points.push_back(row);
+            grid.points.push_back(row);
             current_v += step_v;
         }
-
-        // TODO: do this for each (not only for the first) face!
-        break;
     }
 
     return out;
