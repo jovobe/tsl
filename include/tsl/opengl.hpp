@@ -1,7 +1,7 @@
 #ifndef TSL_OPENGL_HPP
 #define TSL_OPENGL_HPP
 
-#include <GLFW/glfw3.h>
+#include <GL/glew.h>
 
 #include <string>
 #include <vector>

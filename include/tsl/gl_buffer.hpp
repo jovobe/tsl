@@ -4,6 +4,7 @@
 #include <vector>
 #include <optional>
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 using std::vector;
@@ -15,7 +16,7 @@ namespace tsl {
 
 struct gl_buffer {
     vector<vec3> vertex_buffer;
-    vector<uint32_t> index_buffer;
+    vector<GLuint> index_buffer;
     optional<vector<vec3>> normal_buffer;
 
     vector<vec3> get_combined_vec_data() const;

@@ -21,6 +21,7 @@ struct regular_grid {
      * @return pair with <vertex buffer, index buffer>
      */
     gl_buffer get_render_buffer() const;
+    gl_buffer add_to_render_buffer(gl_buffer& buffer) const;
 };
 
 }

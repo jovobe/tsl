@@ -16,20 +16,28 @@ namespace tsl {
 
 gl_buffer regular_grid::get_render_buffer() const {
     gl_buffer buffer;
+    add_to_render_buffer(buffer);
+    return buffer;
+}
 
+gl_buffer regular_grid::add_to_render_buffer(gl_buffer& buffer) const {
     // reserve space
     // TODO: assuming filled and regular here -> fix!
-    auto x = static_cast<uint32_t>(points[0].size());
-    auto y = static_cast<uint32_t>(points.size());
+    auto x = static_cast<GLuint>(points[0].size());
+    auto y = static_cast<GLuint>(points.size());
     auto num_vertices = x * y;
+    auto old_num_vertices = static_cast<GLuint>(buffer.vertex_buffer.size());
 
     // 3 values per vertex
-    buffer.vertex_buffer.reserve(num_vertices);
+    buffer.vertex_buffer.reserve(buffer.vertex_buffer.size() + num_vertices);
 
     // one normal per vertex
-    buffer.normal_buffer = vector<vec3>();
+    if (!buffer.normal_buffer) {
+        buffer.normal_buffer = vector<vec3>();
+    }
     auto& normal_buffer = *buffer.normal_buffer;
-    normal_buffer.reserve(num_vertices);
+    normal_buffer.reserve(normal_buffer.size() + num_vertices);
+
 
     auto fields_x = x - 1;
     auto fields_y = y - 1;
@@ -37,7 +45,7 @@ gl_buffer regular_grid::get_render_buffer() const {
     auto num_indices = num_triangles * 3;
 
     // 3 indices per triangle
-    buffer.index_buffer.reserve(num_indices);
+    buffer.index_buffer.reserve(buffer.index_buffer.size() + num_indices);
 
     // copy vertices
     for (const auto& p : points) {
@@ -47,10 +55,10 @@ gl_buffer regular_grid::get_render_buffer() const {
     }
 
     // generate indices
-    for (uint32_t i = 0; i < y - 1; ++i) {
-        for (uint32_t j = 0; j < x - 1; ++j) {
+    for (GLuint i = 0; i < y - 1; ++i) {
+        for (GLuint j = 0; j < x - 1; ++j) {
 
-            const uint32_t current_index = j + (i * x);
+            const GLuint current_index = (j + (i * x)) + old_num_vertices;
 
             buffer.index_buffer.push_back(current_index);
             buffer.index_buffer.push_back(current_index + x);
@@ -63,14 +71,14 @@ gl_buffer regular_grid::get_render_buffer() const {
     }
 
     // generate normals TODO: approach is very naive! change it!
-    for (uint32_t i = 0; i < y; ++i) {
-        for (uint32_t j = 0; j < x; ++j) {
+    for (GLuint i = 0; i < y; ++i) {
+        for (GLuint j = 0; j < x; ++j) {
 
-            const uint32_t current_index = j + (i * x);
+            const GLuint current_index = (j + (i * x)) + old_num_vertices;
 
-            uint32_t i1 = current_index;
-            uint32_t i2 = 0;
-            uint32_t i3 = 0;
+            GLuint i1 = current_index;
+            GLuint i2 = 0;
+            GLuint i3 = 0;
 
             // if at top right corner
             if (j == x - 1 && i == y - 1) {

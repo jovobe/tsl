@@ -1,6 +1,7 @@
 #ifndef TSL_APPLICATION_HPP
 #define TSL_APPLICATION_HPP
 
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <tsl/window.hpp>

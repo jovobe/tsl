@@ -1,5 +1,4 @@
 #include <GL/glew.h>
-
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -114,7 +113,8 @@ window::window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(phong_vertex_shader);
     glDeleteShader(phong_fragment_shader);
 
-    tmesh = tsplines::get_example_data_1();
+//    tmesh = tsplines::get_example_data_1();
+    tmesh = tsplines::get_example_data_2(5);
 
     // surface
     glGenVertexArrays(1, &surface_vertex_array);
@@ -133,7 +133,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     glBufferData(GL_ARRAY_BUFFER, control_buffer.vertex_buffer.size() * sizeof(vec3), control_buffer.vertex_buffer.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_buffer.index_buffer.size() * sizeof(uint32_t), control_buffer.index_buffer.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_buffer.index_buffer.size() * sizeof(GLuint), control_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // pointer binding
     auto control_vpos_location = glGetAttribLocation(polygon_program, "pos");
@@ -467,7 +467,7 @@ void window::load_surface_data_to_gpu() const {
     glBufferData(GL_ARRAY_BUFFER, vec_data.size() * sizeof(vec3), vec_data.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, surface_buffer.index_buffer.size() * sizeof(uint32_t), surface_buffer.index_buffer.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, surface_buffer.index_buffer.size() * sizeof(GLuint), surface_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // TODO: perhaps this is not necessary?
     // pointer binding
