@@ -18,6 +18,7 @@ struct gl_buffer {
     vector<vec3> vertex_buffer;
     vector<GLuint> index_buffer;
     optional<vector<vec3>> normal_buffer;
+    optional<vector<uint32_t>> picking_buffer;
 
     vector<vec3> get_combined_vec_data() const;
 };
