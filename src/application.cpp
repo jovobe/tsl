@@ -58,8 +58,17 @@ void application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scanco
 
 void application::glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
     cout << "INFO: framebuffer size callback! (" << width << "," << height << ")" << endl;
+
     // TODO: make this window specific
     glViewport(0, 0, width, height);
+
+    auto& instance = get_instance();
+    try {
+        auto& window = instance.windows.at(glfw_window);
+        window.glfw_framebuffer_size_callback(width, height);
+    } catch (out_of_range&) {
+        cout << "WARNING: window size callback for unknown window!" << endl;
+    }
 }
 
 void application::glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height) {

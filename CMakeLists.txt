@@ -29,3 +29,6 @@ configure_file(shader/phong/fragment.glsl shader/phong/fragment.glsl COPYONLY)
 
 configure_file(shader/polygon/geometry.glsl shader/polygon/geometry.glsl COPYONLY)
 configure_file(shader/vertex/geometry.glsl shader/vertex/geometry.glsl COPYONLY)
+
+configure_file(shader/picking/vertex.glsl shader/picking/vertex.glsl COPYONLY)
+configure_file(shader/picking/fragment.glsl shader/picking/fragment.glsl COPYONLY)

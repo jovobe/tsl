@@ -12,6 +12,7 @@
 #include <tsl/gl_buffer.hpp>
 #include <tsl/resolution.hpp>
 #include <tsl/tsplines.hpp>
+#include <tsl/rendering/picking_map.hpp>
 
 using std::string;
 
@@ -44,12 +45,18 @@ private:
     uint32_t width;
     uint32_t height;
 
+    GLsizei frame_width;
+    GLsizei frame_height;
+
+    double dpi;
+
     bool wireframe_mode;
     bool control_mode;
     bool surface_mode;
 
     gl_multi_buffer surface_buffer;
-    gl_buffer control_buffer;
+    gl_buffer control_edges_buffer;
+    gl_buffer control_vertices_buffer;
 
     // TODO: wrap this in a smart pointer
     // Pointer to glfw window. If this points to nullptr, the window was moved.
@@ -57,16 +64,35 @@ private:
 
     int slider_resolution;
 
+    // picking stuff
+    class picking_map picking_map;
+    GLuint vertex_picking_program;
+    GLuint edge_picking_program;
+
+    GLuint control_picking_edges_vertex_array;
+    GLuint control_picking_vertices_vertex_array;
+
+    GLuint picking_frame;
+    GLuint picking_texture;
+    GLuint picking_render;
+
+    // programs
     GLuint vertex_program;
-    GLuint polygon_program;
+    GLuint edge_program;
     GLuint phong_program;
+
+    // vao
     GLuint surface_vertex_array;
+    GLuint control_edges_vertex_array;
+    GLuint control_vertices_vertex_array;
+
+    // vbo
     GLuint surface_vertex_buffer;
     GLuint surface_index_buffer;
-
-    GLuint control_vertex_array;
-    GLuint control_vertex_buffer;
-    GLuint control_index_buffer;
+    GLuint control_edges_vertex_buffer;
+    GLuint control_edges_index_buffer;
+    GLuint control_vertices_vertex_buffer;
+    GLuint control_vertices_index_buffer;
 
     resolution<uint32_t> surface_resolution;
     struct tmesh tmesh;
@@ -79,6 +105,17 @@ private:
 
     void load_surface_data_to_gpu() const;
     void update_surface_buffer();
+
+    void update_texture_sizes() const;
+
+    void draw_surface(const mat4& model, const mat4& vp) const;
+    void draw_control_polygon(const mat4& model, const mat4& vp) const;
+    void draw_control_polygon_picking(const mat4& model, const mat4& vp) const;
+    void draw_gui();
+
+    float read_pixel(const mouse_pos& pos) const;
+
+    void picking_phase(const mat4& model, const mat4& vp) const;
 };
 
 }

@@ -1,13 +1,11 @@
 #version 330 core
 layout (lines) in;
 layout (triangle_strip, max_vertices = 4) out;
-//layout (line_strip, max_vertices = 2) out;
 
-//in vec3 vcolor[];
+in vec3 vcolor[];
 
 out vec3 color;
 
-uniform vec3 color_in;
 uniform vec3 camera_pos;
 uniform mat4 VP;
 
@@ -22,7 +20,7 @@ vec3 get_offset_direction(const in vec3 point1, const in vec3 point2) {
 void main() {
 
     // Forward color
-    color = color_in;
+    color = vcolor[0];
 
     vec3 point1 = gl_in[0].gl_Position.xyz;
     vec3 point2 = gl_in[1].gl_Position.xyz;

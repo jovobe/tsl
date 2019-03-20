@@ -1,11 +1,11 @@
 #version 330 core
 layout (points) in;
 layout (triangle_strip, max_vertices = 4) out;
-//layout (points, max_vertices = 1) out;
+
+in vec3 vcolor[];
 
 out vec3 color;
 
-uniform vec3 color_in;
 uniform vec3 camera_pos;
 uniform vec3 camera_up;
 uniform mat4 VP;
@@ -15,7 +15,7 @@ const float POINT_THICKNESS = 0.02f;
 void main() {
 
     // Forward color
-    color = color_in;
+    color = vcolor[0];
 
     vec3 point = gl_in[0].gl_Position.xyz;
     vec3 point_to_camera = normalize(camera_pos - point);
@@ -35,8 +35,4 @@ void main() {
     EmitVertex();
 
     EndPrimitive();
-
-//    gl_Position = VP * gl_in[0].gl_Position;
-//    EmitVertex();
-//    EndPrimitive();
 }
