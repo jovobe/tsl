@@ -64,12 +64,12 @@ private:
     double last_mouse_time;
     optional<double> last_move_time;
 
-    const float MOUSE_SENSITIVITY = 0.1;
-    const float MOVE_SPEED = 3;
+    inline static const float MOUSE_SENSITIVITY = 0.1;
+    inline static const float MOVE_SPEED = 3;
 
-    static const vec3 INITIAL_POS;
-    static const vec3 INITIAL_DIRECTION;
-    static const vec3 INITIAL_UP;
+    inline static const vec3 INITIAL_POS = vec3(0, 0, 3);
+    inline static const vec3 INITIAL_DIRECTION = vec3(0, 0, -1);
+    inline static const vec3 INITIAL_UP = vec3(0, 1, 0);
 };
 
 }

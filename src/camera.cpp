@@ -23,10 +23,6 @@ using std::nullopt;
 
 namespace tsl {
 
-const vec3 camera::INITIAL_POS(0, 0, 3);
-const vec3 camera::INITIAL_DIRECTION(0, 0, -1);
-const vec3 camera::INITIAL_UP(0, 1, 0);
-
 mat4 camera::get_view_matrix() const {
     return lookAt(pos, pos + direction, up);
 }
