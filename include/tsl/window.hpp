@@ -78,6 +78,7 @@ private:
     GLuint picking_texture;
     GLuint picking_render;
 
+    optional<mouse_pos> request_pick;
     optional<reference_wrapper<const picking_element>> selected_element;
 
     // programs
@@ -119,7 +120,7 @@ private:
 
     uint32_t read_pixel(const mouse_pos& pos) const;
 
-    void picking_phase(const mat4& model, const mat4& vp) const;
+    void picking_phase(const mat4& model, const mat4& vp);
 };
 
 }

@@ -359,12 +359,7 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                     camera.reset_curos_pos();
                     break;
                 case GLFW_MOUSE_BUTTON_LEFT: {
-                    auto id = read_pixel(get_mouse_pos());
-                    if (id != 0) {
-                        selected_element = picking_map.get_object(id);
-                    } else {
-                        selected_element = nullopt;
-                    }
+                    request_pick = get_mouse_pos();
                     break;
                 }
                 default:
@@ -407,7 +402,18 @@ void window::render() {
     glfwPollEvents();
 }
 
-void window::picking_phase(const mat4& model, const mat4& vp) const {
+void window::picking_phase(const mat4& model, const mat4& vp) {
+    if (request_pick) {
+        auto id = read_pixel(*request_pick);
+        if (id != 0) {
+            selected_element = picking_map.get_object(id);
+        } else {
+            selected_element = nullopt;
+        }
+
+        request_pick = nullopt;
+    }
+
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, picking_frame);
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -670,6 +676,7 @@ window& window::operator=(window&& window) noexcept {
     slider_resolution = exchange(window.slider_resolution, 0);
     tmesh = move(window.tmesh);
     camera = move(window.camera);
+    request_pick = move(window.request_pick);
 
     picking_map = move(window.picking_map);
     picking_frame = exchange(window.picking_frame, 0);
