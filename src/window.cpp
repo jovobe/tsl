@@ -168,26 +168,26 @@ window::window(string title, uint32_t width, uint32_t height) :
 
     auto combined_control_edges_data = control_edges_buffer.get_combined_vec_data();
     glBindBuffer(GL_ARRAY_BUFFER, control_edges_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, combined_control_edges_data.size() * sizeof(vec3), combined_control_edges_data.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, combined_control_edges_data.size() * sizeof(vertex_element), combined_control_edges_data.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_edges_index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_edges_buffer.index_buffer.size() * sizeof(GLuint), control_edges_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // pointer binding
-    auto control_vpos_location = glGetAttribLocation(edge_program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(control_vpos_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) 0);
-    glEnableVertexAttribArray(static_cast<GLuint>(control_vpos_location));
+    auto control_vpos_location = static_cast<GLuint>(glGetAttribLocation(edge_program, "pos"));
+    glVertexAttribPointer(control_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_vpos_location);
 
     glBindVertexArray(control_picking_edges_vertex_array);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_edges_index_buffer);
 
-    auto control_picking_vpos_location = glGetAttribLocation(edge_picking_program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(control_picking_vpos_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) 0);
-    glEnableVertexAttribArray(static_cast<GLuint>(control_picking_vpos_location));
+    auto control_picking_vpos_location = static_cast<GLuint>(glGetAttribLocation(edge_picking_program, "pos"));
+    glVertexAttribPointer(control_picking_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_picking_vpos_location);
 
-    auto control_picking_vpicking_id_location = glGetAttribLocation(edge_picking_program, "picking_id");
-    glVertexAttribPointer(static_cast<GLuint>(control_picking_vpicking_id_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) (sizeof(vec3)));
-    glEnableVertexAttribArray(static_cast<GLuint>(control_picking_vpicking_id_location));
+    auto control_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(edge_picking_program, "picking_id_in"));
+    glVertexAttribIPointer(control_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
+    glEnableVertexAttribArray(control_picking_vpicking_id_location);
 
     // control vertices polygon
     glGenVertexArrays(1, &control_vertices_vertex_array);
@@ -198,26 +198,26 @@ window::window(string title, uint32_t width, uint32_t height) :
 
     auto combined_control_vertices_data = control_vertices_buffer.get_combined_vec_data();
     glBindBuffer(GL_ARRAY_BUFFER, control_vertices_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, combined_control_vertices_data.size() * sizeof(vec3), combined_control_vertices_data.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, combined_control_vertices_data.size() * sizeof(vertex_element), combined_control_vertices_data.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_vertices_index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_vertices_buffer.index_buffer.size() * sizeof(GLuint), control_vertices_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // pointer binding
-    auto control_vertrex_vpos_location = glGetAttribLocation(vertex_program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(control_vertrex_vpos_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) 0);
-    glEnableVertexAttribArray(static_cast<GLuint>(control_vertrex_vpos_location));
+    auto control_vertrex_vpos_location = static_cast<GLuint>(glGetAttribLocation(vertex_program, "pos"));
+    glVertexAttribPointer(control_vertrex_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_vertrex_vpos_location);
 
     glBindVertexArray(control_picking_vertices_vertex_array);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_vertices_index_buffer);
 
-    auto control_vertrex_picking_vpos_location = glGetAttribLocation(vertex_picking_program, "pos");
-    glVertexAttribPointer(static_cast<GLuint>(control_vertrex_picking_vpos_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) 0);
-    glEnableVertexAttribArray(static_cast<GLuint>(control_vertrex_picking_vpos_location));
+    auto control_vertrex_picking_vpos_location = static_cast<GLuint>(glGetAttribLocation(vertex_picking_program, "pos"));
+    glVertexAttribPointer(control_vertrex_picking_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_vertrex_picking_vpos_location);
 
-    auto control_vertrex_picking_vpicking_id_location = glGetAttribLocation(vertex_picking_program, "picking_id");
-    glVertexAttribPointer(static_cast<GLuint>(control_vertrex_picking_vpicking_id_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) (sizeof(vec3)));
-    glEnableVertexAttribArray(static_cast<GLuint>(control_vertrex_picking_vpicking_id_location));
+    auto control_vertrex_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(vertex_picking_program, "picking_id_in"));
+    glVertexAttribIPointer(control_vertrex_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
+    glEnableVertexAttribArray(control_vertrex_picking_vpicking_id_location);
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -418,7 +418,7 @@ void window::picking_phase(const mat4& model, const mat4& vp) const {
     glViewport(0, 0, frame_width, frame_height);
 }
 
-float window::read_pixel(const mouse_pos& pos) const {
+uint32_t window::read_pixel(const mouse_pos& pos) const {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, picking_frame);
     glReadBuffer(GL_COLOR_ATTACHMENT0);
     uint32_t data = 0;
@@ -427,10 +427,6 @@ float window::read_pixel(const mouse_pos& pos) const {
     glReadPixels(x, y, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_INT, &data);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-
-    cout << "queried pixel at: " << x << "," << y << endl;
-    cout << "got data: " << data << endl;
-
     return data;
 }
 
@@ -667,19 +663,19 @@ void window::load_surface_data_to_gpu() const {
     glBindVertexArray(surface_vertex_array);
 
     glBindBuffer(GL_ARRAY_BUFFER, surface_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, vec_data.size() * sizeof(vec3), vec_data.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vec_data.size() * sizeof(vertex_element), vec_data.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, surface_buffer.index_buffer.size() * sizeof(GLuint), surface_buffer.index_buffer.data(), GL_STATIC_DRAW);
 
     // pointer binding
-    auto vpos_location = glGetAttribLocation(phong_program, "pos_in");
-    glVertexAttribPointer(static_cast<GLuint>(vpos_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) 0);
-    glEnableVertexAttribArray(static_cast<GLuint>(vpos_location));
+    auto vpos_location = static_cast<GLuint>(glGetAttribLocation(phong_program, "pos_in"));
+    glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(vpos_location);
 
-    auto vnormal_location = glGetAttribLocation(phong_program, "normal_in");
-    glVertexAttribPointer(static_cast<GLuint>(vnormal_location), 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*) (sizeof(vec3)));
-    glEnableVertexAttribArray(static_cast<GLuint>(vnormal_location));
+    auto vnormal_location = static_cast<GLuint>(glGetAttribLocation(phong_program, "normal_in"));
+    glVertexAttribPointer(vnormal_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, normal));
+    glEnableVertexAttribArray(vnormal_location);
 }
 
 void window::update_surface_buffer() {

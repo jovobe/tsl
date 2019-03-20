@@ -113,7 +113,7 @@ private:
     void draw_control_polygon_picking(const mat4& model, const mat4& vp) const;
     void draw_gui();
 
-    float read_pixel(const mouse_pos& pos) const;
+    uint32_t read_pixel(const mouse_pos& pos) const;
 
     void picking_phase(const mat4& model, const mat4& vp) const;
 };

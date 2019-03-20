@@ -1,13 +1,17 @@
 #version 330 core
 in vec3 pos;
-in vec3 picking_id;
+in uint picking_id_in;
 
 out vec3 vcolor;
+out uint picking_id;
 
 uniform mat4 M;
 
 void main()
 {
    gl_Position = M * vec4(pos, 1.0);
-   vcolor = picking_id;
+   picking_id = picking_id_in;
+
+   // Pass dummy value
+   vcolor = vec3(0, 0, 0);
 }

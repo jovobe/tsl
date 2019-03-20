@@ -3,8 +3,10 @@ layout (points) in;
 layout (triangle_strip, max_vertices = 4) out;
 
 in vec3 vcolor[];
+in uint picking_id[];
 
 out vec3 color;
+flat out uint picking_id_forward;
 
 uniform vec3 camera_pos;
 uniform vec3 camera_up;
@@ -14,8 +16,9 @@ const float POINT_THICKNESS = 0.02f;
 
 void main() {
 
-    // Forward color
+    // Forward stuff to fragment shader
     color = vcolor[0];
+    picking_id_forward = picking_id[0];
 
     vec3 point = gl_in[0].gl_Position.xyz;
     vec3 point_to_camera = normalize(camera_pos - point);
