@@ -359,9 +359,12 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                     camera.reset_curos_pos();
                     break;
                 case GLFW_MOUSE_BUTTON_LEFT: {
-                    auto pos = get_mouse_pos();
-                    auto id = read_pixel(pos);
-                    cout << "got id: " << id << endl;
+                    auto id = read_pixel(get_mouse_pos());
+                    if (id != 0) {
+                        selected_element = picking_map.get_object(id);
+                    } else {
+                        selected_element = nullopt;
+                    }
                     break;
                 }
                 default:
@@ -437,6 +440,7 @@ void window::draw_gui() {
 
     {
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSizeConstraints(ImVec2(450, 0), ImVec2(width, height));
 
         ImGui::Begin("Settings");
         ImGui::Checkbox("Wireframe mode", &wireframe_mode);
@@ -456,6 +460,31 @@ void window::draw_gui() {
             ImGui::Text("Rendering: %.3f ms/frame (%.1f FPS, sleeping: %d ms)", ms_per_frame, ImGui::GetIO().Framerate, sleep_per_frame);
         } else {
             ImGui::Text("Rendering: / ms/frame (%.1f FPS, sleeping: / ms)", ImGui::GetIO().Framerate);
+        }
+
+        ImGui::End();
+
+        auto picked_elem_window_width = 200;
+        ImGui::SetNextWindowPos(ImVec2(this->width - picked_elem_window_width, 0), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSizeConstraints(ImVec2(picked_elem_window_width, 100), ImVec2(width, height));
+
+        ImGui::Begin("Selected element");
+        if (selected_element) {
+            auto& elem = (*selected_element).get();
+
+            switch (elem.type) {
+                case object_type::vertex:
+                    ImGui::Text("Vertex: %d", elem.handle.get_idx());
+                    break;
+                case object_type::edge:
+                    ImGui::Text("Edge: %d", elem.handle.get_idx());
+                    break;
+                case object_type::face:
+                    ImGui::Text("Face: %d", elem.handle.get_idx());
+                    break;
+                default:
+                    panic("unknown object type picked!");
+            }
         }
 
         ImGui::End();
@@ -646,6 +675,7 @@ window& window::operator=(window&& window) noexcept {
     picking_frame = exchange(window.picking_frame, 0);
     picking_texture = exchange(window.picking_texture, 0);
     picking_render = exchange(window.picking_render, 0);
+    selected_element = move(window.selected_element);
 
     return *this;
 }

@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include <string>
+#include <functional>
 
 #include <tsl/mouse_pos.hpp>
 #include <tsl/application.hpp>
@@ -15,6 +16,7 @@
 #include <tsl/rendering/picking_map.hpp>
 
 using std::string;
+using std::reference_wrapper;
 
 namespace tsl {
 
@@ -75,6 +77,8 @@ private:
     GLuint picking_frame;
     GLuint picking_texture;
     GLuint picking_render;
+
+    optional<reference_wrapper<const picking_element>> selected_element;
 
     // programs
     GLuint vertex_program;
