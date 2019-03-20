@@ -4,12 +4,15 @@
 #include <unordered_map>
 #include <optional>
 #include <utility>
+#include <functional>
 
 #include <tsl/util/base_handle.hpp>
 #include <tsl/geometry/handles.hpp>
 
 using std::unordered_map;
 using std::pair;
+using std::reference_wrapper;
+using std::optional;
 
 namespace tsl {
 
@@ -31,8 +34,9 @@ private:
     uint32_t next;
     unordered_map<uint32_t, picking_element> map;
 public:
-    picking_map() : next(0) {}
+    picking_map() : next(1) {}
     uint32_t add_object(object_type type, base_handle<index> handle);
+    optional<reference_wrapper<const picking_element>> get_object(uint32_t idx) const;
 };
 
 }
