@@ -679,6 +679,18 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetNeighboursOfFace) {
     ASSERT_THAT(neighbours, ::testing::UnorderedElementsAre(f1, f2, f13, f18));
 }
 
+TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfEdge) {
+    auto v0 = vertex_handles[0];
+    auto v1 = vertex_handles[1];
+    auto edge_handle = mesh.get_edge_between(v0, v1);
+    auto half_edges = mesh.get_half_edges_of_edge(edge_handle.unwrap());
+
+    auto expected_half_edge01 = mesh.get_half_edge_between(v0, v1).unwrap();
+    auto expected_half_edge10 = mesh.get_half_edge_between(v1, v0).unwrap();
+
+    ASSERT_THAT(half_edges, ::testing::UnorderedElementsAre(expected_half_edge01, expected_half_edge10));
+}
+
 }
 
 #pragma clang diagnostic pop

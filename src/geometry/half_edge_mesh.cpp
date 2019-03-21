@@ -354,6 +354,12 @@ vector<half_edge_handle> half_edge_mesh::get_half_edges_of_face(face_handle face
     return edges_out;
 }
 
+array<half_edge_handle, 2> half_edge_mesh::get_half_edges_of_edge(edge_handle edge_h) const {
+    half_edge_handle heh(edge_h.get_idx());
+    auto twin = get_e(heh).twin;
+    return {heh, twin};
+}
+
 optional_edge_handle half_edge_mesh::get_edge_between(vertex_handle ah, vertex_handle bh) const
 {
     // Go through all edges of vertex `a` until we find an edge that is also

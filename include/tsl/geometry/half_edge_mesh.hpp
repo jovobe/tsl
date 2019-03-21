@@ -235,6 +235,11 @@ public:
     vector<half_edge_handle> get_half_edges_of_face(face_handle face_handle) const;
 
     /**
+     * @brief Get the two half edges of an edge.
+     */
+    array<half_edge_handle, 2> get_half_edges_of_edge(edge_handle edge_h) const;
+
+    /**
      * @brief If the two given vertices are connected by an edge, it is
      *        returned. None otherwise.
      */
