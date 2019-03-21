@@ -94,6 +94,9 @@ struct tmesh {
     dense_half_edge_map<float> knots;
     dense_half_edge_map<bool> corners;
 
+    dense_half_edge_map<vec2> uv;
+    dense_half_edge_map<uint8_t> dir;
+
     dense_face_map<vector<tuple<indexed_vertex_handle, transform>>> support_map;
     unordered_map<indexed_vertex_handle, tuple<half_edge_handle, tag>> handles;
     unordered_map<double_indexed_vertex_handle, float> knot_vectors;

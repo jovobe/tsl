@@ -474,19 +474,53 @@ void window::draw_gui() {
         ImGui::SetNextWindowPos(ImVec2(this->width - picked_elem_window_width, 0), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSizeConstraints(ImVec2(picked_elem_window_width, 100), ImVec2(width, height));
 
+        auto draw_edge_information = [&] (const half_edge_handle& eh) {
+            ImGui::Text("geometry data");
+            ImGui::Text("- id: %u", eh.get_idx());
+            ImGui::Text("- next: %u", tmesh.mesh.get_next(eh).get_idx());
+            ImGui::Text("- prev: %u", tmesh.mesh.get_prev(eh).get_idx());
+            ImGui::Text("- twin: %u", tmesh.mesh.get_twin(eh).get_idx());
+            ImGui::Text("- target: %u", tmesh.mesh.get_target(eh).get_idx());
+
+            ImGui::Text("tmesh data");
+            ImGui::Text("- points into face corner: %s", tmesh.corners[eh] ? "true" : "false");
+            ImGui::Text("- knot interval: %.2f", tmesh.knots[eh]);
+            ImGui::Text("- local coords (uv) of vertex for current half edge: (%.0f, %.0f)", tmesh.uv[eh].x, tmesh.uv[eh].y);
+            ImGui::Text("- direction (dir) of vertex for current half edge: %u", tmesh.dir[eh]);
+        };
+
         ImGui::Begin("Selected element");
         if (selected_element) {
             auto& elem = (*selected_element).get();
 
             switch (elem.type) {
-                case object_type::vertex:
-                    ImGui::Text("Vertex: %d", elem.handle.get_idx());
+                case object_type::vertex: {
+                    vertex_handle vh(elem.handle.get_idx());
+                    ImGui::Text("Vertex (id: %u):", vh.get_idx());
+                    ImGui::Text("- extended valence: %u", tmesh.get_extended_valence(vh));
+                    ImGui::Separator();
+
+                    ImGui::Text("ingoing half edges (cw order):");
+                    for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
+                        draw_edge_information(eh);
+                        ImGui::Separator();
+                    }
+
                     break;
-                case object_type::edge:
-                    ImGui::Text("Edge: %d", elem.handle.get_idx());
+                }
+                case object_type::edge: {
+                    edge_handle eh(elem.handle.get_idx());
+                    ImGui::Text("Edge:");
+
+                    ImGui::Text("consisting of half edges:");
+                    for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
+                        draw_edge_information(heh);
+                        ImGui::Separator();
+                    }
                     break;
+                }
                 case object_type::face:
-                    ImGui::Text("Face: %d", elem.handle.get_idx());
+                    ImGui::Text("Face: %u", elem.handle.get_idx());
                     break;
                 default:
                     panic("unknown object type picked!");

@@ -247,6 +247,8 @@ tmesh tsplines::get_example_data_1() {
     out.handles = handles;
     out.knot_vectors = knot_vectors;
     out.support_map = out.determine_support_of_basis_functions(handles, transforms, transitions, uv, knot_vectors);
+    out.uv = uv;
+    out.dir = dir;
 
     return out;
 }
@@ -270,6 +272,8 @@ tmesh tsplines::get_example_data_2(uint32_t size) {
     out.handles = handles;
     out.knot_vectors = knot_vectors;
     out.support_map = out.determine_support_of_basis_functions(handles, transforms, transitions, uv, knot_vectors);
+    out.uv = uv;
+    out.dir = dir;
 
     return out;
 }
