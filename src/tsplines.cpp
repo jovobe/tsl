@@ -585,11 +585,6 @@ regular_grid tmesh::get_grid(uint32_t resolution) const {
 vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
     vector<regular_grid> out;
     out.reserve(mesh.num_faces());
-    auto u_max = resolution;
-    auto v_max = resolution;
-
-    float step_u = static_cast<float>(u_max) / (u_max - 1);
-    float step_v = static_cast<float>(v_max) / (v_max - 1);
 
     for (auto&& fh: mesh.get_faces()) {
         // TODO: Get correct distance to extraordinary vertex and then skip faces below distance
@@ -609,6 +604,14 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
             continue;
         }
 
+        auto local_system_max = get_local_max_coordinates(fh);
+        float u_coord = local_system_max.x;
+        float v_coord = local_system_max.y;
+        auto u_max = resolution + 1u;
+        auto v_max = resolution + 1u;
+        float step_u = u_coord / resolution;
+        float step_v = v_coord / resolution;
+
         out.emplace_back();
         auto& grid = out.back();
         grid.points.reserve(static_cast<size_t>(v_max));
@@ -620,7 +623,7 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
             vector<vec3> row;
             row.reserve(static_cast<size_t>(u_max));
             for (uint32_t u = 0; u < u_max; ++u) {
-                row.push_back(get_surface_point_of_face(min(current_u / u_max, 1.0f), min(current_v / v_max, 1.0f), fh));
+                row.push_back(get_surface_point_of_face(min(current_u, u_coord), min(current_v, v_coord), fh));
                 current_u += step_u;
             }
             grid.points.push_back(row);
