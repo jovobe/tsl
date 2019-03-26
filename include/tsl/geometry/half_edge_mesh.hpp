@@ -380,7 +380,7 @@ public:
     /**
      * @brief Creates a half edge mesh as a cube
      */
-    static half_edge_mesh as_cube(double edge_length, uint32_t vertices_per_edge);
+    static half_edge_mesh as_cube(double edge_length, uint32_t vertices_per_edge, bool tjoints);
 
 private:
     stable_vector<half_edge_handle, edge> edges;

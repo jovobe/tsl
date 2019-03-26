@@ -257,7 +257,7 @@ tmesh tsplines::get_example_data_2(uint32_t size) {
     const double EDGE_LENGTH = 1.0;
 
     tmesh out;
-    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size);
+    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, false);
 
     // Set corners and knots
     out.knots = dense_half_edge_map<float>(1.0f);

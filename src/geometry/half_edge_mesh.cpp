@@ -625,7 +625,7 @@ pair<half_edge_handle, half_edge_handle> half_edge_mesh::add_edge_pair(vertex_ha
     return std::make_pair(ah, bh);
 }
 
-half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per_edge) {
+half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per_edge, bool tjoints) {
     // TODO: refactor code to methods (remove duplicate code) and use x_vertices.size()
 
     half_edge_mesh out;
@@ -652,18 +652,58 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     // Create faces
     for (uint32_t x = 0; x < vertices_per_edge - 1; ++x) {
         for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
-            // Current vertex
-            auto bottom_right = ((x + 1) * vertices_per_edge) + z;
-            auto top_right = bottom_right + 1;
-            auto top_left = (x * vertices_per_edge) + (z + 1);
-            auto bottom_left = top_left - 1;
 
-            out.add_face({
-                front_vertices[bottom_right],
-                front_vertices[top_right],
-                front_vertices[top_left],
-                front_vertices[bottom_left]
-            });
+            // Add T-Joint
+            if (x == 2 && z == 2 && tjoints) {
+                auto bottom_right_1 = ((x + 1) * vertices_per_edge) + z;
+                auto bottom_right_2 = ((x + 2) * vertices_per_edge) + z;
+                auto top_right_1 = bottom_right_1 + 1;
+                auto top_right_2 = bottom_right_2 + 1;
+                auto top_left = (x * vertices_per_edge) + (z + 1);
+                auto bottom_left = top_left - 1;
+
+                auto tmp = out.add_face({
+                                 front_vertices[top_left],
+                                 front_vertices[bottom_left],
+                                 front_vertices[bottom_right_1],
+                                 front_vertices[bottom_right_2],
+                                 front_vertices[top_right_2],
+                                 front_vertices[top_right_1]
+                             });
+            } else if (x == 3 && z == 2 && tjoints) {
+
+            } else if (x == 1 && z == 1 && tjoints) {
+                auto bottom_right_1 = ((x + 1) * vertices_per_edge) + z;
+                auto bottom_right_2 = bottom_right_1 + 1;
+                auto top_right = bottom_right_2 + 1;
+                auto bottom_left_1 = (x * vertices_per_edge) + z;
+                auto bottom_left_2 = bottom_left_1 + 1;
+                auto top_left = bottom_left_2 + 1;
+
+                auto tmp = out.add_face({
+                                            front_vertices[bottom_left_1],
+                                            front_vertices[bottom_right_1],
+                                            front_vertices[bottom_right_2],
+                                            front_vertices[top_right],
+                                            front_vertices[top_left],
+                                            front_vertices[bottom_left_2]
+                                        });
+            } else if (x == 1 && z == 2 && tjoints) {
+
+            } else {
+                // Current vertex
+                auto bottom_right = ((x + 1) * vertices_per_edge) + z;
+                auto top_right = bottom_right + 1;
+                auto top_left = (x * vertices_per_edge) + (z + 1);
+                auto bottom_left = top_left - 1;
+
+                out.add_face({
+                                 front_vertices[bottom_right],
+                                 front_vertices[top_right],
+                                 front_vertices[top_left],
+                                 front_vertices[bottom_left]
+                             });
+            };
         }
     }
 
