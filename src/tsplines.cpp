@@ -250,6 +250,7 @@ tmesh tsplines::get_example_data_1() {
     out.support_map = out.determine_support_of_basis_functions(handles, transforms, transitions, uv, knot_vectors);
     out.uv = uv;
     out.dir = dir;
+    out.edge_transitions = transitions;
 
     return out;
 }
@@ -275,6 +276,7 @@ tmesh tsplines::get_example_data_2(uint32_t size) {
     out.support_map = out.determine_support_of_basis_functions(handles, transforms, transitions, uv, knot_vectors);
     out.uv = uv;
     out.dir = dir;
+    out.edge_transitions = transitions;
 
     return out;
 }
