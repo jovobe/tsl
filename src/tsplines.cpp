@@ -491,7 +491,18 @@ tmesh::determine_support_of_basis_functions(
             if (!out.contains_key(cface_h)) {
                 out.insert(cface_h, vector<tuple<indexed_vertex_handle, transform>>());
             }
-            out[cface_h].emplace_back(k, ct);
+//            out[cface_h].emplace_back(k, ct);
+
+            // TODO: Why is the same k added twice here? This check should not be necessary...
+            auto passed_k = k;
+            auto find_key = std::find_if(out[cface_h].begin(), out[cface_h].end(), [&](auto tuple)
+            {
+                return get<0>(tuple).vertex == passed_k.vertex;
+            });
+            if (find_key == out[cface_h].end())
+            {
+                out[cface_h].emplace_back(k, ct);
+            }
 
             auto g = mesh.get_next(ch);
             while (g != ch) {
