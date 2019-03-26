@@ -259,11 +259,20 @@ tmesh tsplines::get_example_data_2(uint32_t size) {
     const double EDGE_LENGTH = 1.0;
 
     tmesh out;
-    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, false);
+    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, true);
 
     // Set corners and knots
     out.knots = dense_half_edge_map<float>(1.0f);
     out.corners = dense_half_edge_map<bool>(true);
+
+    auto edge1 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 2), vertex_handle((3 * size) + 2)).unwrap();
+    auto edge2 = out.mesh.get_half_edge_between(vertex_handle((4 * size) + 3), vertex_handle((3 * size) + 3)).unwrap();
+    auto edge3 = out.mesh.get_half_edge_between(vertex_handle((1 * size) + 3), vertex_handle((1 * size) + 2)).unwrap();
+    auto edge4 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 1), vertex_handle((2 * size) + 2)).unwrap();
+    out.corners[edge1] = false;
+    out.corners[edge2] = false;
+    out.corners[edge3] = false;
+    out.corners[edge4] = false;
 
     // Calc basis funs
     auto [uv, dir] = out.determine_local_coordinate_systems();
