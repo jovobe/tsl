@@ -75,6 +75,11 @@ struct transform {
 
     transform(float f, uint8_t r, vec2 t) : f(f), r(r), t(t) {}
 
+    /**
+     * @brief Apply this transform (t1) on the given transform (t2) and return the resulting transform.
+     *
+     * In other words: this is t1 and the given transform is t2 the result is t1⚬t2 or t1(t2).
+     */
     transform apply(const transform& trans) const;
     vec2 apply(const vec2& vec) const;
 };
