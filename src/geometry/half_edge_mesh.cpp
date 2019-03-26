@@ -8,7 +8,8 @@ using std::tuple;
 using std::get;
 using std::make_unique;
 
-namespace tsl {
+namespace tsl
+{
 
 vertex_handle half_edge_mesh::add_vertex(vec3 pos)
 {
@@ -34,7 +35,8 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
     // handles do not contain a valid `next` and `prev` pointer yet.
     vector<half_edge_handle> inner_handles;
     inner_handles.reserve(handles.size());
-    for (size_t i = 1; i < handles.size(); ++i) {
+    for (size_t i = 1; i < handles.size(); ++i)
+    {
         auto inner_h = find_or_create_edge_between(handles[i - 1], handles[i]);
         inner_handles.push_back(inner_h);
     }
@@ -51,7 +53,8 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
     // Set face handle of edges and get handles for outer edges
     vector<half_edge_handle> outer_handles;
     outer_handles.reserve(handles.size());
-    for (auto&& e_inner_h: inner_handles) {
+    for (auto&& e_inner_h: inner_handles)
+    {
         auto& e_inner = get_e(e_inner_h);
         e_inner.face = optional_face_handle(new_face_h);
         outer_handles.push_back(e_inner.twin);
@@ -67,7 +70,8 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
     vector<tuple<half_edge_handle, vertex_handle, half_edge_handle>> corners;
     corners.reserve(handles.size());
     corners.emplace_back(outer_handles.front(), handles.front(), outer_handles.back());
-    for (size_t i = 1; i < handles.size(); ++i) {
+    for (size_t i = 1; i < handles.size(); ++i)
+    {
         corners.emplace_back(outer_handles[i], handles[i], outer_handles[i - 1]);
     }
 
@@ -117,8 +121,7 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
 
                 get_e(e_end_h).next = e_out_h;
                 e_out.prev = e_end_h;
-            }
-            else
+            } else
             {
                 // `e_in` and `e_out` are the only edges of the vertex.
                 e_in.next = e_out_h;
@@ -207,7 +210,8 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
     auto& e_inner_first = get_e(inner_handles.front());
     e_inner_first.next = inner_handles[1];
     e_inner_first.prev = inner_handles.back();
-    for (size_t i = 1; i < (inner_handles.size() - 1); ++i) {
+    for (size_t i = 1; i < (inner_handles.size() - 1); ++i)
+    {
         auto& e_inner = get_e(inner_handles[i]);
         e_inner.next = inner_handles[i + 1];
         e_inner.prev = inner_handles[i - 1];
@@ -217,10 +221,12 @@ face_handle half_edge_mesh::add_face(const vector<vertex_handle>& handles)
     e_inner_last.prev = inner_handles[inner_handles.size() - 2];
 
     // Set outgoing-handles if they are not set yet.
-    for (size_t i = 0; i < handles.size(); ++i) {
+    for (size_t i = 0; i < handles.size(); ++i)
+    {
         auto& v = get_v(handles[i]);
         auto e_inner_h = inner_handles[i];
-        if (!v.outgoing) {
+        if (!v.outgoing)
+        {
             v.outgoing = optional_half_edge_handle(e_inner_h);
         }
     }
@@ -261,7 +267,8 @@ vec3& half_edge_mesh::get_vertex_position(vertex_handle handle)
 index half_edge_mesh::get_valence(vertex_handle handle) const
 {
     index valence = 0;
-    circulate_around_vertex(handle, [&, this](auto ingoing_edge_h) {
+    circulate_around_vertex(handle, [&, this](auto ingoing_edge_h)
+    {
         valence += 1;
         return true;
     });
@@ -284,22 +291,24 @@ array<vertex_handle, 2> half_edge_mesh::get_vertices_of_edge(edge_handle edge_h)
 {
     auto one_edge_h = half_edge_handle::one_half_of(edge_h);
     auto one_edge = get_e(one_edge_h);
-    return { one_edge.target, get_e(one_edge.twin).target };
+    return {one_edge.target, get_e(one_edge.twin).target};
 }
 
-array<vertex_handle, 2> half_edge_mesh::get_vertices_of_half_edge(half_edge_handle edge_h) const {
+array<vertex_handle, 2> half_edge_mesh::get_vertices_of_half_edge(half_edge_handle edge_h) const
+{
     auto one_edge = get_e(edge_h);
-    return { one_edge.target, get_e(one_edge.twin).target };
+    return {one_edge.target, get_e(one_edge.twin).target};
 }
 
 array<optional_face_handle, 2> half_edge_mesh::get_faces_of_edge(edge_handle edge_h) const
 {
     auto one_edge_h = half_edge_handle::one_half_of(edge_h);
     auto one_edge = get_e(one_edge_h);
-    return { one_edge.face, get_e(one_edge.twin).face };
+    return {one_edge.face, get_e(one_edge.twin).face};
 }
 
-optional_face_handle half_edge_mesh::get_face_of_half_edge(half_edge_handle edge_h) const {
+optional_face_handle half_edge_mesh::get_face_of_half_edge(half_edge_handle edge_h) const
+{
     auto edge = get_e(edge_h);
     return edge.face;
 }
@@ -343,7 +352,8 @@ vector<half_edge_handle> half_edge_mesh::get_half_edges_of_vertex(vertex_handle 
     return out;
 }
 
-vector<half_edge_handle> half_edge_mesh::get_half_edges_of_face(face_handle face_handle) const {
+vector<half_edge_handle> half_edge_mesh::get_half_edges_of_face(face_handle face_handle) const
+{
     vector<half_edge_handle> edges_out;
     edges_out.reserve(4);
     circulate_in_face(face_handle, [&edges_out, this](auto eh)
@@ -354,7 +364,8 @@ vector<half_edge_handle> half_edge_mesh::get_half_edges_of_face(face_handle face
     return edges_out;
 }
 
-array<half_edge_handle, 2> half_edge_mesh::get_half_edges_of_edge(edge_handle edge_h) const {
+array<half_edge_handle, 2> half_edge_mesh::get_half_edges_of_edge(edge_handle edge_h) const
+{
     half_edge_handle heh(edge_h.get_idx());
     auto twin = get_e(heh).twin;
     return {heh, twin};
@@ -396,7 +407,8 @@ optional_half_edge_handle half_edge_mesh::get_half_edge_between(face_handle ah, 
     circulate_in_face(ah, [&, this](auto eh)
     {
         auto& twin = get_e(get_e(eh).twin);
-        if (twin.face && twin.face.unwrap() == bh) {
+        if (twin.face && twin.face.unwrap() == bh)
+        {
             out = optional_half_edge_handle(eh);
             return false;
         }
@@ -406,35 +418,43 @@ optional_half_edge_handle half_edge_mesh::get_half_edge_between(face_handle ah, 
     return out;
 }
 
-void half_edge_mesh::get_neighbours_of_face(face_handle handle, vector<face_handle>& faces_out) const {
+void half_edge_mesh::get_neighbours_of_face(face_handle handle, vector<face_handle>& faces_out) const
+{
     auto inner_edges = get_half_edges_of_face(handle);
-    for (auto&& eh: inner_edges) {
+    for (auto&& eh: inner_edges)
+    {
         auto twin = get_e(get_e(eh).twin);
-        if (twin.face) {
+        if (twin.face)
+        {
             faces_out.push_back(twin.face.unwrap());
         }
     }
 }
 
-vector<face_handle> half_edge_mesh::get_neighbours_of_face(face_handle handle) const {
+vector<face_handle> half_edge_mesh::get_neighbours_of_face(face_handle handle) const
+{
     vector<face_handle> out;
     get_neighbours_of_face(handle, out);
     return out;
 }
 
-half_edge_handle half_edge_mesh::get_twin(half_edge_handle handle) const {
+half_edge_handle half_edge_mesh::get_twin(half_edge_handle handle) const
+{
     return get_e(handle).twin;
 }
 
-half_edge_handle half_edge_mesh::get_prev(half_edge_handle handle) const {
+half_edge_handle half_edge_mesh::get_prev(half_edge_handle handle) const
+{
     return get_e(handle).prev;
 }
 
-half_edge_handle half_edge_mesh::get_next(half_edge_handle handle) const {
+half_edge_handle half_edge_mesh::get_next(half_edge_handle handle) const
+{
     return get_e(handle).next;
 }
 
-vertex_handle half_edge_mesh::get_target(half_edge_handle handle) const {
+vertex_handle half_edge_mesh::get_target(half_edge_handle handle) const
+{
     return get_e(handle).target;
 }
 
@@ -442,7 +462,8 @@ vertex_handle half_edge_mesh::get_target(half_edge_handle handle) const {
 bool half_edge_mesh::is_face_insertion_valid(const vector<vertex_handle>& handles) const
 {
     // We are working with a quad mesh, so a face needs at least 4 vertices!
-    if (handles.size() < 4) {
+    if (handles.size() < 4)
+    {
         return false;
     }
 
@@ -486,7 +507,8 @@ bool half_edge_mesh::is_face_insertion_valid(const vector<vertex_handle>& handle
 //       with v0-v6? Search for more edge cases!
 optional_face_handle half_edge_mesh::get_face_between(const vector<vertex_handle>& handles) const
 {
-    if (handles.size() < 4) {
+    if (handles.size() < 4)
+    {
         panic("too few vertex handles! A face in a quad mesh needs at least four vertices!");
     }
 
@@ -575,8 +597,7 @@ optional_half_edge_handle half_edge_mesh::edge_between(vertex_handle from_h, ver
     if (ingoing_edge)
     {
         return optional_half_edge_handle(get_e(ingoing_edge.unwrap()).twin);
-    }
-    else
+    } else
     {
         return optional_half_edge_handle();
     }
@@ -588,8 +609,7 @@ half_edge_handle half_edge_mesh::find_or_create_edge_between(vertex_handle from_
     if (found_edge)
     {
         return found_edge.unwrap();
-    }
-    else
+    } else
     {
         return add_edge_pair(from_h, to_h).first;
     }
@@ -625,7 +645,8 @@ pair<half_edge_handle, half_edge_handle> half_edge_mesh::add_edge_pair(vertex_ha
     return std::make_pair(ah, bh);
 }
 
-half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per_edge, bool tjoints) {
+half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per_edge, bool tjoints)
+{
     // TODO: refactor code to methods (remove duplicate code) and use x_vertices.size()
 
     half_edge_mesh out;
@@ -636,8 +657,10 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     // Create vertices
     vector<vertex_handle> front_vertices;
     front_vertices.reserve(vertices_per_edge * vertices_per_edge);
-    for (uint32_t x = 0; x < vertices_per_edge; ++x) {
-        for (uint32_t z = 0; z < vertices_per_edge; ++z) {
+    for (uint32_t x = 0; x < vertices_per_edge; ++x)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge; ++z)
+        {
             auto vh = out.add_vertex(
                 vec3(
                     static_cast<float>(x * edge_length),
@@ -650,11 +673,14 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     }
 
     // Create faces
-    for (uint32_t x = 0; x < vertices_per_edge - 1; ++x) {
-        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
+    for (uint32_t x = 0; x < vertices_per_edge - 1; ++x)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+        {
 
             // Add T-Joint
-            if (x == 2 && z == 2 && tjoints) {
+            if (x == 2 && z == 2 && tjoints)
+            {
                 auto bottom_right_1 = ((x + 1) * vertices_per_edge) + z;
                 auto bottom_right_2 = ((x + 2) * vertices_per_edge) + z;
                 auto top_right_1 = bottom_right_1 + 1;
@@ -662,17 +688,21 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
                 auto top_left = (x * vertices_per_edge) + (z + 1);
                 auto bottom_left = top_left - 1;
 
-                auto tmp = out.add_face({
-                                 front_vertices[top_left],
-                                 front_vertices[bottom_left],
-                                 front_vertices[bottom_right_1],
-                                 front_vertices[bottom_right_2],
-                                 front_vertices[top_right_2],
-                                 front_vertices[top_right_1]
-                             });
-            } else if (x == 3 && z == 2 && tjoints) {
+                auto tmp = out.add_face(
+                    {
+                        front_vertices[top_left],
+                        front_vertices[bottom_left],
+                        front_vertices[bottom_right_1],
+                        front_vertices[bottom_right_2],
+                        front_vertices[top_right_2],
+                        front_vertices[top_right_1]
+                    }
+                );
+            } else if (x == 3 && z == 2 && tjoints)
+            {
 
-            } else if (x == 1 && z == 1 && tjoints) {
+            } else if (x == 1 && z == 1 && tjoints)
+            {
                 auto bottom_right_1 = ((x + 1) * vertices_per_edge) + z;
                 auto bottom_right_2 = bottom_right_1 + 1;
                 auto top_right = bottom_right_2 + 1;
@@ -680,29 +710,35 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
                 auto bottom_left_2 = bottom_left_1 + 1;
                 auto top_left = bottom_left_2 + 1;
 
-                auto tmp = out.add_face({
-                                            front_vertices[bottom_left_1],
-                                            front_vertices[bottom_right_1],
-                                            front_vertices[bottom_right_2],
-                                            front_vertices[top_right],
-                                            front_vertices[top_left],
-                                            front_vertices[bottom_left_2]
-                                        });
-            } else if (x == 1 && z == 2 && tjoints) {
+                auto tmp = out.add_face(
+                    {
+                        front_vertices[bottom_left_1],
+                        front_vertices[bottom_right_1],
+                        front_vertices[bottom_right_2],
+                        front_vertices[top_right],
+                        front_vertices[top_left],
+                        front_vertices[bottom_left_2]
+                    }
+                );
+            } else if (x == 1 && z == 2 && tjoints)
+            {
 
-            } else {
+            } else
+            {
                 // Current vertex
                 auto bottom_right = ((x + 1) * vertices_per_edge) + z;
                 auto top_right = bottom_right + 1;
                 auto top_left = (x * vertices_per_edge) + (z + 1);
                 auto bottom_left = top_left - 1;
 
-                out.add_face({
-                                 front_vertices[bottom_right],
-                                 front_vertices[top_right],
-                                 front_vertices[top_left],
-                                 front_vertices[bottom_left]
-                             });
+                out.add_face(
+                    {
+                        front_vertices[bottom_right],
+                        front_vertices[top_right],
+                        front_vertices[top_left],
+                        front_vertices[bottom_left]
+                    }
+                );
             };
         }
     }
@@ -714,8 +750,10 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     // Create vertices
     vector<vertex_handle> left_vertices;
     left_vertices.reserve((vertices_per_edge - 1) * vertices_per_edge);
-    for (uint32_t y = 1; y < vertices_per_edge; ++y) {
-        for (uint32_t z = 0; z < vertices_per_edge; ++z) {
+    for (uint32_t y = 1; y < vertices_per_edge; ++y)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge; ++z)
+        {
             auto vh = out.add_vertex(
                 vec3(
                     static_cast<float>(0),
@@ -728,30 +766,37 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     }
 
     // Add front connected faces
-    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
-        out.add_face({
-             front_vertices[z],
-             front_vertices[z + 1],
-             left_vertices[z + 1],
-             left_vertices[z]
-         });
+    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+    {
+        out.add_face(
+            {
+                front_vertices[z],
+                front_vertices[z + 1],
+                left_vertices[z + 1],
+                left_vertices[z]
+            }
+        );
     }
 
     // Create faces
-    for (uint32_t y = 0; y < vertices_per_edge - 2; ++y) {
-        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
+    for (uint32_t y = 0; y < vertices_per_edge - 2; ++y)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+        {
             // Current vertex
             auto top_right = (y * vertices_per_edge) + (z + 1);
             auto bottom_right = top_right - 1;
             auto bottom_left = ((y + 1) * vertices_per_edge) + z;
             auto top_left = bottom_left + 1;
 
-            out.add_face({
-                 left_vertices[bottom_right],
-                 left_vertices[top_right],
-                 left_vertices[top_left],
-                 left_vertices[bottom_left]
-             });
+            out.add_face(
+                {
+                    left_vertices[bottom_right],
+                    left_vertices[top_right],
+                    left_vertices[top_left],
+                    left_vertices[bottom_left]
+                }
+            );
         }
     }
 
@@ -762,8 +807,10 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     // Create vertices
     vector<vertex_handle> back_vertices;
     back_vertices.reserve((vertices_per_edge - 1) * vertices_per_edge);
-    for (uint32_t x = 1; x < vertices_per_edge; ++x) {
-        for (uint32_t z = 0; z < vertices_per_edge; ++z) {
+    for (uint32_t x = 1; x < vertices_per_edge; ++x)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge; ++z)
+        {
             auto vh = out.add_vertex(
                 vec3(
                     static_cast<float>(x * edge_length),
@@ -776,30 +823,37 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     }
 
     // Add left connected faces
-    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
-        out.add_face({
-             left_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z],
-             left_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z + 1],
-             back_vertices[z + 1],
-             back_vertices[z]
-         });
+    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+    {
+        out.add_face(
+            {
+                left_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z],
+                left_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z + 1],
+                back_vertices[z + 1],
+                back_vertices[z]
+            }
+        );
     }
 
     // Create faces
-    for (uint32_t x = 0; x < vertices_per_edge - 2; ++x) {
-        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
+    for (uint32_t x = 0; x < vertices_per_edge - 2; ++x)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+        {
             // Current vertex
             auto top_right = (x * vertices_per_edge) + (z + 1);
             auto bottom_right = top_right - 1;
             auto bottom_left = ((x + 1) * vertices_per_edge) + z;
             auto top_left = bottom_left + 1;
 
-            out.add_face({
-                 back_vertices[bottom_right],
-                 back_vertices[top_right],
-                 back_vertices[top_left],
-                 back_vertices[bottom_left]
-             });
+            out.add_face(
+                {
+                    back_vertices[bottom_right],
+                    back_vertices[top_right],
+                    back_vertices[top_left],
+                    back_vertices[bottom_left]
+                }
+            );
         }
     }
 
@@ -810,8 +864,10 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     // Create vertices
     vector<vertex_handle> right_vertices;
     right_vertices.reserve((vertices_per_edge - 2) * vertices_per_edge);
-    for (uint32_t y = 1; y < vertices_per_edge - 1; ++y) {
-        for (uint32_t z = 0; z < vertices_per_edge; ++z) {
+    for (uint32_t y = 1; y < vertices_per_edge - 1; ++y)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge; ++z)
+        {
             auto vh = out.add_vertex(
                 vec3(
                     static_cast<float>((vertices_per_edge - 1) * edge_length),
@@ -824,41 +880,51 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     }
 
     // Add back connected faces
-    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
-        out.add_face({
-             back_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z],
-             back_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z + 1],
-             right_vertices[((vertices_per_edge - 3) * vertices_per_edge) + z + 1],
-             right_vertices[((vertices_per_edge - 3) * vertices_per_edge) + z]
-         });
+    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+    {
+        out.add_face(
+            {
+                back_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z],
+                back_vertices[((vertices_per_edge - 2) * vertices_per_edge) + z + 1],
+                right_vertices[((vertices_per_edge - 3) * vertices_per_edge) + z + 1],
+                right_vertices[((vertices_per_edge - 3) * vertices_per_edge) + z]
+            }
+        );
     }
 
     // Create faces
-    for (uint32_t y = 0; y < vertices_per_edge - 3; ++y) {
-        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
+    for (uint32_t y = 0; y < vertices_per_edge - 3; ++y)
+    {
+        for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+        {
             // Current vertex
             auto top_right = ((y + 1) * vertices_per_edge) + (z + 1);
             auto bottom_right = top_right - 1;
             auto bottom_left = (y * vertices_per_edge) + z;
             auto top_left = bottom_left + 1;
 
-            out.add_face({
-                 right_vertices[bottom_right],
-                 right_vertices[top_right],
-                 right_vertices[top_left],
-                 right_vertices[bottom_left]
-             });
+            out.add_face(
+                {
+                    right_vertices[bottom_right],
+                    right_vertices[top_right],
+                    right_vertices[top_left],
+                    right_vertices[bottom_left]
+                }
+            );
         }
     }
 
     // Add front connected faces
-    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z) {
-        out.add_face({
-             right_vertices[z],
-             right_vertices[z + 1],
-             front_vertices[((vertices_per_edge - 1) * vertices_per_edge) + z + 1],
-             front_vertices[((vertices_per_edge - 1) * vertices_per_edge) + z]
-         });
+    for (uint32_t z = 0; z < vertices_per_edge - 1; ++z)
+    {
+        out.add_face(
+            {
+                right_vertices[z],
+                right_vertices[z + 1],
+                front_vertices[((vertices_per_edge - 1) * vertices_per_edge) + z + 1],
+                front_vertices[((vertices_per_edge - 1) * vertices_per_edge) + z]
+            }
+        );
     }
 
     // =============================
@@ -868,8 +934,10 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     // Create vertices
     vector<vertex_handle> top_vertices;
     top_vertices.reserve((vertices_per_edge - 2) * (vertices_per_edge - 2));
-    for (uint32_t x = 1; x < vertices_per_edge - 1; ++x) {
-        for (uint32_t y = 1; y < vertices_per_edge - 1; ++y) {
+    for (uint32_t x = 1; x < vertices_per_edge - 1; ++x)
+    {
+        for (uint32_t y = 1; y < vertices_per_edge - 1; ++y)
+        {
             auto vh = out.add_vertex(
                 vec3(
                     static_cast<float>(x * edge_length),
@@ -882,86 +950,108 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     }
 
     // Create faces
-    for (uint32_t x = 0; x < vertices_per_edge - 3; ++x) {
-        for (uint32_t y = 0; y < vertices_per_edge - 3; ++y) {
+    for (uint32_t x = 0; x < vertices_per_edge - 3; ++x)
+    {
+        for (uint32_t y = 0; y < vertices_per_edge - 3; ++y)
+        {
             // Current vertex
             auto bottom_right = ((x + 1) * (vertices_per_edge - 2)) + y;
             auto top_right = bottom_right + 1;
             auto bottom_left = (x * (vertices_per_edge - 2)) + y;
             auto top_left = bottom_left + 1;
 
-            out.add_face({
-                 top_vertices[bottom_right],
-                 top_vertices[top_right],
-                 top_vertices[top_left],
-                 top_vertices[bottom_left]
-             });
+            out.add_face(
+                {
+                    top_vertices[bottom_right],
+                    top_vertices[top_right],
+                    top_vertices[top_left],
+                    top_vertices[bottom_left]
+                }
+            );
         }
     }
 
     // Add front and back connected faces
-    for (uint32_t x = 1; x < vertices_per_edge - 2; ++x) {
+    for (uint32_t x = 1; x < vertices_per_edge - 2; ++x)
+    {
         // front connected
-        out.add_face({
-             front_vertices[x * (vertices_per_edge) + (vertices_per_edge - 1)],
-             front_vertices[(x + 1) * (vertices_per_edge) + (vertices_per_edge - 1)],
-             top_vertices[x * (vertices_per_edge - 2)],
-             top_vertices[(x - 1) * (vertices_per_edge - 2)]
-         });
+        out.add_face(
+            {
+                front_vertices[x * (vertices_per_edge) + (vertices_per_edge - 1)],
+                front_vertices[(x + 1) * (vertices_per_edge) + (vertices_per_edge - 1)],
+                top_vertices[x * (vertices_per_edge - 2)],
+                top_vertices[(x - 1) * (vertices_per_edge - 2)]
+            }
+        );
 
         // back connected
-        out.add_face({
-            top_vertices[(x - 1) * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
-            top_vertices[x * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
-            back_vertices[(x * vertices_per_edge) + (vertices_per_edge - 1)],
-            back_vertices[((x - 1) * vertices_per_edge) + (vertices_per_edge - 1)]
-        });
+        out.add_face(
+            {
+                top_vertices[(x - 1) * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
+                top_vertices[x * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
+                back_vertices[(x * vertices_per_edge) + (vertices_per_edge - 1)],
+                back_vertices[((x - 1) * vertices_per_edge) + (vertices_per_edge - 1)]
+            }
+        );
     }
 
     // Add left and right connected faces
-    for (uint32_t y = 1; y < vertices_per_edge - 2; ++y) {
+    for (uint32_t y = 1; y < vertices_per_edge - 2; ++y)
+    {
         // left connected
-        out.add_face({
-            left_vertices[y * (vertices_per_edge) + (vertices_per_edge - 1)],
-            left_vertices[(y - 1) * (vertices_per_edge) + (vertices_per_edge - 1)],
-            top_vertices[y - 1],
-            top_vertices[y]
-        });
+        out.add_face(
+            {
+                left_vertices[y * (vertices_per_edge) + (vertices_per_edge - 1)],
+                left_vertices[(y - 1) * (vertices_per_edge) + (vertices_per_edge - 1)],
+                top_vertices[y - 1],
+                top_vertices[y]
+            }
+        );
 
         // right connected
-        out.add_face({
-            top_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + y)],
-            top_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + (y - 1))],
-            right_vertices[((y - 1) * vertices_per_edge) + (vertices_per_edge - 1)],
-            right_vertices[(y * vertices_per_edge) + (vertices_per_edge - 1)]
-        });
+        out.add_face(
+            {
+                top_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + y)],
+                top_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + (y - 1))],
+                right_vertices[((y - 1) * vertices_per_edge) + (vertices_per_edge - 1)],
+                right_vertices[(y * vertices_per_edge) + (vertices_per_edge - 1)]
+            }
+        );
     }
 
     // Add missing faces in corners
-    out.add_face({
-        front_vertices[vertices_per_edge - 1],
-        front_vertices[(2 * vertices_per_edge) - 1],
-        top_vertices[0],
-        left_vertices[vertices_per_edge - 1]
-    });
-    out.add_face({
-        left_vertices[((vertices_per_edge - 1) * vertices_per_edge) - 1],
-        left_vertices[((vertices_per_edge - 2) * vertices_per_edge) - 1],
-        top_vertices[vertices_per_edge - 3],
-        back_vertices[vertices_per_edge - 1]
-    });
-    out.add_face({
-        back_vertices[((vertices_per_edge - 1) * vertices_per_edge) - 1],
-        back_vertices[((vertices_per_edge - 2) * vertices_per_edge) - 1],
-        top_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 2)) - 1],
-        right_vertices[((vertices_per_edge - 2) * vertices_per_edge) - 1]
-    });
-    out.add_face({
-        front_vertices[((vertices_per_edge - 1) * vertices_per_edge) - 1],
-        front_vertices[((vertices_per_edge) * vertices_per_edge) - 1],
-        right_vertices[vertices_per_edge - 1],
-        top_vertices[((vertices_per_edge - 3) * (vertices_per_edge - 2))]
-    });
+    out.add_face(
+        {
+            front_vertices[vertices_per_edge - 1],
+            front_vertices[(2 * vertices_per_edge) - 1],
+            top_vertices[0],
+            left_vertices[vertices_per_edge - 1]
+        }
+    );
+    out.add_face(
+        {
+            left_vertices[((vertices_per_edge - 1) * vertices_per_edge) - 1],
+            left_vertices[((vertices_per_edge - 2) * vertices_per_edge) - 1],
+            top_vertices[vertices_per_edge - 3],
+            back_vertices[vertices_per_edge - 1]
+        }
+    );
+    out.add_face(
+        {
+            back_vertices[((vertices_per_edge - 1) * vertices_per_edge) - 1],
+            back_vertices[((vertices_per_edge - 2) * vertices_per_edge) - 1],
+            top_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 2)) - 1],
+            right_vertices[((vertices_per_edge - 2) * vertices_per_edge) - 1]
+        }
+    );
+    out.add_face(
+        {
+            front_vertices[((vertices_per_edge - 1) * vertices_per_edge) - 1],
+            front_vertices[((vertices_per_edge) * vertices_per_edge) - 1],
+            right_vertices[vertices_per_edge - 1],
+            top_vertices[((vertices_per_edge - 3) * (vertices_per_edge - 2))]
+        }
+    );
 
     // =============================
     // Bottom side
@@ -970,8 +1060,10 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     // Create vertices
     vector<vertex_handle> bottom_vertices;
     bottom_vertices.reserve((vertices_per_edge - 2) * (vertices_per_edge - 2));
-    for (uint32_t x = 1; x < vertices_per_edge - 1; ++x) {
-        for (uint32_t y = 1; y < vertices_per_edge - 1; ++y) {
+    for (uint32_t x = 1; x < vertices_per_edge - 1; ++x)
+    {
+        for (uint32_t y = 1; y < vertices_per_edge - 1; ++y)
+        {
             auto vh = out.add_vertex(
                 vec3(
                     static_cast<float>(x * edge_length),
@@ -984,86 +1076,108 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
     }
 
     // Create faces
-    for (uint32_t x = 0; x < vertices_per_edge - 3; ++x) {
-        for (uint32_t y = 0; y < vertices_per_edge - 3; ++y) {
+    for (uint32_t x = 0; x < vertices_per_edge - 3; ++x)
+    {
+        for (uint32_t y = 0; y < vertices_per_edge - 3; ++y)
+        {
             // Current vertex
             auto bottom_right = ((x + 1) * (vertices_per_edge - 2)) + (y + 1);
             auto top_right = bottom_right - 1;
             auto bottom_left = (x * (vertices_per_edge - 2)) + (y + 1);
             auto top_left = bottom_left - 1;
 
-            out.add_face({
-                 bottom_vertices[bottom_right],
-                 bottom_vertices[top_right],
-                 bottom_vertices[top_left],
-                 bottom_vertices[bottom_left]
-             });
+            out.add_face(
+                {
+                    bottom_vertices[bottom_right],
+                    bottom_vertices[top_right],
+                    bottom_vertices[top_left],
+                    bottom_vertices[bottom_left]
+                }
+            );
         }
     }
 
     // Add front and back connected faces
-    for (uint32_t x = 1; x < vertices_per_edge - 2; ++x) {
+    for (uint32_t x = 1; x < vertices_per_edge - 2; ++x)
+    {
         // front connected
-        out.add_face({
-            front_vertices[(x + 1) * (vertices_per_edge)],
-            front_vertices[x * (vertices_per_edge)],
-            bottom_vertices[(x - 1) * (vertices_per_edge - 2)],
-            bottom_vertices[x * (vertices_per_edge - 2)]
-        });
+        out.add_face(
+            {
+                front_vertices[(x + 1) * (vertices_per_edge)],
+                front_vertices[x * (vertices_per_edge)],
+                bottom_vertices[(x - 1) * (vertices_per_edge - 2)],
+                bottom_vertices[x * (vertices_per_edge - 2)]
+            }
+        );
 
         // back connected
-        out.add_face({
-            bottom_vertices[x * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
-            bottom_vertices[(x - 1) * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
-            back_vertices[((x - 1) * vertices_per_edge)],
-            back_vertices[(x * vertices_per_edge)]
-        });
+        out.add_face(
+            {
+                bottom_vertices[x * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
+                bottom_vertices[(x - 1) * (vertices_per_edge - 2) + (vertices_per_edge - 3)],
+                back_vertices[((x - 1) * vertices_per_edge)],
+                back_vertices[(x * vertices_per_edge)]
+            }
+        );
     }
 
     // Add left and right connected faces
-    for (uint32_t y = 1; y < vertices_per_edge - 2; ++y) {
+    for (uint32_t y = 1; y < vertices_per_edge - 2; ++y)
+    {
         // left connected
-        out.add_face({
-            left_vertices[(y - 1) * (vertices_per_edge)],
-            left_vertices[y * (vertices_per_edge)],
-            bottom_vertices[y],
-            bottom_vertices[y - 1]
-        });
+        out.add_face(
+            {
+                left_vertices[(y - 1) * (vertices_per_edge)],
+                left_vertices[y * (vertices_per_edge)],
+                bottom_vertices[y],
+                bottom_vertices[y - 1]
+            }
+        );
 
         // right connected
-        out.add_face({
-            bottom_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + (y - 1))],
-            bottom_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + y)],
-            right_vertices[(y * vertices_per_edge)],
-            right_vertices[((y - 1) * vertices_per_edge)]
-        });
+        out.add_face(
+            {
+                bottom_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + (y - 1))],
+                bottom_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 3) + y)],
+                right_vertices[(y * vertices_per_edge)],
+                right_vertices[((y - 1) * vertices_per_edge)]
+            }
+        );
     }
 
     // Add missing faces in corners
-    out.add_face({
-        front_vertices[vertices_per_edge],
-        front_vertices[0],
-        left_vertices[0],
-        bottom_vertices[0]
-    });
-    out.add_face({
-        left_vertices[((vertices_per_edge - 3) * vertices_per_edge)],
-        left_vertices[((vertices_per_edge - 2) * vertices_per_edge)],
-        back_vertices[0],
-        bottom_vertices[vertices_per_edge - 3]
-    });
-    out.add_face({
-        back_vertices[((vertices_per_edge - 3) * vertices_per_edge)],
-        back_vertices[((vertices_per_edge - 2) * vertices_per_edge)],
-        right_vertices[((vertices_per_edge - 3) * vertices_per_edge)],
-        bottom_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 2)) - 1]
-    });
-    out.add_face({
-        front_vertices[((vertices_per_edge - 1) * vertices_per_edge)],
-        front_vertices[((vertices_per_edge - 2) * vertices_per_edge)],
-        bottom_vertices[((vertices_per_edge - 3) * (vertices_per_edge - 2))],
-        right_vertices[0]
-    });
+    out.add_face(
+        {
+            front_vertices[vertices_per_edge],
+            front_vertices[0],
+            left_vertices[0],
+            bottom_vertices[0]
+        }
+    );
+    out.add_face(
+        {
+            left_vertices[((vertices_per_edge - 3) * vertices_per_edge)],
+            left_vertices[((vertices_per_edge - 2) * vertices_per_edge)],
+            back_vertices[0],
+            bottom_vertices[vertices_per_edge - 3]
+        }
+    );
+    out.add_face(
+        {
+            back_vertices[((vertices_per_edge - 3) * vertices_per_edge)],
+            back_vertices[((vertices_per_edge - 2) * vertices_per_edge)],
+            right_vertices[((vertices_per_edge - 3) * vertices_per_edge)],
+            bottom_vertices[((vertices_per_edge - 2) * (vertices_per_edge - 2)) - 1]
+        }
+    );
+    out.add_face(
+        {
+            front_vertices[((vertices_per_edge - 1) * vertices_per_edge)],
+            front_vertices[((vertices_per_edge - 2) * vertices_per_edge)],
+            bottom_vertices[((vertices_per_edge - 3) * (vertices_per_edge - 2))],
+            right_vertices[0]
+        }
+    );
 
     return out;
 }
