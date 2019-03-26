@@ -481,12 +481,16 @@ void window::draw_gui() {
             ImGui::Text("- prev: %u", tmesh.mesh.get_prev(eh).get_idx());
             ImGui::Text("- twin: %u", tmesh.mesh.get_twin(eh).get_idx());
             ImGui::Text("- target: %u", tmesh.mesh.get_target(eh).get_idx());
+            ImGui::Text("- face: %u", tmesh.mesh.get_face_of_half_edge(eh).unwrap().get_idx());
 
             ImGui::Text("tmesh data");
             ImGui::Text("- points into face corner: %s", tmesh.corners[eh] ? "true" : "false");
             ImGui::Text("- knot interval: %.2f", tmesh.knots[eh]);
             ImGui::Text("- local coords (uv) of vertex for current half edge: (%.0f, %.0f)", tmesh.uv[eh].x, tmesh.uv[eh].y);
             ImGui::Text("- direction (dir) of vertex for current half edge: %u", tmesh.dir[eh]);
+
+            auto& trans = tmesh.edge_transitions[eh];
+            ImGui::Text("- transition: scale: %.2f, rotate: %u, translate: (%.2f, %.2f)", trans.f, trans.r, trans.t.x, trans.t.y);
         };
 
         ImGui::Begin("Selected element");
