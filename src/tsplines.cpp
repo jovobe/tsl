@@ -8,6 +8,7 @@
 
 using std::queue;
 using std::min;
+using std::max;
 using std::get;
 
 namespace tsl {
@@ -823,6 +824,21 @@ uint32_t tmesh::get_extended_valence(const vertex_handle handle) const {
 
 bool tmesh::is_extraordinary(const vertex_handle handle) const {
     return get_extended_valence(handle) != 4;
+}
+
+vec2 tmesh::get_local_max_coordinates(const face_handle& handle) const {
+    auto inner_half_edges = mesh.get_half_edges_of_face(handle);
+    vec2 out(0, 0);
+    for (auto&& eh: inner_half_edges) {
+        // Check u direction
+        if (dir[eh] % 2 == 0) {
+            out.x = max(out.x, uv[eh].x);
+        } else {
+            // Check v direction
+            out.y = max(out.y, uv[eh].y);
+        }
+    }
+    return out;
 }
 
 vec2 rotate(uint8_t times, const vec2& vec) {

@@ -144,6 +144,11 @@ struct tmesh {
     uint32_t get_extended_valence(const vertex_handle handle) const;
     bool is_extraordinary(const vertex_handle handle) const;
 
+    /**
+     * @brief The max u and v coordinates for the local system of the given face returned as (u, v).
+     */
+    vec2 get_local_max_coordinates(const face_handle& handle) const;
+
     vector<regular_grid> get_grids(uint32_t resolution) const;
     regular_grid get_grid(uint32_t resolution) const;
     vec3 get_surface_point_of_face(float u, float v, face_handle f) const;
