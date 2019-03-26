@@ -559,10 +559,9 @@ aa_rectangle tmesh::get_parametric_domain(
     auto [nh, nq] = handles.at(neighbouring_index);
     auto nface_h = mesh.get_face_of_half_edge(nh).expect(EXPECT_NO_BORDER);
 
-    float scale_factor = 1.0f;
-
     // Only calc the scale factor, if we are NOT at a t-joint
-    if (nq == tag::positive_u) {
+    float scale_factor = 1.0f;
+    if (face_h != nface_h) {
         auto separating_edge = mesh.get_half_edge_between(face_h, nface_h).expect(EXPECT_NO_BORDER);
         scale_factor = fac(separating_edge);
     }
@@ -788,7 +787,7 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
 
     // Get transformation from values from hindex + 1 into domain of handle
     float transform_01 = 1.0f;
-    if (tag1 == tag::positive_u) {
+    if (face_h0 != face_h1) {
         auto edge_bewteen_0_and1 = mesh.get_half_edge_between(face_h0, face_h1).expect(EXPECT_NO_BORDER);
         transform_01 = fac(edge_bewteen_0_and1);
     }
@@ -799,7 +798,7 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
 
     // Get transformation from values from hindex - 1 into domain of handle
     float transform_0_1 = 1.0f;
-    if (tag_1 == tag::positive_u) {
+    if (face_h0 != face_h_1) {
         auto edge_bewteen_0_and_1 = mesh.get_half_edge_between(face_h0, face_h_1).expect(EXPECT_NO_BORDER);
         transform_0_1 = fac(edge_bewteen_0_and_1);
     }
@@ -811,7 +810,7 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
     // For the transition from index - 2 into domain of handle we need two transitions: -2 to -1 and -1 to handle
     // Get transformation from values from hindex - 2 into index - 1
     float transform__1_2 = 1.0f;
-    if (tag_2 == tag::positive_u) {
+    if (face_h_1 != face_h_2) {
         auto edge_bewteen__1_and_2 = mesh.get_half_edge_between(face_h_1, face_h_2).expect(EXPECT_NO_BORDER);
         transform__1_2 = fac(edge_bewteen__1_and_2);
     }
