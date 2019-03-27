@@ -37,6 +37,7 @@ public:
     picking_map() : next(1) {}
     uint32_t add_object(object_type type, base_handle<index> handle);
     optional<reference_wrapper<const picking_element>> get_object(uint32_t idx) const;
+    void clear();
 };
 
 }

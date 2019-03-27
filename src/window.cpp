@@ -45,8 +45,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     wireframe_mode(false),
     control_mode(true),
     surface_mode(true),
-    surface_resolution(1),
-    slider_resolution(1)
+    surface_resolution(1)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -170,8 +169,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     //    tmesh = tsplines::get_example_data_1();
     tmesh = tsplines::get_example_data_2(5);
 
-    update_surface_buffer();
-    update_control_buffer();
+    update_buffer();
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -222,15 +220,11 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                 // TODO: switch to keyboard layout independent version! (use `glfwSetCharCallback`)
                 case GLFW_KEY_RIGHT_BRACKET:
                     surface_resolution.increment();
-                    slider_resolution += 1;
-                    update_surface_buffer();
+                    update_buffer();
                     break;
                 case GLFW_KEY_SLASH:
                     surface_resolution.decrement();
-                    if (slider_resolution > 1) {
-                        slider_resolution -= 1;
-                    }
-                    update_surface_buffer();
+                    update_buffer();
                     break;
                 default:
                     break;
@@ -407,9 +401,11 @@ void window::draw_gui() {
         ImGui::Checkbox("Show control polygon", &control_mode);
         ImGui::Checkbox("Show surface", &surface_mode);
 
-        if (ImGui::SliderInt("Resolution", &slider_resolution, 1, 40)) {
-            surface_resolution.set(static_cast<uint32_t>(slider_resolution));
-            update_surface_buffer();
+        if (ImGui::InputInt("Resolution", (int*) surface_resolution.data(), 1, 1)) {
+            if (surface_resolution.get() < 1) {
+                surface_resolution.set(1);
+            }
+            update_buffer();
         }
 
         auto& app = application::get_instance();
@@ -736,7 +732,6 @@ window& window::operator=(window&& window) noexcept {
     surface_mode = exchange(window.surface_mode, false);
     surface_buffer = move(window.surface_buffer);
     surface_resolution = move(window.surface_resolution);
-    slider_resolution = exchange(window.slider_resolution, 0);
     tmesh = move(window.tmesh);
     camera = move(window.camera);
     request_pick = move(window.request_pick);
@@ -757,7 +752,10 @@ mouse_pos window::get_mouse_pos() const {
     return mouse_pos(x_pos, y_pos);
 }
 
-void window::load_surface_data_to_gpu() const {
+void window::update_surface_buffer() {
+    auto grids = tmesh.get_grids(surface_resolution.get());
+    surface_buffer = get_multi_render_buffer(grids, picking_map);
+
     auto vec_data = surface_buffer.get_combined_vec_data();
 
     glBindVertexArray(surface_vertex_array);
@@ -787,16 +785,6 @@ void window::load_surface_data_to_gpu() const {
     auto surface_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(surface_picking_program, "picking_id_in"));
     glVertexAttribIPointer(surface_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
     glEnableVertexAttribArray(surface_picking_vpicking_id_location);
-}
-
-void window::update_surface_buffer() {
-    // TODO: Get real resolution
-    auto grids = tmesh.get_grids(20);
-
-    // TODO: fix picking map! here the data in the picking map is modified, which will result in invalid data
-    surface_buffer = get_multi_render_buffer(grids, picking_map);
-
-    load_surface_data_to_gpu();
 }
 
 void window::update_control_buffer() {
@@ -854,6 +842,13 @@ void window::update_control_buffer() {
     auto control_vertrex_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(vertex_picking_program, "picking_id_in"));
     glVertexAttribIPointer(control_vertrex_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
     glEnableVertexAttribArray(control_vertrex_picking_vpicking_id_location);
+}
+
+void window::update_buffer()
+{
+    picking_map.clear();
+    update_surface_buffer();
+    update_control_buffer();
 }
 
 }

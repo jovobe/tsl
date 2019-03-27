@@ -64,8 +64,6 @@ private:
     // Pointer to glfw window. If this points to nullptr, the window was moved.
     GLFWwindow* glfw_window;
 
-    int slider_resolution;
-
     // picking stuff
     class picking_map picking_map;
     GLuint vertex_picking_program;
@@ -110,9 +108,9 @@ private:
 //    friend void application::create_window(string title, uint32_t width, uint32_t height);
     friend class application;
 
-    void load_surface_data_to_gpu() const;
-    void update_surface_buffer();
+    void update_buffer();
 
+    void update_surface_buffer();
     void update_control_buffer();
 
     void update_texture_sizes() const;

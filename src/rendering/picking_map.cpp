@@ -19,4 +19,9 @@ optional<reference_wrapper<const picking_element>> picking_map::get_object(uint3
     }
 }
 
+void picking_map::clear()
+{
+    map.clear();
+}
+
 }

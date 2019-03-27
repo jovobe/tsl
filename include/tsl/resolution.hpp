@@ -6,14 +6,15 @@ namespace tsl {
 template<typename T>
 class resolution {
 public:
-    explicit resolution(T start) : data(start) {};
+    explicit resolution(T start) : val(start) {};
     void increment();
     void decrement();
     T get() const;
     void set(T val);
+    T* data();
 
 private:
-    T data;
+    T val;
 };
 
 }
