@@ -106,7 +106,7 @@ nubs nubs::get_example_data_4() {
 }
 
 regular_grid nubs::get_grid(uint32_t resolution) const {
-    regular_grid out;
+    regular_grid out(face_handle(0));
     auto u_max = resolution * x;
     auto v_max = resolution * y;
     out.points.reserve(v_max);

@@ -52,7 +52,7 @@ struct nubs {
     // m: y + 1
     uint32_t m;
 
-    nubs() : p(0), q(0), U(), V(), P(), x(), y(), n(), m() {};
+    nubs() : p(0), q(0), U(), V(), P(face_handle(0)), x(), y(), n(), m() {};
 
     regular_grid get_grid(uint32_t resolution) const;
     vec3 get_surface_point(float u, float v) const;

@@ -124,8 +124,11 @@ window::window(string title, uint32_t width, uint32_t height) :
 
     auto vertex_shader = create_shader("shader/vertex.glsl", GL_VERTEX_SHADER);
     auto fragment_shader = create_shader("shader/fragment.glsl", GL_FRAGMENT_SHADER);
+
     auto vertex_picking_shader = create_shader("shader/picking/vertex.glsl", GL_VERTEX_SHADER);
+    auto vertex_wogeom_picking_shader = create_shader("shader/picking/vertex_without_geometry.glsl", GL_VERTEX_SHADER);
     auto fragment_picking_shader = create_shader("shader/picking/fragment.glsl", GL_FRAGMENT_SHADER);
+
     auto edge_geometry_shader = create_shader("shader/polygon/geometry.glsl", GL_GEOMETRY_SHADER);
     auto vertex_geometry_shader = create_shader("shader/vertex/geometry.glsl", GL_GEOMETRY_SHADER);
 
@@ -137,6 +140,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     edge_picking_program = create_program({vertex_picking_shader, fragment_picking_shader, edge_geometry_shader});
     vertex_picking_program = create_program({vertex_picking_shader, fragment_picking_shader, vertex_geometry_shader});
     phong_program = create_program({phong_vertex_shader, phong_fragment_shader});
+    surface_picking_program = create_program({vertex_wogeom_picking_shader, fragment_picking_shader});
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
@@ -146,6 +150,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(vertex_geometry_shader);
     glDeleteShader(phong_vertex_shader);
     glDeleteShader(phong_fragment_shader);
+    glDeleteShader(vertex_wogeom_picking_shader);
 
 //    tmesh = tsplines::get_example_data_1();
     tmesh = tsplines::get_example_data_2(5);
@@ -153,6 +158,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     control_vertices_buffer = get_vertices_buffer(tmesh.mesh, picking_map);
 
     // surface
+    glGenVertexArrays(1, &surface_picking_vertex_array);
     glGenVertexArrays(1, &surface_vertex_array);
     glGenBuffers(1, &surface_vertex_buffer);
     glGenBuffers(1, &surface_index_buffer);
@@ -416,7 +422,7 @@ void window::picking_phase(const mat4& model, const mat4& vp) {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (surface_mode) {
-//        draw_surface(model, vp);
+        draw_surface_picking(model, vp);
     }
     if (control_mode) {
         draw_control_polygon_picking(model, vp);
@@ -473,22 +479,30 @@ void window::draw_gui() {
         ImGui::SetNextWindowSizeConstraints(ImVec2(picked_elem_window_width, 100), ImVec2(width, height));
 
         auto draw_edge_information = [&] (const half_edge_handle& eh) {
-            ImGui::Text("geometry data");
-            ImGui::Text("- id: %u", eh.get_idx());
-            ImGui::Text("- next: %u", tmesh.mesh.get_next(eh).get_idx());
-            ImGui::Text("- prev: %u", tmesh.mesh.get_prev(eh).get_idx());
-            ImGui::Text("- twin: %u", tmesh.mesh.get_twin(eh).get_idx());
-            ImGui::Text("- target: %u", tmesh.mesh.get_target(eh).get_idx());
-            ImGui::Text("- face: %u", tmesh.mesh.get_face_of_half_edge(eh).unwrap().get_idx());
 
-            ImGui::Text("tmesh data");
-            ImGui::Text("- points into face corner: %s", tmesh.corners[eh] ? "true" : "false");
-            ImGui::Text("- knot interval: %.2f", tmesh.knots[eh]);
-            ImGui::Text("- local coords (uv) of vertex for current half edge: (%.0f, %.0f)", tmesh.uv[eh].x, tmesh.uv[eh].y);
-            ImGui::Text("- direction (dir) of vertex for current half edge: %u", tmesh.dir[eh]);
+            if (ImGui::TreeNode((void*)(intptr_t) eh.get_idx(), "half edge: %u", eh.get_idx())) {
+                if (ImGui::TreeNode("geometry data")) {
+                    ImGui::BulletText("next: %u", tmesh.mesh.get_next(eh).get_idx());
+                    ImGui::BulletText("prev: %u", tmesh.mesh.get_prev(eh).get_idx());
+                    ImGui::BulletText("twin: %u", tmesh.mesh.get_twin(eh).get_idx());
+                    ImGui::BulletText("target: %u", tmesh.mesh.get_target(eh).get_idx());
+                    ImGui::BulletText("face: %u", tmesh.mesh.get_face_of_half_edge(eh).unwrap().get_idx());
+                    ImGui::TreePop();
+                }
 
-            auto& trans = tmesh.edge_transitions[eh];
-            ImGui::Text("- transition: scale: %.2f, rotate: %u, translate: (%.2f, %.2f)", trans.f, trans.r, trans.t.x, trans.t.y);
+                if (ImGui::TreeNode("t-mesh data")) {
+                    ImGui::BulletText("points into face corner: %s", tmesh.corners[eh] ? "true" : "false");
+                    ImGui::BulletText("knot interval: %.2f", tmesh.knots[eh]);
+                    ImGui::BulletText("local coords (uv) of vertex for current half edge: (%.0f, %.0f)", tmesh.uv[eh].x, tmesh.uv[eh].y);
+                    ImGui::BulletText("direction (dir) of vertex for current half edge: %u", tmesh.dir[eh]);
+
+                    auto& trans = tmesh.edge_transitions[eh];
+                    ImGui::BulletText("transition: scale: %.2f, rotate: %u, translate: (%.2f, %.2f)", trans.f, trans.r, trans.t.x, trans.t.y);
+                    ImGui::TreePop();
+                }
+
+                ImGui::TreePop();
+            }
         };
 
         ImGui::Begin("Selected element");
@@ -498,32 +512,65 @@ void window::draw_gui() {
             switch (elem.type) {
                 case object_type::vertex: {
                     vertex_handle vh(elem.handle.get_idx());
-                    ImGui::Text("Vertex (id: %u):", vh.get_idx());
-                    ImGui::Text("- extended valence: %u", tmesh.get_extended_valence(vh));
+                    ImGui::Text("Vertex (id: %u)", vh.get_idx());
+                    ImGui::BulletText("extended valence: %u", tmesh.get_extended_valence(vh));
                     ImGui::Separator();
 
-                    ImGui::Text("ingoing half edges (cw order):");
-                    for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
-                        draw_edge_information(eh);
-                        ImGui::Separator();
+                    if (ImGui::TreeNode("ingoing half edges (cw order)")) {
+                        for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
+                            draw_edge_information(eh);
+                        }
+                        ImGui::TreePop();
                     }
 
                     break;
                 }
                 case object_type::edge: {
                     edge_handle eh(elem.handle.get_idx());
-                    ImGui::Text("Edge:");
+                    ImGui::Text("Edge (id: %u)", eh.get_idx());
+                    ImGui::Separator();
 
-                    ImGui::Text("consisting of half edges:");
-                    for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
-                        draw_edge_information(heh);
-                        ImGui::Separator();
+                    if (ImGui::TreeNode("consisting of half edges")) {
+                        for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
+                            draw_edge_information(heh);
+                        }
+                        ImGui::TreePop();
                     }
                     break;
                 }
-                case object_type::face:
-                    ImGui::Text("Face: %u", elem.handle.get_idx());
+                case object_type::face: {
+                    face_handle fh(elem.handle.get_idx());
+                    ImGui::Text("Face (id: %u)", elem.handle.get_idx());
+
+                    auto max_local_coords = tmesh.get_local_max_coordinates(fh);
+                    ImGui::BulletText("local coordinates: (%.2f, %.2f)", max_local_coords.x, max_local_coords.y);
+
+                    ImGui::Separator();
+
+                    auto support = tmesh.support_map[fh];
+                    if (ImGui::TreeNode((void*) nullptr, "supporting basis functions: (%lu)", support.size())) {
+                        for (auto&& [index, trans]: support) {
+                            if (ImGui::TreeNode((void*)(intptr_t) index.vertex.get_idx(), "vertex: %u", index.vertex.get_idx())) {
+                                auto [uv, vv] = tmesh.get_knot_vectors(index);
+                                if (ImGui::TreeNode("knot vector u")) {
+                                    for (auto&& u: uv) {
+                                        ImGui::BulletText("%.2f", u);
+                                    }
+                                    ImGui::TreePop();
+                                }
+                                if (ImGui::TreeNode("knot vector v")) {
+                                    for (auto&& v: vv) {
+                                        ImGui::BulletText("%.2f", v);
+                                    }
+                                    ImGui::TreePop();
+                                }
+                                ImGui::TreePop();
+                            }
+                        }
+                        ImGui::TreePop();
+                    }
                     break;
+                }
                 default:
                     panic("unknown object type picked!");
             }
@@ -643,6 +690,26 @@ void window::draw_surface(const mat4& model, const mat4& vp) const {
     );
 }
 
+void window::draw_surface_picking(const mat4& model, const mat4& vp) const {
+    glUseProgram(surface_picking_program);
+
+    auto vp_location_phong = glGetUniformLocation(phong_program, "VP");
+    auto m_location_phong = glGetUniformLocation(phong_program, "M");
+
+    glUniformMatrix4fv(vp_location_phong, 1, GL_FALSE, value_ptr(vp));
+    glUniformMatrix4fv(m_location_phong, 1, GL_FALSE, value_ptr(model));
+
+    glBindVertexArray(surface_picking_vertex_array);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glMultiDrawElements(
+        GL_TRIANGLES,
+        surface_buffer.counts.data(),
+        GL_UNSIGNED_INT,
+        (void**) surface_buffer.indices.data(),
+        static_cast<GLsizei>(surface_buffer.counts.size())
+    );
+}
+
 window::~window() {
     // if this window was moved, we don't have to destruct it
     if (glfw_window != nullptr) {
@@ -655,6 +722,7 @@ window::~window() {
         glDeleteVertexArrays(1, &control_vertices_vertex_array);
         glDeleteVertexArrays(1, &control_picking_edges_vertex_array);
         glDeleteVertexArrays(1, &control_picking_vertices_vertex_array);
+        glDeleteVertexArrays(1, &surface_picking_vertex_array);
 
         glDeleteBuffers(1, &control_edges_vertex_buffer);
         glDeleteBuffers(1, &control_edges_index_buffer);
@@ -695,23 +763,28 @@ window& window::operator=(window&& window) noexcept {
     edge_picking_program = exchange(window.edge_picking_program, 0);
     vertex_picking_program = exchange(window.vertex_picking_program, 0);
     phong_program = exchange(window.phong_program, 0);
+    surface_picking_program = exchange(window.surface_picking_program, 0);
+
     surface_vertex_array = exchange(window.surface_vertex_array, 0);
-    surface_vertex_buffer = exchange(window.surface_vertex_buffer, 0);
-    surface_index_buffer = exchange(window.surface_index_buffer, 0);
     control_edges_vertex_array = exchange(window.control_edges_vertex_array, 0);
     control_vertices_vertex_array = exchange(window.control_vertices_vertex_array, 0);
     control_picking_edges_vertex_array = exchange(window.control_picking_edges_vertex_array, 0);
     control_picking_vertices_vertex_array = exchange(window.control_picking_vertices_vertex_array, 0);
+    surface_picking_vertex_array = exchange(window.surface_picking_vertex_array, 0);
+
+    surface_vertex_buffer = exchange(window.surface_vertex_buffer, 0);
+    surface_index_buffer = exchange(window.surface_index_buffer, 0);
     control_edges_vertex_buffer = exchange(window.control_edges_vertex_buffer, 0);
     control_edges_index_buffer = exchange(window.control_edges_index_buffer, 0);
     control_vertices_vertex_buffer = exchange(window.control_vertices_vertex_buffer, 0);
     control_vertices_index_buffer = exchange(window.control_vertices_index_buffer, 0);
+    control_edges_buffer = move(window.control_edges_buffer);
+    control_vertices_buffer = move(window.control_vertices_buffer);
+
     wireframe_mode = exchange(window.wireframe_mode, false);
     control_mode = exchange(window.control_mode, false);
     surface_mode = exchange(window.surface_mode, false);
     surface_buffer = move(window.surface_buffer);
-    control_edges_buffer = move(window.control_edges_buffer);
-    control_vertices_buffer = move(window.control_vertices_buffer);
     surface_resolution = move(window.surface_resolution);
     slider_resolution = exchange(window.slider_resolution, 0);
     tmesh = move(window.tmesh);
@@ -753,12 +826,25 @@ void window::load_surface_data_to_gpu() const {
     auto vnormal_location = static_cast<GLuint>(glGetAttribLocation(phong_program, "normal_in"));
     glVertexAttribPointer(vnormal_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, normal));
     glEnableVertexAttribArray(vnormal_location);
+
+    glBindVertexArray(surface_picking_vertex_array);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
+
+    auto surface_picking_vpos_location = static_cast<GLuint>(glGetAttribLocation(surface_picking_program, "pos"));
+    glVertexAttribPointer(surface_picking_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(surface_picking_vpos_location);
+
+    auto surface_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(surface_picking_program, "picking_id_in"));
+    glVertexAttribIPointer(surface_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
+    glEnableVertexAttribArray(surface_picking_vpicking_id_location);
 }
 
 void window::update_surface_buffer() {
     // TODO: Get real resolution
     auto grids = tmesh.get_grids(20);
-    surface_buffer = get_multi_render_buffer(grids);
+
+    // TODO: fix picking map! here the data in the picking map is modified, which will result in invalid data
+    surface_buffer = get_multi_render_buffer(grids, picking_map);
 
     load_surface_data_to_gpu();
 }

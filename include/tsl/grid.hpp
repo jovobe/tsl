@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include <tsl/gl_buffer.hpp>
+#include <tsl/rendering/picking_map.hpp>
 
 using std::vector;
 
@@ -16,15 +17,18 @@ namespace tsl {
 
 struct regular_grid {
     vector<vector<vec3>> points;
+    face_handle handle;
+
+    explicit regular_grid(const face_handle& handle) : handle(handle) {}
 
     /**
      * @return pair with <vertex buffer, index buffer>
      */
-    gl_buffer get_render_buffer() const;
-    gl_buffer add_to_render_buffer(gl_buffer& buffer) const;
+    gl_buffer get_render_buffer(picking_map& picking_map) const;
+    gl_buffer add_to_render_buffer(gl_buffer& buffer, picking_map& picking_map) const;
 };
 
-gl_multi_buffer get_multi_render_buffer(const vector<regular_grid>& grids);
+gl_multi_buffer get_multi_render_buffer(const vector<regular_grid>& grids, picking_map& picking_map);
 
 }
 

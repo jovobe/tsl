@@ -70,9 +70,11 @@ private:
     class picking_map picking_map;
     GLuint vertex_picking_program;
     GLuint edge_picking_program;
+    GLuint surface_picking_program;
 
     GLuint control_picking_edges_vertex_array;
     GLuint control_picking_vertices_vertex_array;
+    GLuint surface_picking_vertex_array;
 
     GLuint picking_frame;
     GLuint picking_texture;
@@ -114,6 +116,7 @@ private:
     void update_texture_sizes() const;
 
     void draw_surface(const mat4& model, const mat4& vp) const;
+    void draw_surface_picking(const mat4& model, const mat4& vp) const;
     void draw_control_polygon(const mat4& model, const mat4& vp) const;
     void draw_control_polygon_picking(const mat4& model, const mat4& vp) const;
     void draw_gui();

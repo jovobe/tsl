@@ -575,7 +575,7 @@ aa_rectangle tmesh::get_parametric_domain(
 }
 
 regular_grid tmesh::get_grid(uint32_t resolution) const {
-    regular_grid out;
+    regular_grid out(face_handle(0));
 
     // TODO: Implement
 
@@ -612,7 +612,7 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
         float step_u = u_coord / resolution;
         float step_v = v_coord / resolution;
 
-        out.emplace_back();
+        out.emplace_back(fh);
         auto& grid = out.back();
         grid.points.reserve(static_cast<size_t>(v_max));
 

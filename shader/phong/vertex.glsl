@@ -5,7 +5,6 @@ in vec3 normal_in;
 out vec3 color;
 out vec3 normal;
 out vec3 pos;
-out uint picking_id;
 
 uniform mat4 M;
 uniform mat4 VP;
@@ -17,7 +16,4 @@ void main()
    color = color_in;
    normal = (M * vec4(normal_in, 0)).xyz;
    pos = (M * vec4(pos_in, 1.0)).xyz;
-
-   // Pass dummy value
-   picking_id = 0u;
 }
