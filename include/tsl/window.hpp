@@ -113,6 +113,8 @@ private:
     void load_surface_data_to_gpu() const;
     void update_surface_buffer();
 
+    void update_control_buffer();
+
     void update_texture_sizes() const;
 
     void draw_surface(const mat4& model, const mat4& vp) const;

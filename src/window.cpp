@@ -152,78 +152,26 @@ window::window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(phong_fragment_shader);
     glDeleteShader(vertex_wogeom_picking_shader);
 
-//    tmesh = tsplines::get_example_data_1();
-    tmesh = tsplines::get_example_data_2(5);
-    control_edges_buffer = get_edges_buffer(tmesh.mesh, picking_map);
-    control_vertices_buffer = get_vertices_buffer(tmesh.mesh, picking_map);
-
-    // surface
     glGenVertexArrays(1, &surface_picking_vertex_array);
     glGenVertexArrays(1, &surface_vertex_array);
     glGenBuffers(1, &surface_vertex_buffer);
     glGenBuffers(1, &surface_index_buffer);
 
-    update_surface_buffer();
-
-    // control edges polygon
     glGenVertexArrays(1, &control_edges_vertex_array);
     glGenVertexArrays(1, &control_picking_edges_vertex_array);
     glGenBuffers(1, &control_edges_vertex_buffer);
     glGenBuffers(1, &control_edges_index_buffer);
-    glBindVertexArray(control_edges_vertex_array);
 
-    auto combined_control_edges_data = control_edges_buffer.get_combined_vec_data();
-    glBindBuffer(GL_ARRAY_BUFFER, control_edges_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, combined_control_edges_data.size() * sizeof(vertex_element), combined_control_edges_data.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_edges_index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_edges_buffer.index_buffer.size() * sizeof(GLuint), control_edges_buffer.index_buffer.data(), GL_STATIC_DRAW);
-
-    // pointer binding
-    auto control_vpos_location = static_cast<GLuint>(glGetAttribLocation(edge_program, "pos"));
-    glVertexAttribPointer(control_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
-    glEnableVertexAttribArray(control_vpos_location);
-
-    glBindVertexArray(control_picking_edges_vertex_array);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_edges_index_buffer);
-
-    auto control_picking_vpos_location = static_cast<GLuint>(glGetAttribLocation(edge_picking_program, "pos"));
-    glVertexAttribPointer(control_picking_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
-    glEnableVertexAttribArray(control_picking_vpos_location);
-
-    auto control_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(edge_picking_program, "picking_id_in"));
-    glVertexAttribIPointer(control_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
-    glEnableVertexAttribArray(control_picking_vpicking_id_location);
-
-    // control vertices polygon
     glGenVertexArrays(1, &control_vertices_vertex_array);
     glGenVertexArrays(1, &control_picking_vertices_vertex_array);
     glGenBuffers(1, &control_vertices_vertex_buffer);
     glGenBuffers(1, &control_vertices_index_buffer);
-    glBindVertexArray(control_vertices_vertex_array);
 
-    auto combined_control_vertices_data = control_vertices_buffer.get_combined_vec_data();
-    glBindBuffer(GL_ARRAY_BUFFER, control_vertices_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, combined_control_vertices_data.size() * sizeof(vertex_element), combined_control_vertices_data.data(), GL_STATIC_DRAW);
+    //    tmesh = tsplines::get_example_data_1();
+    tmesh = tsplines::get_example_data_2(5);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_vertices_index_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_vertices_buffer.index_buffer.size() * sizeof(GLuint), control_vertices_buffer.index_buffer.data(), GL_STATIC_DRAW);
-
-    // pointer binding
-    auto control_vertrex_vpos_location = static_cast<GLuint>(glGetAttribLocation(vertex_program, "pos"));
-    glVertexAttribPointer(control_vertrex_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
-    glEnableVertexAttribArray(control_vertrex_vpos_location);
-
-    glBindVertexArray(control_picking_vertices_vertex_array);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_vertices_index_buffer);
-
-    auto control_vertrex_picking_vpos_location = static_cast<GLuint>(glGetAttribLocation(vertex_picking_program, "pos"));
-    glVertexAttribPointer(control_vertrex_picking_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
-    glEnableVertexAttribArray(control_vertrex_picking_vpos_location);
-
-    auto control_vertrex_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(vertex_picking_program, "picking_id_in"));
-    glVertexAttribIPointer(control_vertrex_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
-    glEnableVertexAttribArray(control_vertrex_picking_vpicking_id_location);
+    update_surface_buffer();
+    update_control_buffer();
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -849,6 +797,63 @@ void window::update_surface_buffer() {
     surface_buffer = get_multi_render_buffer(grids, picking_map);
 
     load_surface_data_to_gpu();
+}
+
+void window::update_control_buffer() {
+    control_edges_buffer = get_edges_buffer(tmesh.mesh, picking_map);
+    control_vertices_buffer = get_vertices_buffer(tmesh.mesh, picking_map);
+
+    // control edges polygon
+    glBindVertexArray(control_edges_vertex_array);
+
+    auto combined_control_edges_data = control_edges_buffer.get_combined_vec_data();
+    glBindBuffer(GL_ARRAY_BUFFER, control_edges_vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, combined_control_edges_data.size() * sizeof(vertex_element), combined_control_edges_data.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_edges_index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_edges_buffer.index_buffer.size() * sizeof(GLuint), control_edges_buffer.index_buffer.data(), GL_STATIC_DRAW);
+
+    // pointer binding
+    auto control_vpos_location = static_cast<GLuint>(glGetAttribLocation(edge_program, "pos"));
+    glVertexAttribPointer(control_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_vpos_location);
+
+    glBindVertexArray(control_picking_edges_vertex_array);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_edges_index_buffer);
+
+    auto control_picking_vpos_location = static_cast<GLuint>(glGetAttribLocation(edge_picking_program, "pos"));
+    glVertexAttribPointer(control_picking_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_picking_vpos_location);
+
+    auto control_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(edge_picking_program, "picking_id_in"));
+    glVertexAttribIPointer(control_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
+    glEnableVertexAttribArray(control_picking_vpicking_id_location);
+
+    // control vertices polygon
+    glBindVertexArray(control_vertices_vertex_array);
+
+    auto combined_control_vertices_data = control_vertices_buffer.get_combined_vec_data();
+    glBindBuffer(GL_ARRAY_BUFFER, control_vertices_vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, combined_control_vertices_data.size() * sizeof(vertex_element), combined_control_vertices_data.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_vertices_index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, control_vertices_buffer.index_buffer.size() * sizeof(GLuint), control_vertices_buffer.index_buffer.data(), GL_STATIC_DRAW);
+
+    // pointer binding
+    auto control_vertrex_vpos_location = static_cast<GLuint>(glGetAttribLocation(vertex_program, "pos"));
+    glVertexAttribPointer(control_vertrex_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_vertrex_vpos_location);
+
+    glBindVertexArray(control_picking_vertices_vertex_array);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, control_vertices_index_buffer);
+
+    auto control_vertrex_picking_vpos_location = static_cast<GLuint>(glGetAttribLocation(vertex_picking_program, "pos"));
+    glVertexAttribPointer(control_vertrex_picking_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(control_vertrex_picking_vpos_location);
+
+    auto control_vertrex_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(vertex_picking_program, "picking_id_in"));
+    glVertexAttribIPointer(control_vertrex_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
+    glEnableVertexAttribArray(control_vertrex_picking_vpicking_id_location);
 }
 
 }
