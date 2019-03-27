@@ -365,7 +365,9 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                     camera.reset_curos_pos();
                     break;
                 case GLFW_MOUSE_BUTTON_LEFT: {
-                    request_pick = get_mouse_pos();
+                    if (!ImGui::GetIO().WantCaptureMouse) {
+                        request_pick = get_mouse_pos();
+                    }
                     break;
                 }
                 default:
