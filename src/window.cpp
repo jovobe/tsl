@@ -14,6 +14,7 @@
 #include <tsl/opengl.hpp>
 #include <tsl/tsplines.hpp>
 #include <tsl/rendering/half_edge_mesh.hpp>
+#include <tsl/rendering/tmesh.hpp>
 
 #include <string>
 #include <iostream>
@@ -881,6 +882,17 @@ void window::update_picked_buffer()
     auto picked_vertices_location = static_cast<GLuint>(glGetAttribLocation(vertex_program, "picked_in"));
     glVertexAttribIPointer(picked_vertices_location, 1, GL_UNSIGNED_BYTE, sizeof(uint8_t), (void*) nullptr);
     glEnableVertexAttribArray(picked_vertices_location);
+
+    // Faces
+    auto picked_faces = get_picked_faces_buffer(tmesh_faces, picked_elements);
+
+    glBindVertexArray(surface_vertex_array);
+    glBindBuffer(GL_ARRAY_BUFFER, surface_picked_buffer);
+    glBufferData(GL_ARRAY_BUFFER, picked_faces.size() * sizeof(uint8_t), picked_faces.data(), GL_STATIC_DRAW);
+
+    auto picked_faces_location = static_cast<GLuint>(glGetAttribLocation(phong_program, "picked_in"));
+    glVertexAttribIPointer(picked_faces_location, 1, GL_UNSIGNED_BYTE, sizeof(uint8_t), (void*) nullptr);
+    glEnableVertexAttribArray(picked_faces_location);
 }
 
 void window::update_buffer()
