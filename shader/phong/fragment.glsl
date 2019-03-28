@@ -8,6 +8,8 @@ out vec4 fragment_color;
 
 uniform vec3 camera_pos;
 
+const float TINT_FACTOR = 0.5f;
+
 vec3 light_pos = vec3(-5, 10, 10);
 vec3 light_color = vec3(1);
 float light_power = 1.0;
@@ -25,7 +27,8 @@ void main()
     float specular_factor = clamp(dot(inverse_camera_direction, reflected_light_direction), 0, 1);
 
     if (picked != 0u) {
-        color_calculated = vec3(1, 1, 1);
+        color_calculated = color_calculated + (vec3(1) - color_calculated) * TINT_FACTOR;
+        // color_calculated = vec3(1, 1, 1);
     }
 
     vec3 ambient_color = color_calculated * ambient_light;
