@@ -746,6 +746,7 @@ window& window::operator=(window&& window) noexcept {
     surface_buffer = move(window.surface_buffer);
     surface_resolution = move(window.surface_resolution);
     tmesh = move(window.tmesh);
+    tmesh_faces = move(window.tmesh_faces);
     camera = move(window.camera);
     request_pick = move(window.request_pick);
 
@@ -766,8 +767,8 @@ mouse_pos window::get_mouse_pos() const {
 }
 
 void window::update_surface_buffer() {
-    auto grids = tmesh.get_grids(surface_resolution.get());
-    surface_buffer = get_multi_render_buffer(grids, picking_map);
+    tmesh_faces = tmesh.get_grids(surface_resolution.get());
+    surface_buffer = get_multi_render_buffer(tmesh_faces, picking_map);
 
     auto vec_data = surface_buffer.get_combined_vec_data();
 

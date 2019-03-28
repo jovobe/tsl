@@ -105,6 +105,8 @@ private:
     resolution<uint32_t> surface_resolution;
     struct tmesh tmesh;
 
+    vector<regular_grid> tmesh_faces;
+
     class camera camera;
 
     // TODO: restrict scope
