@@ -4,9 +4,11 @@ layout (triangle_strip, max_vertices = 4) out;
 
 in vec3 vcolor[];
 in uint picking_id[];
+in uint picked[];
 
 out vec3 color;
 flat out uint picking_id_forward;
+flat out uint picked_forward;
 
 uniform vec3 camera_pos;
 uniform mat4 VP;
@@ -24,6 +26,7 @@ void main() {
     // Forward stuff to fragment shader
     color = vcolor[0];
     picking_id_forward = picking_id[0];
+    picked_forward = picked[0];
 
     vec3 point1 = gl_in[0].gl_Position.xyz;
     vec3 point2 = gl_in[1].gl_Position.xyz;

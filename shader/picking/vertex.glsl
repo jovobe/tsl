@@ -4,6 +4,7 @@ in uint picking_id_in;
 
 out vec3 vcolor;
 out uint picking_id;
+out uint picked;
 
 uniform mat4 M;
 
@@ -14,4 +15,5 @@ void main()
 
    // Pass dummy value
    vcolor = vec3(0, 0, 0);
+   picked = 0u;
 }

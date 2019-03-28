@@ -79,7 +79,7 @@ private:
     GLuint picking_render;
 
     optional<mouse_pos> request_pick;
-    optional<reference_wrapper<const picking_element>> selected_element;
+    vector<reference_wrapper<const picking_element>> picked_elements;
 
     // programs
     GLuint vertex_program;
@@ -92,6 +92,9 @@ private:
     GLuint control_vertices_vertex_array;
 
     // vbo
+    GLuint surface_picked_buffer;
+    GLuint edges_picked_buffer;
+    GLuint vertices_picked_buffer;
     GLuint surface_vertex_buffer;
     GLuint surface_index_buffer;
     GLuint control_edges_vertex_buffer;
@@ -112,6 +115,8 @@ private:
 
     void update_surface_buffer();
     void update_control_buffer();
+
+    void update_picked_buffer();
 
     void update_texture_sizes() const;
 

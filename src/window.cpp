@@ -155,16 +155,19 @@ window::window(string title, uint32_t width, uint32_t height) :
     glGenVertexArrays(1, &surface_vertex_array);
     glGenBuffers(1, &surface_vertex_buffer);
     glGenBuffers(1, &surface_index_buffer);
+    glGenBuffers(1, &surface_picked_buffer);
 
     glGenVertexArrays(1, &control_edges_vertex_array);
     glGenVertexArrays(1, &control_picking_edges_vertex_array);
     glGenBuffers(1, &control_edges_vertex_buffer);
     glGenBuffers(1, &control_edges_index_buffer);
+    glGenBuffers(1, &edges_picked_buffer);
 
     glGenVertexArrays(1, &control_vertices_vertex_array);
     glGenVertexArrays(1, &control_picking_vertices_vertex_array);
     glGenBuffers(1, &control_vertices_vertex_buffer);
     glGenBuffers(1, &control_vertices_index_buffer);
+    glGenBuffers(1, &vertices_picked_buffer);
 
     //    tmesh = tsplines::get_example_data_1();
     tmesh = tsplines::get_example_data_2(5);
@@ -356,7 +359,9 @@ void window::picking_phase(const mat4& model, const mat4& vp) {
     if (request_pick) {
         auto id = read_pixel(*request_pick);
         if (id != 0) {
-            selected_element = picking_map.get_object(id);
+            picked_elements.clear();
+            picked_elements.push_back(*picking_map.get_object(id));
+            update_picked_buffer();
         }
 
         request_pick = nullopt;
@@ -452,8 +457,9 @@ void window::draw_gui() {
         };
 
         ImGui::Begin("Selected element");
-        if (selected_element) {
-            auto& elem = (*selected_element).get();
+        if (!picked_elements.empty()) {
+            // TODO: Do this for all selected elements!
+            auto& elem = picked_elements.front().get();
 
             switch (elem.type) {
                 case object_type::vertex: {
@@ -522,7 +528,8 @@ void window::draw_gui() {
             }
 
             if (ImGui::Button("Deselect")) {
-                selected_element = nullopt;
+                picked_elements.clear();
+                update_picked_buffer();
             }
         }
 
@@ -674,6 +681,9 @@ window::~window() {
         glDeleteBuffers(1, &control_edges_index_buffer);
         glDeleteBuffers(1, &control_vertices_vertex_buffer);
         glDeleteBuffers(1, &control_vertices_index_buffer);
+        glDeleteBuffers(1, &surface_picked_buffer);
+        glDeleteBuffers(1, &edges_picked_buffer);
+        glDeleteBuffers(1, &vertices_picked_buffer);
 
         glDeleteFramebuffers(1, &picking_frame);
         glDeleteRenderbuffers(1, &picking_render);
@@ -718,6 +728,9 @@ window& window::operator=(window&& window) noexcept {
     control_picking_vertices_vertex_array = exchange(window.control_picking_vertices_vertex_array, 0);
     surface_picking_vertex_array = exchange(window.surface_picking_vertex_array, 0);
 
+    surface_picked_buffer = exchange(window.surface_picked_buffer, 0);
+    edges_picked_buffer = exchange(window.edges_picked_buffer, 0);
+    vertices_picked_buffer = exchange(window.vertices_picked_buffer, 0);
     surface_vertex_buffer = exchange(window.surface_vertex_buffer, 0);
     surface_index_buffer = exchange(window.surface_index_buffer, 0);
     control_edges_vertex_buffer = exchange(window.control_edges_vertex_buffer, 0);
@@ -740,7 +753,7 @@ window& window::operator=(window&& window) noexcept {
     picking_frame = exchange(window.picking_frame, 0);
     picking_texture = exchange(window.picking_texture, 0);
     picking_render = exchange(window.picking_render, 0);
-    selected_element = move(window.selected_element);
+    picked_elements = move(window.picked_elements);
 
     return *this;
 }
@@ -844,11 +857,41 @@ void window::update_control_buffer() {
     glEnableVertexAttribArray(control_vertrex_picking_vpicking_id_location);
 }
 
+void window::update_picked_buffer()
+{
+    // Edges
+    auto picked_edges = get_picked_edges_buffer(tmesh.mesh, picked_elements);
+
+    glBindVertexArray(control_edges_vertex_array);
+    glBindBuffer(GL_ARRAY_BUFFER, edges_picked_buffer);
+    glBufferData(GL_ARRAY_BUFFER, picked_edges.size() * sizeof(uint8_t), picked_edges.data(), GL_STATIC_DRAW);
+
+    auto picked_edges_location = static_cast<GLuint>(glGetAttribLocation(edge_program, "picked_in"));
+    glVertexAttribIPointer(picked_edges_location, 1, GL_UNSIGNED_BYTE, sizeof(uint8_t), (void*) nullptr);
+    glEnableVertexAttribArray(picked_edges_location);
+
+    // Vertices
+    auto picked_vertices = get_picked_vertices_buffer(tmesh.mesh, picked_elements);
+
+    glBindVertexArray(control_vertices_vertex_array);
+    glBindBuffer(GL_ARRAY_BUFFER, vertices_picked_buffer);
+    glBufferData(GL_ARRAY_BUFFER, picked_vertices.size() * sizeof(uint8_t), picked_vertices.data(), GL_STATIC_DRAW);
+
+    auto picked_vertices_location = static_cast<GLuint>(glGetAttribLocation(vertex_program, "picked_in"));
+    glVertexAttribIPointer(picked_vertices_location, 1, GL_UNSIGNED_BYTE, sizeof(uint8_t), (void*) nullptr);
+    glEnableVertexAttribArray(picked_vertices_location);
+}
+
 void window::update_buffer()
 {
+    // This needs to be cleared because the picking map will be cleared
+    // otherwise the old indices stored here are invalid
+    picked_elements.clear();
+
     picking_map.clear();
     update_surface_buffer();
     update_control_buffer();
+    update_picked_buffer();
 }
 
 }
