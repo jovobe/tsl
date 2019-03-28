@@ -10,6 +10,7 @@ add_executable(tsl_main
     opengl.cpp
     rendering/half_edge_mesh.cpp
     rendering/picking_map.cpp
+    rendering/tmesh.cpp
 )
 
 add_library(tsl SHARED STATIC
