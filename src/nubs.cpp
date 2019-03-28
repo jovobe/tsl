@@ -110,6 +110,8 @@ regular_grid nubs::get_grid(uint32_t resolution) const {
     auto u_max = resolution * x;
     auto v_max = resolution * y;
     out.points.reserve(v_max);
+    out.num_points_x = u_max;
+    out.num_points_y = v_max;
 
     // TODO: at resolution == 1 this should yield the control polygon. currently there is a small difference - why?
     float current_u = 0;

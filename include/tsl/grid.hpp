@@ -18,8 +18,10 @@ namespace tsl {
 struct regular_grid {
     vector<vector<vec3>> points;
     face_handle handle;
+    size_t num_points_x;
+    size_t num_points_y;
 
-    explicit regular_grid(const face_handle& handle) : handle(handle) {}
+    explicit regular_grid(const face_handle& handle) : handle(handle), num_points_x(0), num_points_y(0) {}
 
     /**
      * @return pair with <vertex buffer, index buffer>

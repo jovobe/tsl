@@ -615,6 +615,8 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
         out.emplace_back(fh);
         auto& grid = out.back();
         grid.points.reserve(static_cast<size_t>(v_max));
+        grid.num_points_x = u_max;
+        grid.num_points_y = v_max;
 
         float current_u = 0;
         float current_v = 0;
