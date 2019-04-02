@@ -45,7 +45,6 @@ struct double_indexed_vertex_handle {
 
 namespace std {
 
-// TODO: check if this hash is good enough
 template<>
 struct hash<tsl::indexed_vertex_handle> {
     size_t operator()(const tsl::indexed_vertex_handle& h) const {
@@ -53,7 +52,6 @@ struct hash<tsl::indexed_vertex_handle> {
     }
 };
 
-// TODO: check if this hash is good enough
 template<>
 struct hash<tsl::double_indexed_vertex_handle> {
     size_t operator()(const tsl::double_indexed_vertex_handle& h) const {
@@ -81,6 +79,13 @@ struct transform {
     vec2 apply(const vec2& vec) const;
 };
 
+struct local_knot_vectors {
+    array<double, 5> u;
+    array<double, 5> v;
+
+    local_knot_vectors(const array<double, 5>& u, const array<double, 5>& v) : u(u), v(v) {}
+};
+
 enum class tag {
     positive_u,
     negative_v
@@ -103,6 +108,7 @@ struct tmesh {
     dense_face_map<vector<tuple<indexed_vertex_handle, transform>>> support_map;
     unordered_map<indexed_vertex_handle, tuple<half_edge_handle, tag>> handles;
     unordered_map<double_indexed_vertex_handle, double> knot_vectors;
+    unordered_map<indexed_vertex_handle, local_knot_vectors> local_knot_vector_map;
 
     tuple<dense_half_edge_map<vec2>, dense_half_edge_map<uint8_t>> determine_local_coordinate_systems() const;
 
@@ -123,7 +129,7 @@ struct tmesh {
         const dense_half_edge_map<transform>& edge_transforms,
         const dense_half_edge_map<vec2>& uv,
         const unordered_map<double_indexed_vertex_handle, double>& knot_vectors
-    ) const;
+    );
 
     double fac(half_edge_handle handle) const;
     bool from_corner(half_edge_handle handle) const;
@@ -144,8 +150,8 @@ struct tmesh {
      * The returned index is wrapped by the valence of the vertex belonging to the given handle.
      */
     uint32_t get_wrapped_offset_index(const indexed_vertex_handle& handle, int32_t offset) const;
-    uint32_t get_extended_valence(const vertex_handle handle) const;
-    bool is_extraordinary(const vertex_handle handle) const;
+    uint32_t get_extended_valence(vertex_handle handle) const;
+    bool is_extraordinary(vertex_handle handle) const;
 
     /**
      * @brief The max u and v coordinates for the local system of the given face returned as (u, v).

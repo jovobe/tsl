@@ -464,9 +464,10 @@ tmesh::determine_support_of_basis_functions(
     const dense_half_edge_map<transform>& edge_transforms,
     const dense_half_edge_map<vec2>& uv,
     const unordered_map<double_indexed_vertex_handle, double>& knot_vectors
-) const {
+) {
     dense_face_map<vector<tuple<indexed_vertex_handle, transform>>> out;
     out.reserve(mesh.num_faces());
+    local_knot_vector_map.reserve(handles.size());
 
     for (auto&& [k, v] : handles) {
         // TODO: Reset tagged map instead of recreating it every handle
@@ -483,6 +484,10 @@ tmesh::determine_support_of_basis_functions(
 
         auto r = get_parametric_domain(k, knot_vectors, handles);
 
+        // Cache local knot vectors for faster surface evaluation
+        auto [knots_u, knots_v] = get_knot_vectors(k);
+        local_knot_vector_map.try_emplace(k, knots_u, knots_v);
+
         while (!bfs_queue.empty()) {
             auto [ch, ct] = bfs_queue.front();
             bfs_queue.pop();
@@ -491,9 +496,8 @@ tmesh::determine_support_of_basis_functions(
             if (!out.contains_key(cface_h)) {
                 out.insert(cface_h, vector<tuple<indexed_vertex_handle, transform>>());
             }
-//            out[cface_h].emplace_back(k, ct);
 
-            // TODO: Why is the same k added twice here? This check should not be necessary...
+            // TODO: Do this in a more efficient way (e.g. bool map per face)
             auto passed_k = k;
             auto find_key = std::find_if(out[cface_h].begin(), out[cface_h].end(), [&](auto tuple)
             {
@@ -643,14 +647,13 @@ vec3 tmesh::get_surface_point_of_face(double u, double v, face_handle f) const {
 
     auto& supports = support_map[f];
     for (auto&& [index, trans]: supports) {
-        // TODO: The knot vectors could be pre calculated
-        auto [uv, vv] = get_knot_vectors(index);
+        auto local_knots = local_knot_vector_map.at(index);
 
         auto p = mesh.get_vertex_position(index.vertex);
         auto transformed = trans.apply(in);
 
-        auto u_basis = tsplines::get_basis_fun(transformed.x, uv);
-        auto v_basis = tsplines::get_basis_fun(transformed.y, vv);
+        auto u_basis = tsplines::get_basis_fun(transformed.x, local_knots.u);
+        auto v_basis = tsplines::get_basis_fun(transformed.y, local_knots.v);
 
         c += u_basis * v_basis * p;
         d += u_basis * v_basis;
