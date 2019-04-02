@@ -663,9 +663,9 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
         {
             auto vh = out.add_vertex(
                 vec3(
-                    static_cast<float>(x * edge_length),
-                    static_cast<float>(0),
-                    static_cast<float>(z * edge_length)
+                    static_cast<double>(x * edge_length),
+                    static_cast<double>(0),
+                    static_cast<double>(z * edge_length)
                 )
             );
             front_vertices.push_back(vh);
@@ -756,9 +756,9 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
         {
             auto vh = out.add_vertex(
                 vec3(
-                    static_cast<float>(0),
-                    static_cast<float>(y * edge_length),
-                    static_cast<float>(z * edge_length)
+                    static_cast<double>(0),
+                    static_cast<double>(y * edge_length),
+                    static_cast<double>(z * edge_length)
                 )
             );
             left_vertices.push_back(vh);
@@ -813,9 +813,9 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
         {
             auto vh = out.add_vertex(
                 vec3(
-                    static_cast<float>(x * edge_length),
-                    static_cast<float>((vertices_per_edge - 1) * edge_length),
-                    static_cast<float>(z * edge_length)
+                    static_cast<double>(x * edge_length),
+                    static_cast<double>((vertices_per_edge - 1) * edge_length),
+                    static_cast<double>(z * edge_length)
                 )
             );
             back_vertices.push_back(vh);
@@ -870,9 +870,9 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
         {
             auto vh = out.add_vertex(
                 vec3(
-                    static_cast<float>((vertices_per_edge - 1) * edge_length),
-                    static_cast<float>(y * edge_length),
-                    static_cast<float>(z * edge_length)
+                    static_cast<double>((vertices_per_edge - 1) * edge_length),
+                    static_cast<double>(y * edge_length),
+                    static_cast<double>(z * edge_length)
                 )
             );
             right_vertices.push_back(vh);
@@ -940,9 +940,9 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
         {
             auto vh = out.add_vertex(
                 vec3(
-                    static_cast<float>(x * edge_length),
-                    static_cast<float>(y * edge_length),
-                    static_cast<float>((vertices_per_edge - 1) * edge_length)
+                    static_cast<double>(x * edge_length),
+                    static_cast<double>(y * edge_length),
+                    static_cast<double>((vertices_per_edge - 1) * edge_length)
                 )
             );
             top_vertices.push_back(vh);
@@ -1066,9 +1066,9 @@ half_edge_mesh half_edge_mesh::as_cube(double edge_length, uint32_t vertices_per
         {
             auto vh = out.add_vertex(
                 vec3(
-                    static_cast<float>(x * edge_length),
-                    static_cast<float>(y * edge_length),
-                    static_cast<float>(0)
+                    static_cast<double>(x * edge_length),
+                    static_cast<double>(y * edge_length),
+                    static_cast<double>(0)
                 )
             );
             bottom_vertices.push_back(vh);

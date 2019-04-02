@@ -3,11 +3,9 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <glm/glm.hpp>
 
 #include <tsl/geometry/line.hpp>
-
-using glm::vec2;
+#include <tsl/geometry/vector.hpp>
 
 using namespace tsl;
 
@@ -30,16 +28,16 @@ protected:
 TEST_F(LineTest, Intersects) {
     // line in rect
     EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(0, 0), vec2(1, 1))));
-    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(-0.5f, -0.5f), vec2(5, 5))));
+    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(-0.5, -0.5), vec2(5, 5))));
 
     // line through rect
-    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(0.5f, 0.5f), vec2(1, 1))));
+    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(0.5, 0.5), vec2(1, 1))));
 
     // line into recht
-    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(0.5f, 0.5f), vec2(5, 5))));
+    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(0.5, 0.5), vec2(5, 5))));
 
     // line out from rect
-    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(-0.5f, -0.5f), vec2(1, 1))));
+    EXPECT_TRUE(l1.intersects(aa_rectangle(vec2(-0.5, -0.5), vec2(1, 1))));
 
     // line on rect edge
     EXPECT_FALSE(l2.intersects(aa_rectangle(vec2(0, 0), vec2(1, 1))));

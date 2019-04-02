@@ -29,7 +29,7 @@ using std::endl;
 using std::vector;
 
 using glm::radians;
-using glm::vec3;
+using glm::fvec3;
 using glm::mat4;
 using glm::value_ptr;
 using glm::perspective;
@@ -334,7 +334,7 @@ void window::render() {
     // projection
     auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 100.0f);
     auto view = camera.get_view_matrix();
-    auto model = rotate(mat4(1.0f), radians(-90.0f), vec3(1.0f, 0.0f, 0.0f));
+    auto model = rotate(mat4(1.0f), radians(-90.0f), fvec3(1.0f, 0.0f, 0.0f));
     auto vp = projection * view;
 
     // Picking phase
@@ -588,7 +588,7 @@ void window::draw_control_polygon(const mat4& model, const mat4& vp) const {
 
     glUniformMatrix4fv(vp_location, 1, GL_FALSE, value_ptr(vp));
     glUniformMatrix4fv(m_location, 1, GL_FALSE, value_ptr(model));
-    glUniform3fv(color_location, 1, value_ptr(vec3(1, 0, 0)));
+    glUniform3fv(color_location, 1, value_ptr(fvec3(1, 0, 0)));
     glUniform3fv(camera_location, 1, value_ptr(camera.get_pos()));
 
     glBindVertexArray(control_edges_vertex_array);
@@ -607,7 +607,7 @@ void window::draw_control_polygon(const mat4& model, const mat4& vp) const {
 
     glUniformMatrix4fv(vertex_vp_location, 1, GL_FALSE, value_ptr(vp));
     glUniformMatrix4fv(vertex_m_location, 1, GL_FALSE, value_ptr(model));
-    glUniform3fv(vertex_color_location, 1, value_ptr(vec3(0, 0, 1)));
+    glUniform3fv(vertex_color_location, 1, value_ptr(fvec3(0, 0, 1)));
     glUniform3fv(vertex_camera_location, 1, value_ptr(camera.get_pos()));
     glUniform3fv(vertex_camera_up_location, 1, value_ptr(camera.get_up()));
 
@@ -626,7 +626,7 @@ void window::draw_surface(const mat4& model, const mat4& vp) const {
 
     glUniformMatrix4fv(vp_location_phong, 1, GL_FALSE, value_ptr(vp));
     glUniformMatrix4fv(m_location_phong, 1, GL_FALSE, value_ptr(model));
-    glUniform3fv(color_location_phong, 1, value_ptr(vec3(0, 1, 0)));
+    glUniform3fv(color_location_phong, 1, value_ptr(fvec3(0, 1, 0)));
     glUniform3fv(camera_location, 1, value_ptr(camera.get_pos()));
 
     glBindVertexArray(surface_vertex_array);

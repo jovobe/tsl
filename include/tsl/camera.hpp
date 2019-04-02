@@ -7,7 +7,7 @@
 
 #include <optional>
 
-using glm::vec3;
+using glm::fvec3;
 using glm::mat4;
 using std::optional;
 
@@ -52,13 +52,13 @@ public:
     void reset_curos_pos();
     void reset_last_move_time();
     void reset_position();
-    vec3 get_pos() const;
-    vec3 get_up() const;
+    fvec3 get_pos() const;
+    fvec3 get_up() const;
 
 private:
-    vec3 pos;
-    vec3 direction;
-    vec3 up;
+    fvec3 pos;
+    fvec3 direction;
+    fvec3 up;
 
     optional<mouse_pos> last_cursor_pos;
     double last_mouse_time;
@@ -67,9 +67,9 @@ private:
     inline static const float MOUSE_SENSITIVITY = 0.1;
     inline static const float MOVE_SPEED = 3;
 
-    inline static const vec3 INITIAL_POS = vec3(0, 0, 3);
-    inline static const vec3 INITIAL_DIRECTION = vec3(0, 0, -1);
-    inline static const vec3 INITIAL_UP = vec3(0, 1, 0);
+    inline static const fvec3 INITIAL_POS = fvec3(0, 0, 3);
+    inline static const fvec3 INITIAL_DIRECTION = fvec3(0, 0, -1);
+    inline static const fvec3 INITIAL_UP = fvec3(0, 1, 0);
 };
 
 }

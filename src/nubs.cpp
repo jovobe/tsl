@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-using glm::vec3;
+using glm::fvec3;
 
 using std::min;
 
@@ -23,11 +23,11 @@ nubs nubs::get_example_data_1() {
 
     // grid size: 6 x 5 (x, y)
     out.P.points = {
-        {vec3(0, 0, 0), vec3(1, 0, 0), vec3(2, 0, 0), vec3(3, 0, 0), vec3(4, 0, 0), vec3(5, 0, 0)},
-        {vec3(0, 1, 0), vec3(1, 1, 0), vec3(2, 1, 0), vec3(3, 1, 0), vec3(4, 1, 0), vec3(5, 1, 0)},
-        {vec3(0, 2, 0), vec3(1, 2, 0), vec3(2, 2, 0), vec3(3, 2, 0), vec3(4, 2, 0), vec3(5, 2, 0)},
-        {vec3(0, 3, 0), vec3(1, 3, 0), vec3(2, 3, 0), vec3(3, 3, 1), vec3(4, 3, 1.5), vec3(5, 3, 1.5)},
-        {vec3(0, 4, 0), vec3(1, 4, 0), vec3(2, 4, 0), vec3(3, 4, 1), vec3(4, 4, 1.5), vec3(5, 4, 1.5)},
+        {fvec3(0, 0, 0), fvec3(1, 0, 0), fvec3(2, 0, 0), fvec3(3, 0, 0), fvec3(4, 0, 0), fvec3(5, 0, 0)},
+        {fvec3(0, 1, 0), fvec3(1, 1, 0), fvec3(2, 1, 0), fvec3(3, 1, 0), fvec3(4, 1, 0), fvec3(5, 1, 0)},
+        {fvec3(0, 2, 0), fvec3(1, 2, 0), fvec3(2, 2, 0), fvec3(3, 2, 0), fvec3(4, 2, 0), fvec3(5, 2, 0)},
+        {fvec3(0, 3, 0), fvec3(1, 3, 0), fvec3(2, 3, 0), fvec3(3, 3, 1), fvec3(4, 3, 1.5), fvec3(5, 3, 1.5)},
+        {fvec3(0, 4, 0), fvec3(1, 4, 0), fvec3(2, 4, 0), fvec3(3, 4, 1), fvec3(4, 4, 1.5), fvec3(5, 4, 1.5)},
     };
 
     out.x = 6;
@@ -58,9 +58,9 @@ nubs nubs::get_example_data_2() {
 
     // 3 x 3
     out.P.points = {
-        {vec3(0, 0, 0), vec3(1, 0, 0), vec3(2, 0, 0)},
-        {vec3(0, 1, 0), vec3(1, 1, 0), vec3(2, 1, 0)},
-        {vec3(0, 2, 0), vec3(1, 2, 0), vec3(2, 2, 0.5)},
+        {fvec3(0, 0, 0), fvec3(1, 0, 0), fvec3(2, 0, 0)},
+        {fvec3(0, 1, 0), fvec3(1, 1, 0), fvec3(2, 1, 0)},
+        {fvec3(0, 2, 0), fvec3(1, 2, 0), fvec3(2, 2, 0.5)},
     };
 
     return out;
@@ -89,11 +89,11 @@ nubs nubs::get_example_data_4() {
 
     // grid size: 5 x 5 (x, y)
     out.P.points = {
-        {vec3(-1, 4.2f, 0),    vec3(-0.75f, 4.1f, 0),  vec3(0, 2.5f, 0),   vec3(0.75f, 4.1f, 0),   vec3(1, 4.2f, 0)},
-        {vec3(-2, 4.5f, 0), vec3(-1, 4.0f, 0.25f), vec3(0, 2.5f, 0),   vec3(1, 4.0f, 0.25f),  vec3(2, 4.5f, 0)},
-        {vec3(-3, 4, 0),    vec3(-1.5f, 3.5f, 1),   vec3(0, 2.5f, 0),   vec3(1.5f, 3.5f, 1),    vec3(3, 4, 0)},
-        {vec3(-2, 2, 0),    vec3(-1, 2, 0.5f),      vec3(0, 2, 0.25f),  vec3(1, 2, 0.5f),       vec3(2, 2, 0)},
-        {vec3(0, 0, 0),     vec3(0, 0, 0),          vec3(0, 0, 0),      vec3(0, 0, 0),          vec3(0, 0, 0)},
+        {fvec3(-1, 4.2f, 0),    fvec3(-0.75f, 4.1f, 0),  fvec3(0, 2.5f, 0),   fvec3(0.75f, 4.1f, 0),   fvec3(1, 4.2f, 0)},
+        {fvec3(-2, 4.5f, 0), fvec3(-1, 4.0f, 0.25f), fvec3(0, 2.5f, 0),   fvec3(1, 4.0f, 0.25f),  fvec3(2, 4.5f, 0)},
+        {fvec3(-3, 4, 0),    fvec3(-1.5f, 3.5f, 1),   fvec3(0, 2.5f, 0),   fvec3(1.5f, 3.5f, 1),    fvec3(3, 4, 0)},
+        {fvec3(-2, 2, 0),    fvec3(-1, 2, 0.5f),      fvec3(0, 2, 0.25f),  fvec3(1, 2, 0.5f),       fvec3(2, 2, 0)},
+        {fvec3(0, 0, 0),     fvec3(0, 0, 0),          fvec3(0, 0, 0),      fvec3(0, 0, 0),          fvec3(0, 0, 0)},
     };
 
     out.x = 5;
@@ -133,7 +133,7 @@ regular_grid nubs::get_grid(uint32_t resolution) const {
     return out;
 }
 
-vec3 nubs::get_surface_point(float u, float v) const {
+fvec3 nubs::get_surface_point(float u, float v) const {
     auto u_span = get_u_span(u);
     auto u_basis_funs = get_u_basis_funs(u_span, u);
 
@@ -141,12 +141,12 @@ vec3 nubs::get_surface_point(float u, float v) const {
     auto v_basis_funs = get_v_basis_funs(v_span, v);
 
     auto u_ind = u_span - p;
-    vec3 out(0, 0, 0);
+    fvec3 out(0, 0, 0);
     for (uint32_t l = 0; l <= q; ++l) {
-        vec3 temp(0, 0, 0);
+        fvec3 temp(0, 0, 0);
         auto v_ind = v_span - q + l;
         for (uint32_t k = 0; k <= p; ++k) {
-            temp += u_basis_funs[k] * P.points[v_ind][u_ind + k];
+            temp += static_cast<double>(u_basis_funs[k]) * P.points[v_ind][u_ind + k];
         }
         out += v_basis_funs[l] * temp;
     }

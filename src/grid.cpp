@@ -1,15 +1,16 @@
 #include <tsl/grid.hpp>
 #include <tsl/gl_buffer.hpp>
 #include <tsl/rendering/picking_map.hpp>
+#include <tsl/geometry/vector.hpp>
+
+#include <glm/glm.hpp>
 
 #include <utility>
 #include <vector>
 
-#include <glm/glm.hpp>
-
-using glm::vec3;
 using glm::cross;
 using glm::normalize;
+using glm::fvec3;
 
 using std::vector;
 
@@ -35,7 +36,7 @@ gl_buffer regular_grid::add_to_render_buffer(gl_buffer& buffer, picking_map& pic
 
     // one normal per vertex
     if (!buffer.normal_buffer) {
-        buffer.normal_buffer = vector<vec3>();
+        buffer.normal_buffer = vector<fvec3>();
     }
     auto& normal_buffer = *buffer.normal_buffer;
     normal_buffer.reserve(normal_buffer.size() + num_vertices);
@@ -58,7 +59,7 @@ gl_buffer regular_grid::add_to_render_buffer(gl_buffer& buffer, picking_map& pic
     // copy vertices
     for (const auto& p : points) {
         for (const auto& v : p) {
-            buffer.vertex_buffer.push_back(v);
+            buffer.vertex_buffer.emplace_back(v);
             picking_buffer.push_back(picking_id);
         }
     }

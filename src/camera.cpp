@@ -16,6 +16,7 @@ using glm::cross;
 using glm::rotate;
 using glm::dot;
 using glm::abs;
+using glm::fvec3;
 
 using std::cout;
 using std::endl;
@@ -102,11 +103,11 @@ void camera::reset_position() {
     up = INITIAL_UP;
 }
 
-vec3 camera::get_pos() const {
+fvec3 camera::get_pos() const {
     return pos;
 }
 
-vec3 camera::get_up() const {
+fvec3 camera::get_up() const {
     return up;
 }
 

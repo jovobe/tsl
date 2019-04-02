@@ -2,10 +2,6 @@
 
 #include <vector>
 
-#include <glm/glm.hpp>
-
-using glm::vec3;
-
 using std::vector;
 
 namespace tsl {

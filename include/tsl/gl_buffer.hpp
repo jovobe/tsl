@@ -10,23 +10,23 @@
 using std::vector;
 using std::optional;
 
-using glm::vec3;
+using glm::fvec3;
 
 namespace tsl {
 
 struct vertex_element {
-    vec3 pos;
-    vec3 normal;
+    fvec3 pos;
+    fvec3 normal;
     uint32_t picking_index;
 
     vertex_element() : pos(0, 0, 0), normal(0, 0, 0), picking_index(0) {}
-    explicit vertex_element(const vec3& pos) : pos(pos), normal(0, 0, 0), picking_index(0) {}
+    explicit vertex_element(const fvec3& pos) : pos(pos), normal(0, 0, 0), picking_index(0) {}
 };
 
 struct gl_buffer {
-    vector<vec3> vertex_buffer;
+    vector<fvec3> vertex_buffer;
     vector<GLuint> index_buffer;
-    optional<vector<vec3>> normal_buffer;
+    optional<vector<fvec3>> normal_buffer;
     optional<vector<uint32_t>> picking_buffer;
 
     vector<vertex_element> get_combined_vec_data() const;

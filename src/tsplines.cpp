@@ -17,7 +17,7 @@ tmesh tsplines::get_example_data_1() {
     tmesh out;
     auto& mesh = out.mesh;
 
-    const float EDGE_LENGTH = 1.0f;
+    const double EDGE_LENGTH = 1;
 
     // =============================================
     // FRONT SIDE
@@ -38,24 +38,24 @@ tmesh tsplines::get_example_data_1() {
     // (0,0) ---> x
 
     // f0
-    auto v0 = mesh.add_vertex({2.0f, 0.0f, 2.0f});
-    auto v1 = mesh.add_vertex({1.0f, 0.0f, 2.0f});
-    auto v2 = mesh.add_vertex({1.0f, 0.0f, 1.0f});
-    auto v3 = mesh.add_vertex({2.0f, 0.0f, 1.0f});
+    auto v0 = mesh.add_vertex({2, 0, 2});
+    auto v1 = mesh.add_vertex({1, 0, 2});
+    auto v2 = mesh.add_vertex({1, 0, 1});
+    auto v3 = mesh.add_vertex({2, 0, 1});
     mesh.add_face({v0, v1, v2, v3});
 
     // f1
-    auto v4 = mesh.add_vertex({0.0f, 0.0f, 2.0f});
-    auto v5 = mesh.add_vertex({0.0f, 0.0f, 1.0f});
+    auto v4 = mesh.add_vertex({0, 0, 2});
+    auto v5 = mesh.add_vertex({0, 0, 1});
     mesh.add_face({v1, v4, v5, v2});
 
     // f2
-    auto v6 = mesh.add_vertex({2.0f, 0.0f, 0.0f});
-    auto v7 = mesh.add_vertex({1.0f, 0.0f, 0.0f});
+    auto v6 = mesh.add_vertex({2, 0, 0});
+    auto v7 = mesh.add_vertex({1, 0, 0});
     mesh.add_face({v3, v2, v7, v6});
 
     // f3
-    auto v8 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v8 = mesh.add_vertex({0, 0, 0});
     mesh.add_face({v2, v5, v8, v7});
 
     // =============================================
@@ -77,21 +77,21 @@ tmesh tsplines::get_example_data_1() {
     // (-2,0) ---> y
 
     // f4
-    auto v9 = mesh.add_vertex({0.0f, 1.0f, 2.0f});
-    auto v10 = mesh.add_vertex({0.0f, 1.0f, 1.0f});
+    auto v9 = mesh.add_vertex({0, 1, 2});
+    auto v10 = mesh.add_vertex({0, 1, 1});
     mesh.add_face({v4, v9, v10, v5});
 
     // f5
-    auto v11 = mesh.add_vertex({0.0f, 2.0f, 2.0f});
-    auto v12 = mesh.add_vertex({0.0f, 2.0f, 1.0f});
+    auto v11 = mesh.add_vertex({0, 2, 2});
+    auto v12 = mesh.add_vertex({0, 2, 1});
     mesh.add_face({v9, v11, v12, v10});
 
     // f6
-    auto v13 = mesh.add_vertex({0.0f, 1.0f, 0.0f});
+    auto v13 = mesh.add_vertex({0, 1, 0});
     mesh.add_face({v5, v10, v13, v8});
 
     // f7
-    auto v14 = mesh.add_vertex({0.0f, 2.0f, 0.0f});
+    auto v14 = mesh.add_vertex({0, 2, 0});
     mesh.add_face({v10, v12, v14, v13});
 
     // =============================================
@@ -113,21 +113,21 @@ tmesh tsplines::get_example_data_1() {
     //                               x <--- (0,0)
 
     // f8
-    auto v15 = mesh.add_vertex({1.0f, 2.0f, 2.0f});
-    auto v16 = mesh.add_vertex({1.0f, 2.0f, 1.0f});
+    auto v15 = mesh.add_vertex({1, 2, 2});
+    auto v16 = mesh.add_vertex({1, 2, 1});
     mesh.add_face({v11, v15, v16, v12});
 
     // f9
-    auto v17 = mesh.add_vertex({2.0f, 2.0f, 2.0f});
-    auto v18 = mesh.add_vertex({2.0f, 2.0f, 1.0f});
+    auto v17 = mesh.add_vertex({2, 2, 2});
+    auto v18 = mesh.add_vertex({2, 2, 1});
     mesh.add_face({v15, v17, v18, v16});
 
     // f10
-    auto v19 = mesh.add_vertex({1.0f, 2.0f, 0.0f});
+    auto v19 = mesh.add_vertex({1, 2, 0});
     mesh.add_face({v12, v16, v19, v14});
 
     // f11
-    auto v20 = mesh.add_vertex({2.0f, 2.0f, 0.0f});
+    auto v20 = mesh.add_vertex({2, 2, 0});
     mesh.add_face({v16, v18, v20, v19});
 
     // =============================================
@@ -149,15 +149,15 @@ tmesh tsplines::get_example_data_1() {
     // (0,0) ---> y
 
     // f12
-    auto v21 = mesh.add_vertex({2.0f, 1.0f, 2.0f});
-    auto v22 = mesh.add_vertex({2.0f, 1.0f, 1.0f});
+    auto v21 = mesh.add_vertex({2, 1, 2});
+    auto v22 = mesh.add_vertex({2, 1, 1});
     mesh.add_face({v17, v21, v22, v18});
 
     // f13
     mesh.add_face({v21, v0, v3, v22});
 
     // f14
-    auto v23 = mesh.add_vertex({2.0f, 1.0f, 0.0f});
+    auto v23 = mesh.add_vertex({2, 1, 0});
     mesh.add_face({v18, v22, v23, v20});
 
     // f15
@@ -184,7 +184,7 @@ tmesh tsplines::get_example_data_1() {
     //                   FRONT
 
     // f16
-    auto v24 = mesh.add_vertex({1.0f, 1.0f, 2.0f});
+    auto v24 = mesh.add_vertex({1, 1, 2});
     mesh.add_face({v17, v15, v24, v21});
 
     // f17
@@ -217,7 +217,7 @@ tmesh tsplines::get_example_data_1() {
     //                   BACK
 
     // f20
-    auto v25 = mesh.add_vertex({1.0f, 1.0f, 0.0f});
+    auto v25 = mesh.add_vertex({1, 1, 0});
     mesh.add_face({v6, v7, v25, v23});
 
     // f21
@@ -236,7 +236,7 @@ tmesh tsplines::get_example_data_1() {
     }
 
     // Set corners and knots
-    out.knots = dense_half_edge_map<float>(1.0f);
+    out.knots = dense_half_edge_map<double>(1);
     out.corners = dense_half_edge_map<bool>(true);
 
     // Calc basis funs
@@ -256,13 +256,13 @@ tmesh tsplines::get_example_data_1() {
 }
 
 tmesh tsplines::get_example_data_2(uint32_t size) {
-    const double EDGE_LENGTH = 1.0;
+    const double EDGE_LENGTH = 1;
 
     tmesh out;
     out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, true);
 
     // Set corners and knots
-    out.knots = dense_half_edge_map<float>(1.0f);
+    out.knots = dense_half_edge_map<double>(1);
     out.corners = dense_half_edge_map<bool>(true);
 
     auto edge1 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 2), vertex_handle((3 * size) + 2)).unwrap();
@@ -298,7 +298,7 @@ tmesh::determine_local_coordinate_systems() const {
     dir.reserve(mesh.num_half_edges());
 
     for (auto&& fh: mesh.get_faces()) {
-        vec2 c(0.0f, 0.0f);
+        vec2 c(0, 0);
         uint8_t i = 0;
 
         auto edges = mesh.get_half_edges_of_face(fh);
@@ -374,14 +374,14 @@ tmesh::setup_basis_function_handles_and_transitions(const dense_half_edge_map<ve
     return {handles, transforms};
 }
 
-unordered_map<double_indexed_vertex_handle, float>
+unordered_map<double_indexed_vertex_handle, double>
 tmesh::determine_knot_vectors(const unordered_map<indexed_vertex_handle, tuple<half_edge_handle, tag>>& handles) const {
-    unordered_map<double_indexed_vertex_handle, float> out;
+    unordered_map<double_indexed_vertex_handle, double> out;
     out.reserve(handles.size() * 2);
 
     for (auto&& [k, v] : handles) {
         auto [h, q] = v;
-        float s = 0.0f;
+        double s = 0;
         uint32_t j = 1;
 
         // no edge in u direction (T-joint), so walk “around” face
@@ -396,7 +396,7 @@ tmesh::determine_knot_vectors(const unordered_map<indexed_vertex_handle, tuple<h
         do {
             auto handle = double_indexed_vertex_handle(k.vertex, k.index, static_cast<uint8_t>(j));
             if (out.count(handle) == 0) {
-                out[handle] = 0.0f;
+                out[handle] = 0;
             }
             out[handle] += knots[h];
 
@@ -437,7 +437,7 @@ tmesh::determine_knot_vectors(const unordered_map<indexed_vertex_handle, tuple<h
         do {
             auto handle = double_indexed_vertex_handle(k.vertex, k.index, static_cast<uint8_t>(j));
             if (out.count(handle) == 0) {
-                out[handle] = 0.0f;
+                out[handle] = 0;
             }
             out[handle] += f * knots[h];
 
@@ -463,7 +463,7 @@ tmesh::determine_support_of_basis_functions(
     const unordered_map<indexed_vertex_handle, transform>& transforms,
     const dense_half_edge_map<transform>& edge_transforms,
     const dense_half_edge_map<vec2>& uv,
-    const unordered_map<double_indexed_vertex_handle, float>& knot_vectors
+    const unordered_map<double_indexed_vertex_handle, double>& knot_vectors
 ) const {
     dense_face_map<vector<tuple<indexed_vertex_handle, transform>>> out;
     out.reserve(mesh.num_faces());
@@ -531,7 +531,7 @@ tmesh::determine_support_of_basis_functions(
     return out;
 }
 
-float tmesh::fac(half_edge_handle handle) const {
+double tmesh::fac(half_edge_handle handle) const {
     return knots[handle] / knots[mesh.get_twin(handle)];
 }
 
@@ -541,7 +541,7 @@ bool tmesh::from_corner(half_edge_handle handle) const {
 
 aa_rectangle tmesh::get_parametric_domain(
     const indexed_vertex_handle& handle,
-    const unordered_map<double_indexed_vertex_handle, float>& knot_vectors,
+    const unordered_map<double_indexed_vertex_handle, double>& knot_vectors,
     const unordered_map<indexed_vertex_handle, tuple<half_edge_handle, tag>>& handles
 ) const {
     double_indexed_vertex_handle index_knot_vector1_level1(handle.vertex, handle.index, 1);
@@ -560,7 +560,7 @@ aa_rectangle tmesh::get_parametric_domain(
     auto nface_h = mesh.get_face_of_half_edge(nh).expect(EXPECT_NO_BORDER);
 
     // Only calc the scale factor, if we are NOT at a t-joint
-    float scale_factor = 1.0f;
+    double scale_factor = 1;
     if (face_h != nface_h) {
         auto separating_edge = mesh.get_half_edge_between(face_h, nface_h).expect(EXPECT_NO_BORDER);
         scale_factor = fac(separating_edge);
@@ -605,12 +605,12 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
         }
 
         auto local_system_max = get_local_max_coordinates(fh);
-        float u_coord = local_system_max.x;
-        float v_coord = local_system_max.y;
+        double u_coord = local_system_max.x;
+        double v_coord = local_system_max.y;
         auto u_max = resolution + 1u;
         auto v_max = resolution + 1u;
-        float step_u = u_coord / resolution;
-        float step_v = v_coord / resolution;
+        double step_u = u_coord / resolution;
+        double step_v = v_coord / resolution;
 
         out.emplace_back(fh);
         auto& grid = out.back();
@@ -618,8 +618,8 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
         grid.num_points_x = u_max;
         grid.num_points_y = v_max;
 
-        float current_u = 0;
-        float current_v = 0;
+        double current_u = 0;
+        double current_v = 0;
         for (uint32_t v = 0; v < v_max; ++v) {
             current_u = 0;
             vector<vec3> row;
@@ -636,9 +636,9 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
     return out;
 }
 
-vec3 tmesh::get_surface_point_of_face(float u, float v, face_handle f) const {
-    vec3 c(0.0f, 0.0f, 0.0f);
-    float d = 0.0f;
+vec3 tmesh::get_surface_point_of_face(double u, double v, face_handle f) const {
+    vec3 c(0, 0, 0);
+    double d = 0;
     vec2 in(u, v);
 
     auto& supports = support_map[f];
@@ -659,39 +659,39 @@ vec3 tmesh::get_surface_point_of_face(float u, float v, face_handle f) const {
     return c / d;
 }
 
-float tsplines::get_basis_fun(float u, const array<float, 5>& knot_vector) {
+double tsplines::get_basis_fun(double u, const array<double, 5>& knot_vector) {
     // Get the span in the knot_vector (the span is called i in the recurrence formula for b-splines)
     auto span = get_span(u, knot_vector);
     // Check if basis function is relevant
     if (!span) {
-        return 0.0f;
+        return 0;
     }
 
     // Unwrap the optional for shorter usage
     auto i = *span;
 
-    float n00 = 0.0f;
-    float n10 = 0.0f;
-    float n20 = 0.0f;
-    float n30 = 0.0f;
+    double n00 = 0;
+    double n10 = 0;
+    double n20 = 0;
+    double n30 = 0;
 
     // We use the recurrence formula for b-splines and assume a fixed degree of 3. The calculation triangle for
     // the basis functions is shown for each span, if we want to find N_0,3:
     switch (i) {
         case 0: {
-            n00 = 1.0f;
+            n00 = 1;
             break;
         }
         case 1: {
-            n10 = 1.0f;
+            n10 = 1;
             break;
         }
         case 2: {
-            n20 = 1.0f;
+            n20 = 1;
             break;
         }
         case 3: {
-            n30 = 1.0f;
+            n30 = 1;
             break;
         }
         default:
@@ -713,36 +713,36 @@ float tsplines::get_basis_fun(float u, const array<float, 5>& knot_vector) {
     //
 
     // Layer N_x,1
-    float n01_left = ((u - knot_vector[0]) / (knot_vector[0+1] - knot_vector[0]));
-    float n01_right = ((knot_vector[0+1+1] - u) / (knot_vector[0+1+1] - knot_vector[0+1]));
-    float n01 = n01_left * n00 + n01_right * n10;
+    double n01_left = ((u - knot_vector[0]) / (knot_vector[0+1] - knot_vector[0]));
+    double n01_right = ((knot_vector[0+1+1] - u) / (knot_vector[0+1+1] - knot_vector[0+1]));
+    double n01 = n01_left * n00 + n01_right * n10;
 
-    float n11_left = ((u - knot_vector[1]) / (knot_vector[1+1] - knot_vector[1]));
-    float n11_right = ((knot_vector[1+1+1] - u) / (knot_vector[1+1+1] - knot_vector[1+1]));
-    float n11 = n11_left * n10 + n11_right * n20;
+    double n11_left = ((u - knot_vector[1]) / (knot_vector[1+1] - knot_vector[1]));
+    double n11_right = ((knot_vector[1+1+1] - u) / (knot_vector[1+1+1] - knot_vector[1+1]));
+    double n11 = n11_left * n10 + n11_right * n20;
 
-    float n21_left = ((u - knot_vector[2]) / (knot_vector[2+1] - knot_vector[2]));
-    float n21_right = ((knot_vector[2+1+1] - u) / (knot_vector[2+1+1] - knot_vector[2+1]));
-    float n21 = n21_left * n20 + n21_right * n30;
+    double n21_left = ((u - knot_vector[2]) / (knot_vector[2+1] - knot_vector[2]));
+    double n21_right = ((knot_vector[2+1+1] - u) / (knot_vector[2+1+1] - knot_vector[2+1]));
+    double n21 = n21_left * n20 + n21_right * n30;
 
     // Layer N_x,2
-    float n02_left = ((u - knot_vector[0]) / (knot_vector[0+2] - knot_vector[0]));
-    float n02_right = ((knot_vector[0+2+1] - u) / (knot_vector[0+2+1] - knot_vector[0+1]));
-    float n02 = n02_left * n01 + n02_right * n11;
+    double n02_left = ((u - knot_vector[0]) / (knot_vector[0+2] - knot_vector[0]));
+    double n02_right = ((knot_vector[0+2+1] - u) / (knot_vector[0+2+1] - knot_vector[0+1]));
+    double n02 = n02_left * n01 + n02_right * n11;
 
-    float n12_left = ((u - knot_vector[1]) / (knot_vector[1+2] - knot_vector[1]));
-    float n12_right = ((knot_vector[1+2+1] - u) / (knot_vector[1+2+1] - knot_vector[1+1]));
-    float n12 = n12_left * n11 + n12_right * n21;
+    double n12_left = ((u - knot_vector[1]) / (knot_vector[1+2] - knot_vector[1]));
+    double n12_right = ((knot_vector[1+2+1] - u) / (knot_vector[1+2+1] - knot_vector[1+1]));
+    double n12 = n12_left * n11 + n12_right * n21;
 
     // Layer N_x,3
-    float n03_left = ((u - knot_vector[0]) / (knot_vector[0+3] - knot_vector[0]));
-    float n03_right = ((knot_vector[0+3+1] - u) / (knot_vector[0+3+1] - knot_vector[0+1]));
-    float n03 = n03_left * n02 + n03_right * n12;
+    double n03_left = ((u - knot_vector[0]) / (knot_vector[0+3] - knot_vector[0]));
+    double n03_right = ((knot_vector[0+3+1] - u) / (knot_vector[0+3+1] - knot_vector[0+1]));
+    double n03 = n03_left * n02 + n03_right * n12;
 
     return n03;
 }
 
-optional<uint8_t> tsplines::get_span(float u, const array<float, 5>& knot_vector) {
+optional<uint8_t> tsplines::get_span(double u, const array<double, 5>& knot_vector) {
     if (u < knot_vector[0] || u >= knot_vector[4]) {
         return nullopt;
     }
@@ -760,7 +760,7 @@ optional<uint8_t> tsplines::get_span(float u, const array<float, 5>& knot_vector
     return mid;
 }
 
-pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_vertex_handle& handle) const {
+pair<array<double, 5>, array<double, 5>> tmesh::get_knot_vectors(const indexed_vertex_handle& handle) const {
 
     // Note on variable names: a number i at the end means "domain + i" and a _i number means "domain - i"
 
@@ -791,7 +791,7 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
     auto knot02 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, handle.index, 2));
 
     // Get transformation from values from hindex + 1 into domain of handle
-    float transform_01 = 1.0f;
+    double transform_01 = 1;
     if (face_h0 != face_h1) {
         auto edge_bewteen_0_and1 = mesh.get_half_edge_between(face_h0, face_h1).expect(EXPECT_NO_BORDER);
         transform_01 = fac(edge_bewteen_0_and1);
@@ -802,7 +802,7 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
     auto knot12 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, index1, 2)) * transform_01;
 
     // Get transformation from values from hindex - 1 into domain of handle
-    float transform_0_1 = 1.0f;
+    double transform_0_1 = 1;
     if (face_h0 != face_h_1) {
         auto edge_bewteen_0_and_1 = mesh.get_half_edge_between(face_h0, face_h_1).expect(EXPECT_NO_BORDER);
         transform_0_1 = fac(edge_bewteen_0_and_1);
@@ -814,7 +814,7 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
 
     // For the transition from index - 2 into domain of handle we need two transitions: -2 to -1 and -1 to handle
     // Get transformation from values from hindex - 2 into index - 1
-    float transform__1_2 = 1.0f;
+    double transform__1_2 = 1;
     if (face_h_1 != face_h_2) {
         auto edge_bewteen__1_and_2 = mesh.get_half_edge_between(face_h_1, face_h_2).expect(EXPECT_NO_BORDER);
         transform__1_2 = fac(edge_bewteen__1_and_2);
@@ -825,8 +825,8 @@ pair<array<float, 5>, array<float, 5>> tmesh::get_knot_vectors(const indexed_ver
     auto knot_21 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, index_2, 1)) * transform_0_2;
     auto knot_22 = knot_vectors.at(double_indexed_vertex_handle(handle.vertex, index_2, 2)) * transform_0_2;
 
-    array<float, 5> u = {-knot_21 - knot_22, -knot_21, 0, knot01, knot01 + knot02};
-    array<float, 5> v = {-knot11 - knot12, -knot11, 0, knot_11, knot_11 + knot_12};
+    array<double, 5> u = {-knot_21 - knot_22, -knot_21, 0, knot01, knot01 + knot02};
+    array<double, 5> v = {-knot11 - knot12, -knot11, 0, knot_11, knot_11 + knot_12};
 
     return {u, v};
 }
@@ -873,15 +873,15 @@ vec2 rotate(uint8_t times, const vec2& vec) {
         case 1: {
             auto swp = out.y;
             out.y = out.x;
-            out.x = swp * -1.0f;
+            out.x = swp * -1;
             break;
         }
         case 2:
-            out *= -1.0f;
+            out *= -1;
             break;
         case 3: {
             auto swp = out.y;
-            out.y = out.x * -1.0f;
+            out.y = out.x * -1;
             out.x = swp;
             break;
         }

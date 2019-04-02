@@ -4,14 +4,11 @@
 #include <cstdint>
 #include <vector>
 
-#include <glm/glm.hpp>
-
 #include <tsl/gl_buffer.hpp>
 #include <tsl/rendering/picking_map.hpp>
+#include <tsl/geometry/vector.hpp>
 
 using std::vector;
-
-using glm::vec3;
 
 namespace tsl {
 

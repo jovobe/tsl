@@ -31,27 +31,27 @@ protected:
         //       (v8) ====== (v7) ====== (v6)
 
         // f0
-        auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v0 = mesh.add_vertex({0, 0, 0});
+        auto v1 = mesh.add_vertex({0, 0, 0});
+        auto v2 = mesh.add_vertex({0, 0, 0});
+        auto v3 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v0, v1, v2, v3}));
         vertex_handles.insert(vertex_handles.end(), {v0, v1, v2, v3});
 
         // f1
-        auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v5 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v4 = mesh.add_vertex({0, 0, 0});
+        auto v5 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v1, v4, v5, v2}));
         vertex_handles.insert(vertex_handles.end(), {v4, v5});
 
         // f2
-        auto v6 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v7 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v6 = mesh.add_vertex({0, 0, 0});
+        auto v7 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v3, v2, v7, v6}));
         vertex_handles.insert(vertex_handles.end(), {v6, v7});
 
         // f3
-        auto v8 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v8 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v2, v5, v8, v7}));
         vertex_handles.insert(vertex_handles.end(), {v8});
 
@@ -72,24 +72,24 @@ protected:
         //       (v14) ===== (v13) ===== (v8)
 
         // f4
-        auto v9 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v10 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v9 = mesh.add_vertex({0, 0, 0});
+        auto v10 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v4, v9, v10, v5}));
         vertex_handles.insert(vertex_handles.end(), {v9, v10});
 
         // f5
-        auto v11 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v12 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v11 = mesh.add_vertex({0, 0, 0});
+        auto v12 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v9, v11, v12, v10}));
         vertex_handles.insert(vertex_handles.end(), {v11, v12});
 
         // f6
-        auto v13 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v13 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v5, v10, v13, v8}));
         vertex_handles.insert(vertex_handles.end(), {v13});
 
         // f7
-        auto v14 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v14 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v10, v12, v14, v13}));
         vertex_handles.insert(vertex_handles.end(), {v14});
 
@@ -110,24 +110,24 @@ protected:
         //       (v20) ===== (v19) ===== (v14)
 
         // f8
-        auto v15 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v16 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v15 = mesh.add_vertex({0, 0, 0});
+        auto v16 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v11, v15, v16, v12}));
         vertex_handles.insert(vertex_handles.end(), {v15, v16});
 
         // f9
-        auto v17 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v18 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v17 = mesh.add_vertex({0, 0, 0});
+        auto v18 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v15, v17, v18, v16}));
         vertex_handles.insert(vertex_handles.end(), {v17, v18});
 
         // f10
-        auto v19 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v19 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v12, v16, v19, v14}));
         vertex_handles.insert(vertex_handles.end(), {v19});
 
         // f11
-        auto v20 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v20 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v16, v18, v20, v19}));
         vertex_handles.insert(vertex_handles.end(), {v20});
 
@@ -148,8 +148,8 @@ protected:
         //       (v6) ====== (v23) ===== (v20)
 
         // f12
-        auto v21 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-        auto v22 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v21 = mesh.add_vertex({0, 0, 0});
+        auto v22 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v17, v21, v22, v18}));
         vertex_handles.insert(vertex_handles.end(), {v21, v22});
 
@@ -157,7 +157,7 @@ protected:
         face_handles.push_back(mesh.add_face({v21, v0, v3, v22}));
 
         // f14
-        auto v23 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v23 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v18, v22, v23, v20}));
         vertex_handles.insert(vertex_handles.end(), {v23});
 
@@ -185,7 +185,7 @@ protected:
         //                   FRONT
 
         // f16
-        auto v24 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v24 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v17, v15, v24, v21}));
         vertex_handles.insert(vertex_handles.end(), {v24});
 
@@ -219,7 +219,7 @@ protected:
         //                   BACK
 
         // f20
-        auto v25 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+        auto v25 = mesh.add_vertex({0, 0, 0});
         face_handles.push_back(mesh.add_face({v6, v7, v25, v23}));
         vertex_handles.insert(vertex_handles.end(), {v25});
 
@@ -244,10 +244,10 @@ protected:
 };
 
 TEST_F(HalfEdgeMeshTest, IsFaceInsertionValid) {
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
+    auto v4 = mesh.add_vertex({0, 0, 0});
 
     EXPECT_FALSE(mesh.is_face_insertion_valid({}));
     EXPECT_FALSE(mesh.is_face_insertion_valid({v1, v2, v3}));
@@ -255,10 +255,10 @@ TEST_F(HalfEdgeMeshTest, IsFaceInsertionValid) {
 }
 
 TEST_F(HalfEdgeMeshTest, IsFaceInsertionValidSameVertices) {
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
+    auto v4 = mesh.add_vertex({0, 0, 0});
 
     EXPECT_TRUE(mesh.is_face_insertion_valid({v1, v2, v3, v4}));
 
@@ -279,30 +279,30 @@ TEST_F(HalfEdgeMeshTest, IsFaceInsertionValidSameVertices) {
 }
 
 TEST_F(HalfEdgeMeshTest, GetVertexPosition) {
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({1.0f, 2.0f, 3.0f});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({1, 2, 3});
 
     {
         const auto& mesh_const = mesh;
         auto v1_pos = mesh_const.get_vertex_position(v1);
-        EXPECT_EQ(vec3(0.0f, 0.0f, 0.0f), v1_pos);
+        EXPECT_EQ(vec3(0, 0, 0), v1_pos);
     }
 
     auto& v2_pos = mesh.get_vertex_position(v2);
-    EXPECT_EQ(vec3(1.0f, 2.0f, 3.0f), v2_pos);
+    EXPECT_EQ(vec3(1, 2, 3), v2_pos);
 
-    v2_pos.x = 42.0f;
-    EXPECT_EQ(vec3(42.0f, 2.0f, 3.0f), v2_pos);
+    v2_pos.x = 42;
+    EXPECT_EQ(vec3(42, 2, 3), v2_pos);
 }
 
 TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
-    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v0 = mesh.add_vertex({0, 0, 0});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
 
-    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v5 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v4 = mesh.add_vertex({0, 0, 0});
+    auto v5 = mesh.add_vertex({0, 0, 0});
 
     vector<face_handle> face_handles;
 
@@ -334,13 +334,13 @@ TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
 
 // TODO: Implement orientability check in `half_edge_mesh::add_face()`
 TEST_F(HalfEdgeMeshTest, Orientability) {
-    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v0 = mesh.add_vertex({0, 0, 0});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
 
-    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v5 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v4 = mesh.add_vertex({0, 0, 0});
+    auto v5 = mesh.add_vertex({0, 0, 0});
 
     mesh.add_face({v0, v1, v2, v3});
 
@@ -349,10 +349,10 @@ TEST_F(HalfEdgeMeshTest, Orientability) {
 }
 
 TEST_F(HalfEdgeMeshTest, VertexIterator) {
-    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v0 = mesh.add_vertex({0, 0, 0});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
 
     vector<vertex_handle> expected_handles;
     expected_handles.insert(expected_handles.begin(), {v0, v1, v2, v3});
@@ -365,15 +365,15 @@ TEST_F(HalfEdgeMeshTest, VertexIterator) {
 }
 
 TEST_F(HalfEdgeMeshTest, FaceIterator) {
-    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v0 = mesh.add_vertex({0, 0, 0});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
 
-    auto v4 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v5 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v6 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v7 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v4 = mesh.add_vertex({0, 0, 0});
+    auto v5 = mesh.add_vertex({0, 0, 0});
+    auto v6 = mesh.add_vertex({0, 0, 0});
+    auto v7 = mesh.add_vertex({0, 0, 0});
 
     // Create the following mesh:
     //
@@ -404,10 +404,10 @@ TEST_F(HalfEdgeMeshTest, FaceIterator) {
 }
 
 TEST_F(HalfEdgeMeshTest, HalfEdgeIterator) {
-    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v0 = mesh.add_vertex({0, 0, 0});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
 
     // Add the following face (f0):
     //
@@ -430,10 +430,10 @@ TEST_F(HalfEdgeMeshTest, HalfEdgeIterator) {
 }
 
 TEST_F(HalfEdgeMeshTest, EdgeIterator) {
-    auto v0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v2 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto v3 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto v0 = mesh.add_vertex({0, 0, 0});
+    auto v1 = mesh.add_vertex({0, 0, 0});
+    auto v2 = mesh.add_vertex({0, 0, 0});
+    auto v3 = mesh.add_vertex({0, 0, 0});
 
     // Add the following face (f0):
     //
@@ -457,8 +457,8 @@ TEST_F(HalfEdgeMeshTest, EdgeIterator) {
 
 TEST_F(HalfEdgeMeshTestWithCubeData, IsFaceInsertionValidNonManifoldTripleEdge) {
     // Create non manifold triple edge
-    auto vte0 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
-    auto vte1 = mesh.add_vertex({0.0f, 0.0f, 0.0f});
+    auto vte0 = mesh.add_vertex({0, 0, 0});
+    auto vte1 = mesh.add_vertex({0, 0, 0});
     auto v0 = vertex_handles[0];
     auto v3 = vertex_handles[3];
 

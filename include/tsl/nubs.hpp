@@ -9,7 +9,7 @@
 
 using std::vector;
 
-using glm::vec3;
+using glm::fvec3;
 
 namespace tsl {
 
@@ -55,7 +55,7 @@ struct nubs {
     nubs() : p(0), q(0), U(), V(), P(face_handle(0)), x(), y(), n(), m() {};
 
     regular_grid get_grid(uint32_t resolution) const;
-    vec3 get_surface_point(float u, float v) const;
+    fvec3 get_surface_point(float u, float v) const;
     size_t get_u_span(float u) const;
     size_t get_v_span(float v) const;
     vector<float> get_u_basis_funs(size_t span, float u) const;

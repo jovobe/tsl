@@ -1,9 +1,7 @@
 #ifndef TSL_RECTANGLE_HPP
 #define TSL_RECTANGLE_HPP
 
-#include <glm/glm.hpp>
-
-using glm::vec2;
+#include <tsl/geometry/vector.hpp>
 
 namespace tsl {
 

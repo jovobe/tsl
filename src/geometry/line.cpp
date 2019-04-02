@@ -50,7 +50,7 @@ bool line::intersects(const aa_rectangle& rectangle) const {
 
 line::side line::test(vec2 p) const {
     auto test = (p2.y - p1.y) * p.x + (p1.x - p2.x) * p.y + (p2.x * p1.y - p1.x * p2.y);
-    if (test < numeric_limits<float>::epsilon() && test > -numeric_limits<float>::epsilon()) {
+    if (test < numeric_limits<double>::epsilon() && test > -numeric_limits<double>::epsilon()) {
         return side::on;
     } else if (test > 0) {
         return side::left;

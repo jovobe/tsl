@@ -1,11 +1,8 @@
 #ifndef TSL_LINE_HPP
 #define TSL_LINE_HPP
 
-#include <glm/glm.hpp>
-
 #include <tsl/geometry/rectangle.hpp>
-
-using glm::vec2;
+#include <tsl/geometry/vector.hpp>
 
 namespace tsl {
 

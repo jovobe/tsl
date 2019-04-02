@@ -1,11 +1,8 @@
 #ifndef TSL_HALF_EDGE_VERTEX_HPP
 #define TSL_HALF_EDGE_VERTEX_HPP
 
-#include <glm/glm.hpp>
-
-#include "handles.hpp"
-
-using glm::vec3;
+#include <tsl/geometry/handles.hpp>
+#include <tsl/geometry/vector.hpp>
 
 namespace tsl {
 
