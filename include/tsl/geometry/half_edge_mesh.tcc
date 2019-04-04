@@ -70,17 +70,22 @@ template<typename pred_t>
 optional_half_edge_handle half_edge_mesh::find_edge_around_vertex(vertex_handle vh, pred_t pred, direction way) const {
     // This function simply follows `next` and `twin` handles to visit all
     // edges around a vertex.
+    optional_half_edge_handle out;
     auto& v = get_v(vh);
     if (!v.outgoing) {
-        return optional_half_edge_handle();
+        return out;
     }
 
     switch (way) {
         case direction::ingoing:
-            return find_edge_around_vertex(get_e(v.outgoing.unwrap()).twin, pred, way);
+            out = find_edge_around_vertex(get_e(v.outgoing.unwrap()).twin, pred, way);
+            break;
         case direction::outgoing:
-            return find_edge_around_vertex(v.outgoing.unwrap(), pred, way);
+            out = find_edge_around_vertex(v.outgoing.unwrap(), pred, way);
+            break;
     }
+
+    return out;
 }
 
 template<typename pred_t>

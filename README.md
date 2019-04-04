@@ -4,6 +4,8 @@ Library for representation and manipulation of generalised T-Spline surfaces wri
 [![CircleCI](https://circleci.com/gh/jovobe/tsl.svg?style=svg)](https://circleci.com/gh/jovobe/tsl)
 
 ## build
+In order to build this software you need a C++ compiler (compatible with C++17 standard) and the package manager [conan](https://conan.io/).
+
 - `mkdir build && cd build`
 
 ### deps (conan)
