@@ -5,6 +5,7 @@ add_executable(tsl_tests
     attrmaps/attribute_map_tests.cpp
     tsplines_tests.cpp
     geometry/line_tests.cpp
+    subdevision_tests.cpp
 )
 
 target_link_libraries(tsl_tests

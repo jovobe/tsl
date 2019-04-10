@@ -1,3 +1,15 @@
+add_library(tsl SHARED STATIC
+    geometry/half_edge_mesh.cpp
+    tsplines.cpp
+    geometry/line.cpp
+    geometry/rectangle.cpp
+    subdevision.cpp
+)
+
+target_link_libraries(tsl
+    ${CONAN_LIBS}
+)
+
 add_executable(tsl_main
     main.cpp
     application.cpp
@@ -11,13 +23,6 @@ add_executable(tsl_main
     rendering/half_edge_mesh.cpp
     rendering/picking_map.cpp
     rendering/tmesh.cpp
-)
-
-add_library(tsl SHARED STATIC
-    geometry/half_edge_mesh.cpp
-    tsplines.cpp
-    geometry/line.cpp
-    geometry/rectangle.cpp
 )
 
 target_include_directories(tsl_main PRIVATE

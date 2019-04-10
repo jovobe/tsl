@@ -21,6 +21,7 @@ include_directories(${TSL_INCLUDE_DIR})
 add_subdirectory(src)
 add_subdirectory(test)
 
+# TODO: This is a bad solution for loading shaders. Load them in a different way!
 configure_file(shader/vertex.glsl shader/vertex.glsl COPYONLY)
 configure_file(shader/fragment.glsl shader/fragment.glsl COPYONLY)
 
