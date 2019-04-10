@@ -170,7 +170,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     glGenBuffers(1, &control_vertices_index_buffer);
     glGenBuffers(1, &vertices_picked_buffer);
 
-    //    tmesh = tsplines::get_example_data_1();
+//    tmesh = tsplines::get_example_data_1();
     tmesh = tsplines::get_example_data_2(5);
 
     update_buffer();

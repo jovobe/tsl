@@ -1,15 +1,26 @@
 #include <queue>
 #include <algorithm>
 #include <variant>
+#include <utility>
+#include <optional>
+
+#include <glm/gtc/type_ptr.hpp>
 
 #include <tsl/tsplines.hpp>
 #include <tsl/geometry/line.hpp>
 #include <tsl/geometry/rectangle.hpp>
+#include <tsl/subdevision.hpp>
+#include <tsl/geometry/vector.hpp>
 
 using std::queue;
 using std::min;
 using std::max;
 using std::get;
+using std::pair;
+using std::make_pair;
+using std::optional;
+
+using glm::value_ptr;
 
 namespace tsl {
 
@@ -259,20 +270,21 @@ tmesh tsplines::get_example_data_2(uint32_t size) {
     const double EDGE_LENGTH = 1;
 
     tmesh out;
-    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, true);
+//    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, true);
+    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, false);
 
     // Set corners and knots
     out.knots = dense_half_edge_map<double>(1);
     out.corners = dense_half_edge_map<bool>(true);
 
-    auto edge1 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 2), vertex_handle((3 * size) + 2)).unwrap();
-    auto edge2 = out.mesh.get_half_edge_between(vertex_handle((4 * size) + 3), vertex_handle((3 * size) + 3)).unwrap();
-    auto edge3 = out.mesh.get_half_edge_between(vertex_handle((1 * size) + 3), vertex_handle((1 * size) + 2)).unwrap();
-    auto edge4 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 1), vertex_handle((2 * size) + 2)).unwrap();
-    out.corners[edge1] = false;
-    out.corners[edge2] = false;
-    out.corners[edge3] = false;
-    out.corners[edge4] = false;
+//    auto edge1 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 2), vertex_handle((3 * size) + 2)).unwrap();
+//    auto edge2 = out.mesh.get_half_edge_between(vertex_handle((4 * size) + 3), vertex_handle((3 * size) + 3)).unwrap();
+//    auto edge3 = out.mesh.get_half_edge_between(vertex_handle((1 * size) + 3), vertex_handle((1 * size) + 2)).unwrap();
+//    auto edge4 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 1), vertex_handle((2 * size) + 2)).unwrap();
+//    out.corners[edge1] = false;
+//    out.corners[edge2] = false;
+//    out.corners[edge3] = false;
+//    out.corners[edge4] = false;
 
     // Calc basis funs
     auto [uv, dir] = out.determine_local_coordinate_systems();
@@ -594,50 +606,123 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
         // TODO: Get correct distance to extraordinary vertex and then skip faces below distance
         // Skip faces containing an extraordinary vertex
         vector<face_handle> faces_to_check;
-//        mesh.get_neighbours_of_face(fh, faces_to_check);
         faces_to_check.push_back(fh);
-        auto skip = false;
+        auto contains_extraordinary_vertex = false;
         for (auto&& cfh: faces_to_check) {
             for (auto&& vh: mesh.get_vertices_of_face(cfh)) {
                 if (is_extraordinary(vh)) {
-                    skip = true;
+                    contains_extraordinary_vertex = true;
                 }
             }
         }
-        if (skip) {
-            continue;
-        }
 
-        auto local_system_max = get_local_max_coordinates(fh);
-        double u_coord = local_system_max.x;
-        double v_coord = local_system_max.y;
-        auto u_max = resolution + 1u;
-        auto v_max = resolution + 1u;
-        double step_u = u_coord / resolution;
-        double step_v = v_coord / resolution;
-
-        out.emplace_back(fh);
-        auto& grid = out.back();
-        grid.points.reserve(static_cast<size_t>(v_max));
-        grid.num_points_x = u_max;
-        grid.num_points_y = v_max;
-
-        double current_u = 0;
-        double current_v = 0;
-        for (uint32_t v = 0; v < v_max; ++v) {
-            current_u = 0;
-            vector<vec3> row;
-            row.reserve(static_cast<size_t>(u_max));
-            for (uint32_t u = 0; u < u_max; ++u) {
-                row.push_back(get_surface_point_of_face(min(current_u, u_coord), min(current_v, v_coord), fh));
-                current_u += step_u;
-            }
-            grid.points.push_back(row);
-            current_v += step_v;
+        if (contains_extraordinary_vertex) {
+            auto grid = evaluate_subd_for_face(resolution, fh);
+            out.emplace_back(grid);
+        } else {
+            auto grid = evaluate_bsplines_for_face(resolution, fh);
+            out.emplace_back(grid);
         }
     }
 
     return out;
+}
+
+regular_grid tmesh::evaluate_bsplines_for_face(uint32_t resolution, face_handle& fh) const {
+    auto local_system_max = get_local_max_coordinates(fh);
+    double u_coord = local_system_max.x;
+    double v_coord = local_system_max.y;
+    auto u_max = resolution + 1u;
+    auto v_max = resolution + 1u;
+    double step_u = u_coord / resolution;
+    double step_v = v_coord / resolution;
+
+    regular_grid grid(fh);
+    grid.points.reserve(static_cast<size_t>(v_max));
+    grid.num_points_x = u_max;
+    grid.num_points_y = v_max;
+
+    double current_u = 0;
+    double current_v = 0;
+    for (uint32_t v = 0; v < v_max; ++v) {
+        current_u = 0;
+        vector<vec3> row;
+        row.reserve(static_cast<size_t>(u_max));
+        for (uint32_t u = 0; u < u_max; ++u) {
+            row.push_back(get_surface_point_of_face(min(current_u, u_coord), min(current_v, v_coord), fh));
+            current_u += step_u;
+        }
+        grid.points.push_back(row);
+        current_v += step_v;
+    }
+    return grid;
+}
+
+regular_grid tmesh::evaluate_subd_for_face(uint32_t resolution, face_handle& fh) const {
+    auto local_system_max = get_local_max_coordinates(fh);
+    double u_coord = local_system_max.x;
+    double v_coord = local_system_max.y;
+    auto u_max = resolution + 1u;
+    auto v_max = resolution + 1u;
+    double step_u = u_coord / resolution;
+    double step_v = v_coord / resolution;
+
+    regular_grid grid(fh);
+    grid.points.reserve(static_cast<size_t>(v_max));
+    grid.num_points_x = u_max;
+    grid.num_points_y = v_max;
+
+    // TODO: This can be cashed!
+    auto neighbours = get_vertices_for_subd_evaluation(fh);
+    vector<double> x_coords;
+    vector<double> y_coords;
+    vector<double> z_coords;
+    x_coords.reserve(neighbours.size());
+    y_coords.reserve(neighbours.size());
+    z_coords.reserve(neighbours.size());
+    for (auto&& vh: neighbours) {
+        auto pos = mesh.get_vertex_position(vh);
+        x_coords.push_back(pos.x);
+        y_coords.push_back(pos.y);
+        z_coords.push_back(pos.z);
+    }
+
+    auto extraordinary_vertex = neighbours.front();
+    auto valence = mesh.get_valence(extraordinary_vertex);
+
+    double current_u = 0;
+    double current_v = 0;
+    for (uint32_t v = 0; v < v_max; ++v) {
+        current_u = 0;
+        vector<vec3> row;
+        row.reserve(static_cast<size_t>(u_max));
+        for (uint32_t u = 0; u < u_max; ++u) {
+            auto ud = min(current_u / u_coord, u_coord);
+            auto vd = min(current_v / v_coord, v_coord);
+            vec3 point;
+            vec3 du;
+            vec3 dv;
+            subd_eval(
+                ud,
+                vd,
+                2 * valence + 8,
+                x_coords.data(),
+                y_coords.data(),
+                z_coords.data(),
+                value_ptr(point),
+                value_ptr(du),
+                value_ptr(dv),
+                nullptr,
+                nullptr,
+                nullptr
+            );
+            row.push_back(point);
+            current_u += step_u;
+        }
+        grid.points.push_back(row);
+        current_v += step_v;
+    }
+    return grid;
 }
 
 vec3 tmesh::get_surface_point_of_face(double u, double v, face_handle f) const {
@@ -867,6 +952,68 @@ vec2 tmesh::get_local_max_coordinates(const face_handle& handle) const {
             out.y = max(out.y, uv[eh].y);
         }
     }
+    return out;
+}
+
+vector<vertex_handle> tmesh::get_vertices_for_subd_evaluation(face_handle handle) const {
+    // Find extraordinary vertex and edge pointing to it.
+    optional<pair<vertex_handle, half_edge_handle>> found;
+    for (auto&& eh: mesh.get_half_edges_of_face(handle)) {
+        auto vh = mesh.get_target(eh);
+        if (is_extraordinary(vh)) {
+            found = make_pair(vh, eh);
+        }
+    }
+
+    if (!found) {
+        panic("Subdevision surface evaluation needs a face with one extraordinary vertex!");
+    }
+
+    auto extraordinary_vertex = (*found).first;
+    auto start_edge = (*found).second;
+
+    // Get vertices in order given by Stam's paper (Fig. 3)
+    vector<vertex_handle> out;
+    auto valence = mesh.get_valence(extraordinary_vertex);
+    out.reserve(2 * valence + 8);
+
+    auto h = start_edge;
+    out.push_back(extraordinary_vertex);
+    h = mesh.get_next(mesh.get_next(mesh.get_twin(h)));
+    auto h2 = h;
+    do {
+        out.push_back(mesh.get_target(h));
+        h = mesh.get_prev(h);
+        out.push_back(mesh.get_target(h));
+        h = mesh.get_prev(mesh.get_twin(mesh.get_prev(h)));
+    } while (h != h2);
+
+    // Points from 7 to 2N+5
+    h = mesh.get_next(mesh.get_twin(mesh.get_next(mesh.get_next(mesh.get_next(mesh.get_twin(mesh.get_next(start_edge)))))));
+    auto twon5 = mesh.get_target(h);
+
+    h = mesh.get_next(h);
+    auto twon4 = mesh.get_target(h);
+
+    h = mesh.get_next(mesh.get_twin(mesh.get_next(h)));
+    auto twon3 = mesh.get_target(h);
+
+    // Add 2N+2 and saved vertices
+    h = mesh.get_next(mesh.get_twin(mesh.get_next(h)));
+    out.push_back(mesh.get_target(h));
+    out.push_back(twon3);
+    out.push_back(twon4);
+    out.push_back(twon5);
+
+    h = mesh.get_next(h);
+    out.push_back(mesh.get_target(h));
+
+    h = mesh.get_next(mesh.get_twin(mesh.get_next(h)));
+    out.push_back(mesh.get_target(h));
+
+    h = mesh.get_next(mesh.get_twin(mesh.get_next(h)));
+    out.push_back(mesh.get_target(h));
+
     return out;
 }
 

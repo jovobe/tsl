@@ -161,6 +161,11 @@ struct tmesh {
     vector<regular_grid> get_grids(uint32_t resolution) const;
     regular_grid get_grid(uint32_t resolution) const;
     vec3 get_surface_point_of_face(double u, double v, face_handle f) const;
+
+    regular_grid evaluate_bsplines_for_face(uint32_t resolution, face_handle& fh) const;
+    regular_grid evaluate_subd_for_face(uint32_t resolution, face_handle& fh) const;
+
+    vector<vertex_handle> get_vertices_for_subd_evaluation(face_handle handle) const;
 };
 
 /**
