@@ -55,6 +55,7 @@ private:
     bool wireframe_mode;
     bool control_mode;
     bool surface_mode;
+    bool normal_mode;
 
     gl_multi_buffer surface_buffer;
     gl_buffer control_edges_buffer;
@@ -85,9 +86,11 @@ private:
     GLuint vertex_program;
     GLuint edge_program;
     GLuint phong_program;
+    GLuint normal_program;
 
     // vao
     GLuint surface_vertex_array;
+    GLuint surface_normal_vertex_array;
     GLuint control_edges_vertex_array;
     GLuint control_vertices_vertex_array;
 
@@ -123,6 +126,7 @@ private:
     void update_texture_sizes() const;
 
     void draw_surface(const mat4& model, const mat4& vp) const;
+    void draw_surface_normals(const mat4& model, const mat4& vp) const;
     void draw_surface_picking(const mat4& model, const mat4& vp) const;
     void draw_control_polygon(const mat4& model, const mat4& vp) const;
     void draw_control_polygon_picking(const mat4& model, const mat4& vp) const;
