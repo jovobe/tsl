@@ -21,6 +21,8 @@ using std::make_pair;
 using std::optional;
 
 using glm::value_ptr;
+using glm::cross;
+using glm::normalize;
 
 namespace tsl {
 
@@ -669,6 +671,7 @@ regular_grid tmesh::evaluate_subd_for_face(uint32_t resolution, face_handle& fh)
 
     regular_grid grid(fh);
     grid.points.reserve(static_cast<size_t>(v_max));
+    grid.normals.reserve(static_cast<size_t>(v_max));
     grid.num_points_x = u_max;
     grid.num_points_y = v_max;
 
@@ -694,8 +697,10 @@ regular_grid tmesh::evaluate_subd_for_face(uint32_t resolution, face_handle& fh)
     double current_v = 0;
     for (uint32_t v = 0; v < v_max; ++v) {
         current_u = 0;
-        vector<vec3> row;
-        row.reserve(static_cast<size_t>(u_max));
+        vector<vec3> pos_row;
+        vector<vec3> normal_row;
+        pos_row.reserve(static_cast<size_t>(u_max));
+        normal_row.reserve(static_cast<size_t>(u_max));
         for (uint32_t u = 0; u < u_max; ++u) {
             auto ud = min(current_u / u_coord, u_coord);
             auto vd = min(current_v / v_coord, v_coord);
@@ -716,10 +721,12 @@ regular_grid tmesh::evaluate_subd_for_face(uint32_t resolution, face_handle& fh)
                 nullptr,
                 nullptr
             );
-            row.push_back(point);
+            pos_row.push_back(point);
+            normal_row.push_back(normalize(cross(du, dv)));
             current_u += step_u;
         }
-        grid.points.push_back(row);
+        grid.points.push_back(pos_row);
+        grid.normals.push_back(normal_row);
         current_v += step_v;
     }
     return grid;

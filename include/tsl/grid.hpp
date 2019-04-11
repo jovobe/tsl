@@ -14,6 +14,7 @@ namespace tsl {
 
 struct regular_grid {
     vector<vector<vec3>> points;
+    vector<vector<vec3>> normals;
     face_handle handle;
     size_t num_points_x;
     size_t num_points_y;

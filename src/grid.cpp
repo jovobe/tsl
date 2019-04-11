@@ -80,41 +80,51 @@ gl_buffer regular_grid::add_to_render_buffer(gl_buffer& buffer, picking_map& pic
         }
     }
 
-    // generate normals TODO: approach is very naive! change it!
-    for (GLuint i = 0; i < y; ++i) {
-        for (GLuint j = 0; j < x; ++j) {
+    // TODO: remove check if normal calculation is implemented for bspline eval
+    if (normals.empty()) {
+        // generate normals TODO: approach is very naive! change it!
+        for (GLuint i = 0; i < y; ++i) {
+            for (GLuint j = 0; j < x; ++j) {
 
-            const GLuint current_index = (j + (i * x)) + old_num_vertices;
+                const GLuint current_index = (j + (i * x)) + old_num_vertices;
 
-            GLuint i1 = current_index;
-            GLuint i2 = 0;
-            GLuint i3 = 0;
+                GLuint i1 = current_index;
+                GLuint i2 = 0;
+                GLuint i3 = 0;
 
-            // if at top right corner
-            if (j == x - 1 && i == y - 1) {
-                i2 = current_index - x;
-                i3 = current_index - 1;
-            }
-            // if at right border
-            else if (j == x - 1) {
-                i2 = current_index + x - 1;
-                i3 = current_index + x;
-            }
-            // if at top border
-            else if (i == y - 1) {
-                i2 = current_index + 1;
-                i3 = current_index - x + 1;
-            }
-            // std case
-            else {
-                i2 = current_index + x;
-                i3 = current_index + 1;
-            }
+                // if at top right corner
+                if (j == x - 1 && i == y - 1) {
+                    i2 = current_index - x;
+                    i3 = current_index - 1;
+                }
+                    // if at right border
+                else if (j == x - 1) {
+                    i2 = current_index + x - 1;
+                    i3 = current_index + x;
+                }
+                    // if at top border
+                else if (i == y - 1) {
+                    i2 = current_index + 1;
+                    i3 = current_index - x + 1;
+                }
+                    // std case
+                else {
+                    i2 = current_index + x;
+                    i3 = current_index + 1;
+                }
 
-            auto& v1 = buffer.vertex_buffer[i1];
-            auto& v2 = buffer.vertex_buffer[i2];
-            auto& v3 = buffer.vertex_buffer[i3];
-            normal_buffer.emplace_back(normalize(cross(v3 - v1, v2 - v1)));
+                auto& v1 = buffer.vertex_buffer[i1];
+                auto& v2 = buffer.vertex_buffer[i2];
+                auto& v3 = buffer.vertex_buffer[i3];
+                normal_buffer.emplace_back(normalize(cross(v3 - v1, v2 - v1)));
+            }
+        }
+    } else {
+        // copy normals
+        for (const auto& n: normals) {
+            for (const auto& v: n) {
+                normal_buffer.emplace_back(v);
+            }
         }
     }
 
