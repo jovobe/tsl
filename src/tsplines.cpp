@@ -755,104 +755,46 @@ vec3 tmesh::get_surface_point_of_face(double u, double v, face_handle f) const {
 }
 
 double tsplines::get_basis_fun(double u, const array<double, 5>& knot_vector) {
-    // Get the span in the knot_vector (the span is called i in the recurrence formula for b-splines)
-    auto span = get_span(u, knot_vector);
-    // Check if basis function is relevant
-    if (!span) {
+    const size_t m = knot_vector.size() - 1;
+    static const uint32_t degree = 3;
+    if (u < knot_vector[0] || u >= knot_vector[degree + 1]) {
         return 0;
     }
 
-    // Unwrap the optional for shorter usage
-    auto i = *span;
-
-    double n00 = 0;
-    double n10 = 0;
-    double n20 = 0;
-    double n30 = 0;
-
-    // We use the recurrence formula for b-splines and assume a fixed degree of 3. The calculation triangle for
-    // the basis functions is shown for each span, if we want to find N_0,3:
-    switch (i) {
-        case 0: {
-            n00 = 1;
-            break;
-        }
-        case 1: {
-            n10 = 1;
-            break;
-        }
-        case 2: {
-            n20 = 1;
-            break;
-        }
-        case 3: {
-            n30 = 1;
-            break;
-        }
-        default:
-            panic("unhandled span in tsplines::get_basis_fun!");
-    }
-
-    // Calc N_0,3 using the set basis functions
-    //
-    //                   N_0,3
-    //                  /     \
-    //                 /       \
-    //               N_0,2     N_1,2
-    //               / \       /  \
-    //              /   \     /    \
-    //          N_0,1     N_1,1     N_2,1
-    //            / \    / \       /  \
-    //           /   \  /   \     /    \
-    //       N_0,0   N_1,0   N_2,0    N_3,0
-    //
-
-    // Layer N_x,1
-    double n01_left = ((u - knot_vector[0]) / (knot_vector[0+1] - knot_vector[0]));
-    double n01_right = ((knot_vector[0+1+1] - u) / (knot_vector[0+1+1] - knot_vector[0+1]));
-    double n01 = n01_left * n00 + n01_right * n10;
-
-    double n11_left = ((u - knot_vector[1]) / (knot_vector[1+1] - knot_vector[1]));
-    double n11_right = ((knot_vector[1+1+1] - u) / (knot_vector[1+1+1] - knot_vector[1+1]));
-    double n11 = n11_left * n10 + n11_right * n20;
-
-    double n21_left = ((u - knot_vector[2]) / (knot_vector[2+1] - knot_vector[2]));
-    double n21_right = ((knot_vector[2+1+1] - u) / (knot_vector[2+1+1] - knot_vector[2+1]));
-    double n21 = n21_left * n20 + n21_right * n30;
-
-    // Layer N_x,2
-    double n02_left = ((u - knot_vector[0]) / (knot_vector[0+2] - knot_vector[0]));
-    double n02_right = ((knot_vector[0+2+1] - u) / (knot_vector[0+2+1] - knot_vector[0+1]));
-    double n02 = n02_left * n01 + n02_right * n11;
-
-    double n12_left = ((u - knot_vector[1]) / (knot_vector[1+2] - knot_vector[1]));
-    double n12_right = ((knot_vector[1+2+1] - u) / (knot_vector[1+2+1] - knot_vector[1+1]));
-    double n12 = n12_left * n11 + n12_right * n21;
-
-    // Layer N_x,3
-    double n03_left = ((u - knot_vector[0]) / (knot_vector[0+3] - knot_vector[0]));
-    double n03_right = ((knot_vector[0+3+1] - u) / (knot_vector[0+3+1] - knot_vector[0+1]));
-    double n03 = n03_left * n02 + n03_right * n12;
-
-    return n03;
-}
-
-optional<uint8_t> tsplines::get_span(double u, const array<double, 5>& knot_vector) {
-    if (u < knot_vector[0] || u >= knot_vector[4]) {
-        return nullopt;
-    }
-    auto low = 0;
-    auto high = 4;
-    auto mid = static_cast<uint8_t>((low + high) / 2);
-    while (u < knot_vector[mid] || u >= knot_vector[mid+1]) {
-        if (u < knot_vector[mid]) {
-            high = mid;
+    // Initialize zero degree funs
+    static vector<double> funs(degree + 1);
+    for (uint32_t j = 0; j <= degree; ++j) {
+        if (u >= knot_vector[j] && u < knot_vector[j + 1]) {
+            funs[j] = 1;
         } else {
-            low = mid;
+            funs[j] = 0;
         }
-        mid = static_cast<uint8_t>((low + high) / 2);
     }
-    return mid;
+
+    // Compute triangular table
+    for (uint32_t k = 1; k <= degree; ++k) {
+        double saved;
+        if (funs[0] == 0) {
+            saved = 0;
+        } else {
+            saved = ((u - knot_vector[0]) * funs[0]) / (knot_vector[k] - knot_vector[0]);
+        }
+
+        for (uint32_t j = 0; j < degree - k + 1; ++j) {
+            auto knot_left = knot_vector[j + 1];
+            auto knot_right = knot_vector[j + k + 1];
+            if (funs[j + 1] == 0) {
+                funs[j] = saved;
+                saved = 0;
+            } else {
+                auto temp = funs[j + 1] / (knot_right - knot_left);
+                funs[j] = saved + (knot_right - u) * temp;
+                saved = (u - knot_left) * temp;
+            }
+        }
+    }
+
+    return funs[0];
 }
 
 pair<array<double, 5>, array<double, 5>> tmesh::get_knot_vectors(const indexed_vertex_handle& handle) const {

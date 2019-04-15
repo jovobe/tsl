@@ -176,7 +176,6 @@ vec2 rotate(uint8_t times, const vec2& vec);
 
 struct tsplines {
     static double get_basis_fun(double u, const array<double, 5>& knot_vector);
-    static optional<uint8_t> get_span(double u, const array<double, 5>& knot_vector);
 
     static tmesh get_example_data_1();
     static tmesh get_example_data_2(uint32_t size);
