@@ -277,6 +277,24 @@ tmesh tsplines::get_example_data_2(uint32_t size) {
     out.knots = dense_half_edge_map<double>(1);
     out.corners = dense_half_edge_map<bool>(true);
 
+    // this is only valid for size 8
+    // edge indices with higher knots
+//    double knot_ring_value = 1.5;
+//    auto knot_ring = {
+//        24, 20, 58, 88, 118, 148, 178, 208,
+//        698, 694, 732, 762, 792, 660, 630,
+//        600, 570, 540, 510, 480, 450, 420,
+//        390, 360, 330, 300, 270, 240
+//    };
+//    for (auto&& e: knot_ring) {
+//        half_edge_handle eh1(e);
+//        half_edge_handle eh2(e + 1);
+//
+//        out.knots[eh1] = knot_ring_value;
+//        out.knots[eh2] = knot_ring_value;
+//    }
+
+        // this is only valid for size 5
 //    auto edge1 = out.mesh.get_half_edge_between(vertex_handle((2 * size) + 2), vertex_handle((3 * size) + 2)).unwrap();
 //    auto edge2 = out.mesh.get_half_edge_between(vertex_handle((4 * size) + 3), vertex_handle((3 * size) + 3)).unwrap();
 //    auto edge3 = out.mesh.get_half_edge_between(vertex_handle((1 * size) + 3), vertex_handle((1 * size) + 2)).unwrap();
