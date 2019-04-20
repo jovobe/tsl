@@ -48,6 +48,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     wireframe_mode(false),
     control_mode(true),
     surface_mode(true),
+    move_object(false),
     normal_mode(false),
     surface_resolution(1)
 {
@@ -307,6 +308,13 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                     glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                     camera.moving_direction.mouse = true;
                     break;
+                case GLFW_MOUSE_BUTTON_LEFT: {
+                    if (!ImGui::GetIO().WantCaptureMouse) {
+                        request_pick = get_mouse_pos();
+                        move_object = true;
+                    }
+                    break;
+                }
                 default:
                     break;
             }
@@ -320,9 +328,7 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                     camera.reset_curos_pos();
                     break;
                 case GLFW_MOUSE_BUTTON_LEFT: {
-                    if (!ImGui::GetIO().WantCaptureMouse) {
-                        request_pick = get_mouse_pos();
-                    }
+                    move_object = false;
                     break;
                 }
                 default:
@@ -343,11 +349,17 @@ void window::render() {
     // projection
     auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 100.0f);
     auto view = camera.get_view_matrix();
-    auto model = rotate(mat4(1.0f), radians(-90.0f), fvec3(1.0f, 0.0f, 0.0f));
+
+    // TODO: If this is commented in, it breaks the object movement -> check why
+    //       Something seems to be not valid with the backwards model projection in the window::get_ray or the
+    //       window::handle_object_move method
+//    auto model = rotate(mat4(1.0f), radians(-90.0f), fvec3(1.0f, 0.0f, 0.0f));
+    auto model = mat4(1.0f);
     auto vp = projection * view;
 
     // Picking phase
     picking_phase(model, vp);
+    handle_object_move(model, vp);
 
     // Render phase
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -784,6 +796,8 @@ window& window::operator=(window&& window) noexcept {
     wireframe_mode = exchange(window.wireframe_mode, false);
     control_mode = exchange(window.control_mode, false);
     surface_mode = exchange(window.surface_mode, false);
+    move_object = exchange(window.move_object, false);
+
     normal_mode = exchange(window.normal_mode, false);
     surface_buffer = move(window.surface_buffer);
     surface_resolution = move(window.surface_resolution);
@@ -957,6 +971,46 @@ void window::update_buffer()
     update_surface_buffer();
     update_control_buffer();
     update_picked_buffer();
+}
+
+void window::handle_object_move(const mat4& model, const mat4& vp) {
+    if (picked_elements.empty() || !move_object) {
+        return;
+    }
+
+    auto elem = picked_elements.front();
+    switch (elem.type) {
+        case object_type::vertex: {
+            vertex_handle vh(elem.handle.get_idx());
+            auto& pos = tmesh.mesh.get_vertex_position(vh);
+
+            line ray(camera.get_pos(), get_ray(get_mouse_pos(), vp));
+            plane move_plane(pos, camera.get_direction());
+
+            auto intersection = *(ray.intersect(move_plane));
+            vec4 foo = inverse(model) * vec4(intersection, 1.0f);
+            pos = vec3(foo);
+
+            // TODO: This disables the highlighting of the element
+            update_buffer();
+            picked_elements.emplace_back(elem);
+
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+vec3 window::get_ray(const mouse_pos& mouse_pos, const mat4& vp) const {
+    float mouse_x = mouse_pos.x / (width  * 0.5f) - 1.0f;
+    float mouse_y = mouse_pos.y / (height * 0.5f) - 1.0f;
+
+    mat4 inv_mvp = inverse(vp);
+    auto screen_pos = vec4(mouse_x, -mouse_y, 1.0f, 1.0f);
+    auto world_pos = inv_mvp * screen_pos;
+
+    return normalize(vec3(world_pos));
 }
 
 }

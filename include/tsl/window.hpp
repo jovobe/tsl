@@ -57,6 +57,8 @@ private:
     bool surface_mode;
     bool normal_mode;
 
+    bool move_object;
+
     gl_multi_buffer surface_buffer;
     gl_buffer control_edges_buffer;
     gl_buffer control_vertices_buffer;
@@ -131,6 +133,9 @@ private:
     void draw_control_polygon(const mat4& model, const mat4& vp) const;
     void draw_control_polygon_picking(const mat4& model, const mat4& vp) const;
     void draw_gui();
+
+    void handle_object_move(const mat4& model, const mat4& vp);
+    vec3 get_ray(const mouse_pos& mouse_pos, const mat4& vp) const;
 
     uint32_t read_pixel(const mouse_pos& pos) const;
 
