@@ -12,7 +12,7 @@ using std::find;
 
 namespace tsl {
 
-vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const vector<reference_wrapper<const picking_element>>& picked) {
+vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const vector<picking_element>& picked) {
 
     // Filter type edges
     vector<reference_wrapper<const picking_element>> edges_picked;
@@ -46,7 +46,7 @@ vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const vector
     return out;
 }
 
-vector<uint8_t> get_picked_vertices_buffer(const half_edge_mesh& mesh, const vector<reference_wrapper<const picking_element>>& picked) {
+vector<uint8_t> get_picked_vertices_buffer(const half_edge_mesh& mesh, const vector<picking_element>& picked) {
     // Filter type vertices
     vector<reference_wrapper<const picking_element>> vertices_picked;
     copy_if(picked.begin(), picked.end(), back_inserter(vertices_picked), [](const picking_element& elem) {
@@ -89,7 +89,7 @@ gl_buffer get_edges_buffer(const half_edge_mesh& mesh, picking_map& picking_map)
         auto picking_id = picking_map.add_object(object_type::edge, eh);
         auto vertices = mesh.get_vertices_of_edge(eh);
         for (auto&& vh: vertices) {
-            out.vertex_buffer.push_back(mesh.get_vertex_position(vh));
+            out.vertex_buffer.emplace_back(mesh.get_vertex_position(vh));
             picking_buffer.push_back(picking_id);
             out.index_buffer.push_back(current_index++);
         }
@@ -108,7 +108,7 @@ gl_buffer get_vertices_buffer(const half_edge_mesh& mesh, picking_map& picking_m
 
     uint32_t current_index = 0;
     for (auto&& vh: mesh.get_vertices()) {
-        out.vertex_buffer.push_back(mesh.get_vertex_position(vh));
+        out.vertex_buffer.emplace_back(mesh.get_vertex_position(vh));
         out.index_buffer.push_back(current_index++);
         auto picking_id = picking_map.add_object(object_type::vertex, vh);
         picking_buffer.push_back(picking_id);

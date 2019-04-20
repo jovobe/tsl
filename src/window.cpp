@@ -473,7 +473,7 @@ void window::draw_gui() {
         ImGui::Begin("Selected element");
         if (!picked_elements.empty()) {
             // TODO: Do this for all selected elements!
-            auto& elem = picked_elements.front().get();
+            auto& elem = picked_elements.front();
 
             switch (elem.type) {
                 case object_type::vertex: {

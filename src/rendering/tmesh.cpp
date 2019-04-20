@@ -3,7 +3,7 @@
 namespace tsl
 {
 
-vector<uint8_t> get_picked_faces_buffer(const vector<regular_grid>& faces, const vector<reference_wrapper<const picking_element>>& picked) {
+vector<uint8_t> get_picked_faces_buffer(const vector<regular_grid>& faces, const vector<picking_element>& picked) {
     // Filter type faces
     vector<reference_wrapper<const picking_element>> faces_picked;
     copy_if(picked.begin(), picked.end(), back_inserter(faces_picked), [](const picking_element& elem) {

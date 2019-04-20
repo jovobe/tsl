@@ -11,8 +11,8 @@ using std::reference_wrapper;
 
 namespace tsl {
 
-vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const vector<reference_wrapper<const picking_element>>& picked);
-vector<uint8_t> get_picked_vertices_buffer(const half_edge_mesh& mesh, const vector<reference_wrapper<const picking_element>>& picked);
+vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const vector<picking_element>& picked);
+vector<uint8_t> get_picked_vertices_buffer(const half_edge_mesh& mesh, const vector<picking_element>& picked);
 
 gl_buffer get_edges_buffer(const half_edge_mesh& mesh, picking_map& picking_map);
 gl_buffer get_vertices_buffer(const half_edge_mesh& mesh, picking_map& picking_map);

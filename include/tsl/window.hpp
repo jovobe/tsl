@@ -80,7 +80,7 @@ private:
     GLuint picking_render;
 
     optional<mouse_pos> request_pick;
-    vector<reference_wrapper<const picking_element>> picked_elements;
+    vector<picking_element> picked_elements;
 
     // programs
     GLuint vertex_program;

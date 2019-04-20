@@ -11,7 +11,7 @@ uint32_t tsl::picking_map::add_object(object_type type, base_handle<index> handl
     return next++;
 }
 
-optional<reference_wrapper<const picking_element>> picking_map::get_object(uint32_t idx) const {
+optional<picking_element> picking_map::get_object(uint32_t idx) const {
     if (map.count(idx) != 0) {
         return map.at(idx);
     } else {
