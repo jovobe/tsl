@@ -15,6 +15,8 @@
 #include <tsl/tsplines.hpp>
 #include <tsl/rendering/half_edge_mesh.hpp>
 #include <tsl/rendering/tmesh.hpp>
+#include <tsl/geometry/line.hpp>
+#include <tsl/geometry/plane.hpp>
 
 #include <string>
 #include <iostream>

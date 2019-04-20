@@ -7,7 +7,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 #include <tsl/tsplines.hpp>
-#include <tsl/geometry/line.hpp>
+#include <tsl/geometry/line_segment.hpp>
 #include <tsl/geometry/rectangle.hpp>
 #include <tsl/subdevision.hpp>
 #include <tsl/geometry/vector.hpp>
@@ -543,7 +543,7 @@ tmesh::determine_support_of_basis_functions(
             auto g = mesh.get_next(ch);
             while (g != ch) {
                 auto prev_g = mesh.get_prev(g);
-                line l(ct.apply(uv[g]), ct.apply(uv[prev_g]));
+                line_segment l(ct.apply(uv[g]), ct.apply(uv[prev_g]));
                 if (!l.intersects(r)) {
                     g = mesh.get_next(g);
                     continue;

@@ -8,6 +8,7 @@ namespace tsl
 
 using vec2 = glm::dvec2;
 using vec3 = glm::dvec3;
+using vec4 = glm::dvec4;
 
 }
 

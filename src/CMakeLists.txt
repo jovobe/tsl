@@ -1,9 +1,10 @@
 add_library(tsl SHARED STATIC
     geometry/half_edge_mesh.cpp
     tsplines.cpp
-    geometry/line.cpp
+    geometry/line_segment.cpp
     geometry/rectangle.cpp
     subdevision.cpp
+    geometry/line.cpp
 )
 
 target_link_libraries(tsl

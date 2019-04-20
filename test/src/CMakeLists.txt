@@ -4,8 +4,9 @@ add_executable(tsl_tests
     attrmaps/stable_vector_tests.cpp
     attrmaps/attribute_map_tests.cpp
     tsplines_tests.cpp
-    geometry/line_tests.cpp
+    geometry/line_segment_tests.cpp
     subdevision_tests.cpp
+    geometry/line_tests.cpp
 )
 
 target_link_libraries(tsl_tests

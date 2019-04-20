@@ -1,31 +1,22 @@
 #ifndef TSL_LINE_HPP
 #define TSL_LINE_HPP
 
-#include <tsl/geometry/rectangle.hpp>
 #include <tsl/geometry/vector.hpp>
+#include <tsl/geometry/plane.hpp>
+
+#include <optional>
+
+using std::optional;
 
 namespace tsl {
 
 struct line {
-    vec2 p1;
-    vec2 p2;
+    vec3 support_vector;
+    vec3 normal;
 
-    line(const vec2& p1, const vec2& p2) : p1(p1), p2(p2) {}
+    line(const vec3& support_vector, const vec3& normal) : support_vector(support_vector), normal(normal) {}
 
-    /**
-     * @brief Returns true, if the line intersects the interior of the given rect.
-     *
-     * If the line touches the rect without intersecting its interior, false will be returned!
-     */
-    bool intersects(const aa_rectangle& rectangle) const;
-
-private:
-    enum class side {
-        on,
-        left,
-        right
-    };
-    side test(vec2 p) const;
+    optional<vec3> intersect(const plane& plane) const;
 };
 
 }
