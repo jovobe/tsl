@@ -54,6 +54,7 @@ public:
     void reset_position();
     fvec3 get_pos() const;
     fvec3 get_up() const;
+    fvec3 get_direction() const;
 
 private:
     fvec3 pos;

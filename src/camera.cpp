@@ -111,4 +111,8 @@ fvec3 camera::get_up() const {
     return up;
 }
 
+fvec3 camera::get_direction() const {
+    return direction;
+}
+
 }
