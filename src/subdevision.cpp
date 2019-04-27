@@ -4,6 +4,7 @@
 #include <string>
 #include <cmath>
 #include <cblas.h>
+#include <limits>
 
 namespace tsl {
 
@@ -133,6 +134,7 @@ void subd_eval (
     if (v == 0)
         v = 1e-15;
     uint32_t k, n = (uint32_t) floor (std::min (-std::log2 (u), -std::log2 (v)));
+    n = std::min(n, static_cast<uint32_t>(floor(std::log2(std::numeric_limits<uint32_t>::max()))));
 
     uint32_t pow2 = 1 << n;
     u *= pow2;
