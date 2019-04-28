@@ -3,9 +3,9 @@
 #include <variant>
 #include <utility>
 #include <optional>
+#include <iostream>
 
 #include <glm/gtc/type_ptr.hpp>
-
 #include <tsl/tsplines.hpp>
 #include <tsl/geometry/line.hpp>
 #include <tsl/geometry/rectangle.hpp>
@@ -641,6 +641,7 @@ regular_grid tmesh::evaluate_bsplines_for_face(uint32_t resolution, face_handle&
 
     regular_grid grid(fh);
     grid.points.reserve(static_cast<size_t>(v_max));
+    grid.normals.reserve(static_cast<size_t>(v_max));
     grid.num_points_x = u_max;
     grid.num_points_y = v_max;
 
@@ -649,12 +650,17 @@ regular_grid tmesh::evaluate_bsplines_for_face(uint32_t resolution, face_handle&
     for (uint32_t v = 0; v < v_max; ++v) {
         current_u = 0;
         vector<vec3> row;
+        vector<vec3> normal_row;
         row.reserve(static_cast<size_t>(u_max));
+        normal_row.reserve(static_cast<size_t>(u_max));
         for (uint32_t u = 0; u < u_max; ++u) {
-            row.push_back(get_surface_point_of_face(min(current_u, u_coord), min(current_v, v_coord), fh));
+            auto [point, du, dv] = get_surface_point_of_face_and_derivs(min(current_u, u_coord), min(current_v, v_coord), fh);
+            row.push_back(point);
+            normal_row.push_back(normalize(cross(du, dv)));
             current_u += step_u;
         }
         grid.points.push_back(row);
+        grid.normals.push_back(normal_row);
         current_v += step_v;
     }
     return grid;
@@ -754,8 +760,68 @@ vec3 tmesh::get_surface_point_of_face(double u, double v, face_handle f) const {
     return c / d;
 }
 
+array<vec3, 3> tmesh::get_surface_point_of_face_and_derivs(double u, double v, face_handle f) const {
+    vec3 c(0, 0, 0);
+    vec3 cdu(0, 0, 0);
+    vec3 cdv(0, 0, 0);
+    double d = 0;
+    double du = 0;
+    double dv = 0;
+    vec2 in(u, v);
+
+    auto& supports = support_map[f];
+    for (auto&& [index, trans]: supports) {
+        auto local_knots = local_knot_vector_map.at(index);
+
+        auto p = mesh.get_vertex_position(index.vertex);
+        auto transformed = trans.apply(in);
+
+        auto u_basis = tsplines::get_basis_fun_with_derivative(transformed.x, local_knots.u);
+        auto v_basis = tsplines::get_basis_fun_with_derivative(transformed.y, local_knots.v);
+
+        c += u_basis.first * v_basis.first * p;
+        d += u_basis.first * v_basis.first;
+
+        // TODO: this could eventually be done with a rotation?
+        switch (trans.r) {
+            case 0:
+            case 4:
+                cdu += u_basis.second * v_basis.first * p;
+                cdv += u_basis.first * v_basis.second * p;
+                du += u_basis.second * v_basis.first;
+                dv += u_basis.first * v_basis.second;
+                break;
+            case 1:
+                cdu += u_basis.first * v_basis.second * p;
+                cdv += (-u_basis.second) * v_basis.first * p;
+                du += u_basis.first * v_basis.second;
+                dv += (-u_basis.second) * v_basis.first;
+                break;
+            case 2:
+                cdu += (-u_basis.second) * v_basis.first * p;
+                cdv += u_basis.first * (-v_basis.second) * p;
+                du += (-u_basis.second) * v_basis.first;
+                dv += u_basis.first * (-v_basis.second);
+                break;
+            case 3:
+                cdu += u_basis.first * (-v_basis.second) * p;
+                cdv += u_basis.second * v_basis.first * p;
+                du += u_basis.first * (-v_basis.second);
+                dv += u_basis.second * v_basis.first;
+                break;
+            default:
+                panic("unknown rotation in transform!");
+        }
+    }
+
+    return {
+        c / d,
+        ((cdu * d) - (c * du)) / (d * d),
+        ((cdv * d) - (c * dv)) / (d * d)
+    };
+}
+
 double tsplines::get_basis_fun(double u, const array<double, 5>& knot_vector) {
-    const size_t m = knot_vector.size() - 1;
     static const uint32_t degree = 3;
     if (u < knot_vector[0] || u >= knot_vector[degree + 1]) {
         return 0;
@@ -795,6 +861,59 @@ double tsplines::get_basis_fun(double u, const array<double, 5>& knot_vector) {
     }
 
     return funs[0];
+}
+
+pair<double, double> tsplines::get_basis_fun_with_derivative(double u, const array<double, 5>& knot_vector, uint32_t degree) {
+    if (u < knot_vector[0] || u >= knot_vector[degree + 1]) {
+        return {0, 0};
+    }
+
+    // Initialize zero degree funs
+    vector<vector<double>> funs(degree + 1);
+    for (uint32_t j = 0; j <= degree; ++j) {
+        funs[j].resize(degree + 1);
+        if (u >= knot_vector[j] && u < knot_vector[j + 1]) {
+            funs[j][0] = 1;
+        } else {
+            funs[j][0] = 0;
+        }
+    }
+
+    // Compute triangular table
+    for (uint32_t k = 1; k <= degree; ++k) {
+        double saved;
+        if (funs[0][k - 1] == 0) {
+            saved = 0;
+        } else {
+            saved = ((u - knot_vector[0]) * funs[0][k - 1]) / (knot_vector[k] - knot_vector[0]);
+        }
+
+        for (uint32_t j = 0; j < degree - k + 1; ++j) {
+            auto knot_left = knot_vector[j + 1];
+            auto knot_right = knot_vector[j + k + 1];
+            if (funs[j + 1][k - 1] == 0) {
+                funs[j][k] = saved;
+                saved = 0;
+            } else {
+                auto temp = funs[j + 1][k - 1] / (knot_right - knot_left);
+                funs[j][k] = saved + (knot_right - u) * temp;
+                saved = (u - knot_left) * temp;
+            }
+        }
+    }
+
+    pair<double, double> out;
+    out.first = funs[0][degree];
+
+    // Calc first derivative
+    array<double, 2> funs_devs = {funs[0][degree - 1], funs[1][degree - 1]};
+    out.second = degree * (
+        (funs_devs[0] / (knot_vector[degree] - knot_vector[0]))
+        -
+        (funs_devs[1] / (knot_vector[degree + 1] - knot_vector[1]))
+    );
+
+    return out;
 }
 
 pair<array<double, 5>, array<double, 5>> tmesh::get_knot_vectors(const indexed_vertex_handle& handle) const {
