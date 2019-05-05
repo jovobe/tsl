@@ -161,6 +161,7 @@ struct tmesh {
     vector<regular_grid> get_grids(uint32_t resolution) const;
     regular_grid get_grid(uint32_t resolution) const;
     vec3 get_surface_point_of_face(double u, double v, face_handle f) const;
+    array<vec3, 3> get_surface_point_of_face_and_derivs(double u, double v, face_handle f) const;
 
     regular_grid evaluate_bsplines_for_face(uint32_t resolution, face_handle& fh) const;
     regular_grid evaluate_subd_for_face(uint32_t resolution, face_handle& fh) const;
@@ -176,7 +177,7 @@ vec2 rotate(uint8_t times, const vec2& vec);
 
 struct tsplines {
     static double get_basis_fun(double u, const array<double, 5>& knot_vector);
-    static optional<uint8_t> get_span(double u, const array<double, 5>& knot_vector);
+    static pair<double, double> get_basis_fun_with_derivative(double u, const array<double, 5>& knot_vector, uint32_t degree = 3);
 
     static tmesh get_example_data_1();
     static tmesh get_example_data_2(uint32_t size);

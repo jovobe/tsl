@@ -46,6 +46,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     wireframe_mode(false),
     control_mode(true),
     surface_mode(true),
+    normal_mode(false),
     surface_resolution(1)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -135,12 +136,17 @@ window::window(string title, uint32_t width, uint32_t height) :
     auto phong_vertex_shader = create_shader("shader/phong/vertex.glsl", GL_VERTEX_SHADER);
     auto phong_fragment_shader = create_shader("shader/phong/fragment.glsl", GL_FRAGMENT_SHADER);
 
+    auto normal_vertex_shader = create_shader("shader/normal/vertex.glsl", GL_VERTEX_SHADER);
+    auto normal_geometry_shader = create_shader("shader/normal/geometry.glsl", GL_GEOMETRY_SHADER);
+    auto normal_fragment_shader = create_shader("shader/normal/fragment.glsl", GL_FRAGMENT_SHADER);
+
     edge_program = create_program({vertex_shader, fragment_shader, edge_geometry_shader});
     vertex_program = create_program({vertex_shader, fragment_shader, vertex_geometry_shader});
     edge_picking_program = create_program({vertex_picking_shader, fragment_picking_shader, edge_geometry_shader});
     vertex_picking_program = create_program({vertex_picking_shader, fragment_picking_shader, vertex_geometry_shader});
     phong_program = create_program({phong_vertex_shader, phong_fragment_shader});
     surface_picking_program = create_program({vertex_wogeom_picking_shader, fragment_picking_shader});
+    normal_program = create_program({normal_vertex_shader, normal_geometry_shader, normal_fragment_shader});
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
@@ -152,6 +158,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     glDeleteShader(phong_fragment_shader);
     glDeleteShader(vertex_wogeom_picking_shader);
 
+    glGenVertexArrays(1, &surface_normal_vertex_array);
     glGenVertexArrays(1, &surface_picking_vertex_array);
     glGenVertexArrays(1, &surface_vertex_array);
     glGenBuffers(1, &surface_vertex_buffer);
@@ -345,6 +352,9 @@ void window::render() {
     if (surface_mode) {
         draw_surface(model, vp);
     }
+    if (normal_mode) {
+        draw_surface_normals(model, vp);
+    }
     if (control_mode) {
         draw_control_polygon(model, vp);
     }
@@ -406,6 +416,7 @@ void window::draw_gui() {
         ImGui::Checkbox("Wireframe mode", &wireframe_mode);
         ImGui::Checkbox("Show control polygon", &control_mode);
         ImGui::Checkbox("Show surface", &surface_mode);
+        ImGui::Checkbox("Show surface normals", &normal_mode);
 
         if (ImGui::InputInt("Resolution", (int*) surface_resolution.data(), 1, 1)) {
             if (surface_resolution.get() < 1) {
@@ -644,6 +655,30 @@ void window::draw_surface(const mat4& model, const mat4& vp) const {
     );
 }
 
+void window::draw_surface_normals(const mat4& model, const mat4& vp) const {
+    glUseProgram(normal_program);
+
+    auto vp_location = glGetUniformLocation(normal_program, "VP");
+    auto m_location = glGetUniformLocation(normal_program, "M");
+    auto color_location = glGetUniformLocation(normal_program, "color_in");
+    auto camera_location = glGetUniformLocation(normal_program, "camera_pos");
+
+    glUniformMatrix4fv(vp_location, 1, GL_FALSE, value_ptr(vp));
+    glUniformMatrix4fv(m_location, 1, GL_FALSE, value_ptr(model));
+    glUniform3fv(color_location, 1, value_ptr(fvec3(0, 0, 1)));
+    glUniform3fv(camera_location, 1, value_ptr(camera.get_pos()));
+
+    glBindVertexArray(surface_normal_vertex_array);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glMultiDrawElements(
+        GL_POINTS,
+        surface_buffer.counts.data(),
+        GL_UNSIGNED_INT,
+        (void**) surface_buffer.indices.data(),
+        static_cast<GLsizei>(surface_buffer.counts.size())
+    );
+}
+
 void window::draw_surface_picking(const mat4& model, const mat4& vp) const {
     glUseProgram(surface_picking_program);
 
@@ -677,6 +712,7 @@ window::~window() {
         glDeleteVertexArrays(1, &control_picking_edges_vertex_array);
         glDeleteVertexArrays(1, &control_picking_vertices_vertex_array);
         glDeleteVertexArrays(1, &surface_picking_vertex_array);
+        glDeleteVertexArrays(1, &surface_normal_vertex_array);
 
         glDeleteBuffers(1, &control_edges_vertex_buffer);
         glDeleteBuffers(1, &control_edges_index_buffer);
@@ -721,6 +757,7 @@ window& window::operator=(window&& window) noexcept {
     vertex_picking_program = exchange(window.vertex_picking_program, 0);
     phong_program = exchange(window.phong_program, 0);
     surface_picking_program = exchange(window.surface_picking_program, 0);
+    normal_program = exchange(window.normal_program, 0);
 
     surface_vertex_array = exchange(window.surface_vertex_array, 0);
     control_edges_vertex_array = exchange(window.control_edges_vertex_array, 0);
@@ -728,6 +765,7 @@ window& window::operator=(window&& window) noexcept {
     control_picking_edges_vertex_array = exchange(window.control_picking_edges_vertex_array, 0);
     control_picking_vertices_vertex_array = exchange(window.control_picking_vertices_vertex_array, 0);
     surface_picking_vertex_array = exchange(window.surface_picking_vertex_array, 0);
+    surface_normal_vertex_array = exchange(window.surface_normal_vertex_array, 0);
 
     surface_picked_buffer = exchange(window.surface_picked_buffer, 0);
     edges_picked_buffer = exchange(window.edges_picked_buffer, 0);
@@ -744,6 +782,7 @@ window& window::operator=(window&& window) noexcept {
     wireframe_mode = exchange(window.wireframe_mode, false);
     control_mode = exchange(window.control_mode, false);
     surface_mode = exchange(window.surface_mode, false);
+    normal_mode = exchange(window.normal_mode, false);
     surface_buffer = move(window.surface_buffer);
     surface_resolution = move(window.surface_resolution);
     tmesh = move(window.tmesh);
@@ -800,6 +839,17 @@ void window::update_surface_buffer() {
     auto surface_picking_vpicking_id_location = static_cast<GLuint>(glGetAttribLocation(surface_picking_program, "picking_id_in"));
     glVertexAttribIPointer(surface_picking_vpicking_id_location, 1, GL_UNSIGNED_INT, sizeof(vertex_element), (void*) offsetof(vertex_element, picking_index));
     glEnableVertexAttribArray(surface_picking_vpicking_id_location);
+
+    glBindVertexArray(surface_normal_vertex_array);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, surface_index_buffer);
+
+    auto normal_vpos_location = static_cast<GLuint>(glGetAttribLocation(normal_program, "pos_in"));
+    glVertexAttribPointer(normal_vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, pos));
+    glEnableVertexAttribArray(normal_vpos_location);
+
+    auto normal_vnormal_location = static_cast<GLuint>(glGetAttribLocation(normal_program, "normal_in"));
+    glVertexAttribPointer(normal_vnormal_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_element), (void*) offsetof(vertex_element, normal));
+    glEnableVertexAttribArray(normal_vnormal_location);
 }
 
 void window::update_control_buffer() {

@@ -180,22 +180,25 @@ TEST_F(TmeshWithTfaceTest, GetExtendedValence) {
     EXPECT_EQ(4, mesh.get_extended_valence(vertex_handles[4]));
 }
 
-TEST(GetSpanTest, DefaultKnotVector) {
-    array<double, 5> knot_vector = {-2, -1, 0, 1, 2};
+TEST(BasisFunsTest, Derivs) {
 
-    EXPECT_EQ(0, *tsplines::get_span(-2, knot_vector));
-    EXPECT_EQ(0, *tsplines::get_span(-1.5, knot_vector));
-    EXPECT_EQ(1, *tsplines::get_span(-1, knot_vector));
-    EXPECT_EQ(1, *tsplines::get_span(-.5, knot_vector));
-    EXPECT_EQ(2, *tsplines::get_span(0, knot_vector));
-    EXPECT_EQ(2, *tsplines::get_span(.5, knot_vector));
-    EXPECT_EQ(3, *tsplines::get_span(1, knot_vector));
-    EXPECT_EQ(3, *tsplines::get_span(1.5, knot_vector));
+    // N_2,2(5/2) = 1/8 (NURBS Book page 71)
+    // N'_2,2(5/2) = -(1/2) (NURBS Book page 91)
+    auto n22 = tsplines::get_basis_fun_with_derivative(2.5, {0,1,2,3,4}, 2);
+    EXPECT_EQ(1.0/8.0, n22.first);
+    EXPECT_EQ(-1.0/2.0, n22.second);
 
-    EXPECT_EQ(nullopt, tsplines::get_span(2, knot_vector));
-    EXPECT_EQ(nullopt, tsplines::get_span(-2.1, knot_vector));
-    EXPECT_EQ(nullopt, tsplines::get_span(-5, knot_vector));
-    EXPECT_EQ(nullopt, tsplines::get_span(2.1, knot_vector));
+    // N_3,2(5/2) = 6/8 (NURBS Book page 71)
+    // N'_3,2(5/2) = 0 (NURBS Book page 91)
+    auto n32 = tsplines::get_basis_fun_with_derivative(2.5, {1,2,3,4,4}, 2);
+    EXPECT_EQ(6.0/8.0, n32.first);
+    EXPECT_EQ(0, n32.second);
+
+    // N_4,2(5/2) = 1/8 (NURBS Book page 71)
+    // N'_4,2(5/2) = 1/2 (NURBS Book page 91)
+    auto n42 = tsplines::get_basis_fun_with_derivative(2.5, {2,3,4,4,5}, 2);
+    EXPECT_EQ(1.0/8.0, n42.first);
+    EXPECT_EQ(1.0/2.0, n42.second);
 }
 
 }

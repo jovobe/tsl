@@ -3,9 +3,9 @@
 #include <variant>
 #include <utility>
 #include <optional>
+#include <iostream>
 
 #include <glm/gtc/type_ptr.hpp>
-
 #include <tsl/tsplines.hpp>
 #include <tsl/geometry/line.hpp>
 #include <tsl/geometry/rectangle.hpp>
@@ -21,6 +21,8 @@ using std::make_pair;
 using std::optional;
 
 using glm::value_ptr;
+using glm::cross;
+using glm::normalize;
 
 namespace tsl {
 
@@ -657,6 +659,7 @@ regular_grid tmesh::evaluate_bsplines_for_face(uint32_t resolution, face_handle&
 
     regular_grid grid(fh);
     grid.points.reserve(static_cast<size_t>(v_max));
+    grid.normals.reserve(static_cast<size_t>(v_max));
     grid.num_points_x = u_max;
     grid.num_points_y = v_max;
 
@@ -665,12 +668,17 @@ regular_grid tmesh::evaluate_bsplines_for_face(uint32_t resolution, face_handle&
     for (uint32_t v = 0; v < v_max; ++v) {
         current_u = 0;
         vector<vec3> row;
+        vector<vec3> normal_row;
         row.reserve(static_cast<size_t>(u_max));
+        normal_row.reserve(static_cast<size_t>(u_max));
         for (uint32_t u = 0; u < u_max; ++u) {
-            row.push_back(get_surface_point_of_face(min(current_u, u_coord), min(current_v, v_coord), fh));
+            auto [point, du, dv] = get_surface_point_of_face_and_derivs(min(current_u, u_coord), min(current_v, v_coord), fh);
+            row.push_back(point);
+            normal_row.push_back(normalize(cross(du, dv)));
             current_u += step_u;
         }
         grid.points.push_back(row);
+        grid.normals.push_back(normal_row);
         current_v += step_v;
     }
     return grid;
@@ -687,6 +695,7 @@ regular_grid tmesh::evaluate_subd_for_face(uint32_t resolution, face_handle& fh)
 
     regular_grid grid(fh);
     grid.points.reserve(static_cast<size_t>(v_max));
+    grid.normals.reserve(static_cast<size_t>(v_max));
     grid.num_points_x = u_max;
     grid.num_points_y = v_max;
 
@@ -712,8 +721,10 @@ regular_grid tmesh::evaluate_subd_for_face(uint32_t resolution, face_handle& fh)
     double current_v = 0;
     for (uint32_t v = 0; v < v_max; ++v) {
         current_u = 0;
-        vector<vec3> row;
-        row.reserve(static_cast<size_t>(u_max));
+        vector<vec3> pos_row;
+        vector<vec3> normal_row;
+        pos_row.reserve(static_cast<size_t>(u_max));
+        normal_row.reserve(static_cast<size_t>(u_max));
         for (uint32_t u = 0; u < u_max; ++u) {
             auto ud = min(current_u / u_coord, u_coord);
             auto vd = min(current_v / v_coord, v_coord);
@@ -734,10 +745,12 @@ regular_grid tmesh::evaluate_subd_for_face(uint32_t resolution, face_handle& fh)
                 nullptr,
                 nullptr
             );
-            row.push_back(point);
+            pos_row.push_back(point);
+            normal_row.push_back(normalize(cross(du, dv)));
             current_u += step_u;
         }
-        grid.points.push_back(row);
+        grid.points.push_back(pos_row);
+        grid.normals.push_back(normal_row);
         current_v += step_v;
     }
     return grid;
@@ -765,105 +778,160 @@ vec3 tmesh::get_surface_point_of_face(double u, double v, face_handle f) const {
     return c / d;
 }
 
+array<vec3, 3> tmesh::get_surface_point_of_face_and_derivs(double u, double v, face_handle f) const {
+    vec3 c(0, 0, 0);
+    vec3 cdu(0, 0, 0);
+    vec3 cdv(0, 0, 0);
+    double d = 0;
+    double du = 0;
+    double dv = 0;
+    vec2 in(u, v);
+
+    auto& supports = support_map[f];
+    for (auto&& [index, trans]: supports) {
+        auto local_knots = local_knot_vector_map.at(index);
+
+        auto p = mesh.get_vertex_position(index.vertex);
+        auto transformed = trans.apply(in);
+
+        auto u_basis = tsplines::get_basis_fun_with_derivative(transformed.x, local_knots.u);
+        auto v_basis = tsplines::get_basis_fun_with_derivative(transformed.y, local_knots.v);
+
+        c += u_basis.first * v_basis.first * p;
+        d += u_basis.first * v_basis.first;
+
+        // TODO: this could eventually be done with a rotation?
+        switch (trans.r) {
+            case 0:
+            case 4:
+                cdu += u_basis.second * v_basis.first * p;
+                cdv += u_basis.first * v_basis.second * p;
+                du += u_basis.second * v_basis.first;
+                dv += u_basis.first * v_basis.second;
+                break;
+            case 1:
+                cdu += u_basis.first * v_basis.second * p;
+                cdv += (-u_basis.second) * v_basis.first * p;
+                du += u_basis.first * v_basis.second;
+                dv += (-u_basis.second) * v_basis.first;
+                break;
+            case 2:
+                cdu += (-u_basis.second) * v_basis.first * p;
+                cdv += u_basis.first * (-v_basis.second) * p;
+                du += (-u_basis.second) * v_basis.first;
+                dv += u_basis.first * (-v_basis.second);
+                break;
+            case 3:
+                cdu += u_basis.first * (-v_basis.second) * p;
+                cdv += u_basis.second * v_basis.first * p;
+                du += u_basis.first * (-v_basis.second);
+                dv += u_basis.second * v_basis.first;
+                break;
+            default:
+                panic("unknown rotation in transform!");
+        }
+    }
+
+    return {
+        c / d,
+        ((cdu * d) - (c * du)) / (d * d),
+        ((cdv * d) - (c * dv)) / (d * d)
+    };
+}
+
 double tsplines::get_basis_fun(double u, const array<double, 5>& knot_vector) {
-    // Get the span in the knot_vector (the span is called i in the recurrence formula for b-splines)
-    auto span = get_span(u, knot_vector);
-    // Check if basis function is relevant
-    if (!span) {
+    static const uint32_t degree = 3;
+    if (u < knot_vector[0] || u >= knot_vector[degree + 1]) {
         return 0;
     }
 
-    // Unwrap the optional for shorter usage
-    auto i = *span;
-
-    double n00 = 0;
-    double n10 = 0;
-    double n20 = 0;
-    double n30 = 0;
-
-    // We use the recurrence formula for b-splines and assume a fixed degree of 3. The calculation triangle for
-    // the basis functions is shown for each span, if we want to find N_0,3:
-    switch (i) {
-        case 0: {
-            n00 = 1;
-            break;
+    // Initialize zero degree funs
+    static vector<double> funs(degree + 1);
+    for (uint32_t j = 0; j <= degree; ++j) {
+        if (u >= knot_vector[j] && u < knot_vector[j + 1]) {
+            funs[j] = 1;
+        } else {
+            funs[j] = 0;
         }
-        case 1: {
-            n10 = 1;
-            break;
-        }
-        case 2: {
-            n20 = 1;
-            break;
-        }
-        case 3: {
-            n30 = 1;
-            break;
-        }
-        default:
-            panic("unhandled span in tsplines::get_basis_fun!");
     }
 
-    // Calc N_0,3 using the set basis functions
-    //
-    //                   N_0,3
-    //                  /     \
-    //                 /       \
-    //               N_0,2     N_1,2
-    //               / \       /  \
-    //              /   \     /    \
-    //          N_0,1     N_1,1     N_2,1
-    //            / \    / \       /  \
-    //           /   \  /   \     /    \
-    //       N_0,0   N_1,0   N_2,0    N_3,0
-    //
+    // Compute triangular table
+    for (uint32_t k = 1; k <= degree; ++k) {
+        double saved;
+        if (funs[0] == 0) {
+            saved = 0;
+        } else {
+            saved = ((u - knot_vector[0]) * funs[0]) / (knot_vector[k] - knot_vector[0]);
+        }
 
-    // Layer N_x,1
-    double n01_left = ((u - knot_vector[0]) / (knot_vector[0+1] - knot_vector[0]));
-    double n01_right = ((knot_vector[0+1+1] - u) / (knot_vector[0+1+1] - knot_vector[0+1]));
-    double n01 = n01_left * n00 + n01_right * n10;
+        for (uint32_t j = 0; j < degree - k + 1; ++j) {
+            auto knot_left = knot_vector[j + 1];
+            auto knot_right = knot_vector[j + k + 1];
+            if (funs[j + 1] == 0) {
+                funs[j] = saved;
+                saved = 0;
+            } else {
+                auto temp = funs[j + 1] / (knot_right - knot_left);
+                funs[j] = saved + (knot_right - u) * temp;
+                saved = (u - knot_left) * temp;
+            }
+        }
+    }
 
-    double n11_left = ((u - knot_vector[1]) / (knot_vector[1+1] - knot_vector[1]));
-    double n11_right = ((knot_vector[1+1+1] - u) / (knot_vector[1+1+1] - knot_vector[1+1]));
-    double n11 = n11_left * n10 + n11_right * n20;
-
-    double n21_left = ((u - knot_vector[2]) / (knot_vector[2+1] - knot_vector[2]));
-    double n21_right = ((knot_vector[2+1+1] - u) / (knot_vector[2+1+1] - knot_vector[2+1]));
-    double n21 = n21_left * n20 + n21_right * n30;
-
-    // Layer N_x,2
-    double n02_left = ((u - knot_vector[0]) / (knot_vector[0+2] - knot_vector[0]));
-    double n02_right = ((knot_vector[0+2+1] - u) / (knot_vector[0+2+1] - knot_vector[0+1]));
-    double n02 = n02_left * n01 + n02_right * n11;
-
-    double n12_left = ((u - knot_vector[1]) / (knot_vector[1+2] - knot_vector[1]));
-    double n12_right = ((knot_vector[1+2+1] - u) / (knot_vector[1+2+1] - knot_vector[1+1]));
-    double n12 = n12_left * n11 + n12_right * n21;
-
-    // Layer N_x,3
-    double n03_left = ((u - knot_vector[0]) / (knot_vector[0+3] - knot_vector[0]));
-    double n03_right = ((knot_vector[0+3+1] - u) / (knot_vector[0+3+1] - knot_vector[0+1]));
-    double n03 = n03_left * n02 + n03_right * n12;
-
-    return n03;
+    return funs[0];
 }
 
-optional<uint8_t> tsplines::get_span(double u, const array<double, 5>& knot_vector) {
-    if (u < knot_vector[0] || u >= knot_vector[4]) {
-        return nullopt;
+pair<double, double> tsplines::get_basis_fun_with_derivative(double u, const array<double, 5>& knot_vector, uint32_t degree) {
+    if (u < knot_vector[0] || u >= knot_vector[degree + 1]) {
+        return {0, 0};
     }
-    auto low = 0;
-    auto high = 4;
-    auto mid = static_cast<uint8_t>((low + high) / 2);
-    while (u < knot_vector[mid] || u >= knot_vector[mid+1]) {
-        if (u < knot_vector[mid]) {
-            high = mid;
+
+    // Initialize zero degree funs
+    vector<vector<double>> funs(degree + 1);
+    for (uint32_t j = 0; j <= degree; ++j) {
+        funs[j].resize(degree + 1);
+        if (u >= knot_vector[j] && u < knot_vector[j + 1]) {
+            funs[j][0] = 1;
         } else {
-            low = mid;
+            funs[j][0] = 0;
         }
-        mid = static_cast<uint8_t>((low + high) / 2);
     }
-    return mid;
+
+    // Compute triangular table
+    for (uint32_t k = 1; k <= degree; ++k) {
+        double saved;
+        if (funs[0][k - 1] == 0) {
+            saved = 0;
+        } else {
+            saved = ((u - knot_vector[0]) * funs[0][k - 1]) / (knot_vector[k] - knot_vector[0]);
+        }
+
+        for (uint32_t j = 0; j < degree - k + 1; ++j) {
+            auto knot_left = knot_vector[j + 1];
+            auto knot_right = knot_vector[j + k + 1];
+            if (funs[j + 1][k - 1] == 0) {
+                funs[j][k] = saved;
+                saved = 0;
+            } else {
+                auto temp = funs[j + 1][k - 1] / (knot_right - knot_left);
+                funs[j][k] = saved + (knot_right - u) * temp;
+                saved = (u - knot_left) * temp;
+            }
+        }
+    }
+
+    pair<double, double> out;
+    out.first = funs[0][degree];
+
+    // Calc first derivative
+    array<double, 2> funs_devs = {funs[0][degree - 1], funs[1][degree - 1]};
+    out.second = degree * (
+        (funs_devs[0] / (knot_vector[degree] - knot_vector[0]))
+        -
+        (funs_devs[1] / (knot_vector[degree + 1] - knot_vector[1]))
+    );
+
+    return out;
 }
 
 pair<array<double, 5>, array<double, 5>> tmesh::get_knot_vectors(const indexed_vertex_handle& handle) const {
