@@ -22,6 +22,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <functional>
 
 using std::move;
 using std::exchange;
@@ -29,6 +30,7 @@ using std::string;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::reference_wrapper;
 
 using glm::radians;
 using glm::fvec3;
@@ -980,6 +982,31 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
         return;
     }
 
+    auto move_points = [&](const vector<vertex_handle>& vertices) {
+        vector<reference_wrapper<vec3>> positions;
+        positions.reserve(2);
+        vec3 center(0, 0, 0);
+        for (auto&& vh: vertices) {
+            auto& pos = tmesh.mesh.get_vertex_position(vh);
+            positions.emplace_back(pos);
+            center += pos;
+        }
+        center /= positions.size();
+
+        line ray(camera.get_pos(), get_ray(get_mouse_pos(), vp));
+        plane move_plane(center, camera.get_direction());
+
+        auto intersection = *(ray.intersect(move_plane));
+        if (!start_move) {
+            start_move = intersection;
+        } else {
+            for (auto&& pos: positions) {
+                pos.get() -= *start_move - intersection;
+            }
+            start_move = intersection;
+        }
+    };
+
     auto elem = picked_elements.front();
     switch (elem.type) {
         case object_type::vertex: {
@@ -996,6 +1023,30 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
                 pos -= *start_move - intersection;
                 start_move = intersection;
             }
+
+            update_buffer();
+            picked_elements.emplace_back(elem);
+            update_picked_buffer();
+
+            break;
+        }
+        case object_type::edge: {
+            edge_handle eh(elem.handle.get_idx());
+            auto vertices = tmesh.mesh.get_vertices_of_edge(eh);
+
+            move_points(vector(vertices.begin(), vertices.end()));
+
+            update_buffer();
+            picked_elements.emplace_back(elem);
+            update_picked_buffer();
+
+            break;
+        }
+        case object_type::face: {
+            face_handle fh(elem.handle.get_idx());
+            auto vertices = tmesh.mesh.get_vertices_of_face(fh);
+
+            move_points(vertices);
 
             update_buffer();
             picked_elements.emplace_back(elem);
