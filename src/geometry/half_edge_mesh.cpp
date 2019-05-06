@@ -315,6 +315,13 @@ void half_edge_mesh::get_vertices_of_edge(edge_handle edge_h, vector<vertex_hand
     vertices_out.push_back(get_e(one_edge.twin).target);
 }
 
+void half_edge_mesh::get_vertices_of_edge(edge_handle edge_h, set<vertex_handle>& vertices_out) const {
+    auto one_edge_h = half_edge_handle::one_half_of(edge_h);
+    auto one_edge = get_e(one_edge_h);
+    vertices_out.insert(one_edge.target);
+    vertices_out.insert(get_e(one_edge.twin).target);
+}
+
 array<vertex_handle, 2> half_edge_mesh::get_vertices_of_half_edge(half_edge_handle edge_h) const
 {
     auto one_edge = get_e(edge_h);
