@@ -1058,7 +1058,7 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
         auto offset = *start_move - intersection;
 
         // If we actually moved, delete the request to deselect the clicked element
-        if (length(offset) > 0.1) {
+        if (length(offset) > 0) {
             request_remove = nullopt;
         }
 
