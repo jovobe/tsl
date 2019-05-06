@@ -81,6 +81,7 @@ private:
     GLuint picking_texture;
     GLuint picking_render;
 
+    optional<vec3> start_move;
     optional<mouse_pos> request_pick;
     vector<picking_element> picked_elements;
 

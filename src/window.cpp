@@ -311,7 +311,6 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                 case GLFW_MOUSE_BUTTON_LEFT: {
                     if (!ImGui::GetIO().WantCaptureMouse) {
                         request_pick = get_mouse_pos();
-                        move_object = true;
                     }
                     break;
                 }
@@ -329,6 +328,7 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                     break;
                 case GLFW_MOUSE_BUTTON_LEFT: {
                     move_object = false;
+                    start_move = nullopt;
                     break;
                 }
                 default:
@@ -387,6 +387,7 @@ void window::picking_phase(const mat4& model, const mat4& vp) {
             picked_elements.clear();
             picked_elements.push_back(*picking_map.get_object(id));
             update_picked_buffer();
+            move_object = true;
         }
 
         request_pick = nullopt;
@@ -805,6 +806,7 @@ window& window::operator=(window&& window) noexcept {
     tmesh_faces = move(window.tmesh_faces);
     camera = move(window.camera);
     request_pick = move(window.request_pick);
+    start_move = move(window.start_move);
 
     picking_map = move(window.picking_map);
     picking_frame = exchange(window.picking_frame, 0);
@@ -988,8 +990,12 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
             plane move_plane(pos, camera.get_direction());
 
             auto intersection = *(ray.intersect(move_plane));
-            vec4 foo = inverse(model) * vec4(intersection, 1.0f);
-            pos = vec3(foo);
+            if (!start_move) {
+                start_move = intersection;
+            } else {
+                pos -= *start_move - intersection;
+                start_move = intersection;
+            }
 
             update_buffer();
             picked_elements.emplace_back(elem);
