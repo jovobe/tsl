@@ -991,9 +991,9 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
             vec4 foo = inverse(model) * vec4(intersection, 1.0f);
             pos = vec3(foo);
 
-            // TODO: This disables the highlighting of the element
             update_buffer();
             picked_elements.emplace_back(elem);
+            update_picked_buffer();
 
             break;
         }
