@@ -164,6 +164,21 @@ public:
     array<vertex_handle, 2> get_vertices_of_edge(edge_handle edge_h) const;
 
     /**
+     * @brief Adds the two vertices of an edge to the given vector.
+     *
+     * The order of the vertices is not specified. The vertex handles are written
+     * into the `vertices_out` vector. This is done
+     * to reduce the number of heap allocations if this method is called in
+     * a loop. If you are not calling it in a loop or can't, for some reason,
+     * take advantages of this method's signature, you can call the other
+     * overload of this method which just returns the vector. Such convinient.
+     *
+     * Note: you probably should remember to `clear()` the vector before
+     * passing it into this method.
+     */
+    void get_vertices_of_edge(edge_handle edge_h, vector<vertex_handle>& vertices_out) const;
+
+    /**
      * @brief Get the two vertices of an half edge.
      *
      * The order of the vertices is not specified
