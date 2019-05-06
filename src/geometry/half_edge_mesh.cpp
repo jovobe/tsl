@@ -279,12 +279,17 @@ vector<vertex_handle> half_edge_mesh::get_vertices_of_face(face_handle handle) c
 {
     vector<vertex_handle> vertices_out;
     vertices_out.reserve(4);
+    get_vertices_of_face(handle, vertices_out);
+    return vertices_out;
+}
+
+void half_edge_mesh::get_vertices_of_face(face_handle handle, vector<vertex_handle>& vertices_out) const
+{
     circulate_in_face(handle, [&vertices_out, this](auto eh)
     {
         vertices_out.push_back(get_e(eh).target);
         return true;
     });
-    return vertices_out;
 }
 
 array<vertex_handle, 2> half_edge_mesh::get_vertices_of_edge(edge_handle edge_h) const

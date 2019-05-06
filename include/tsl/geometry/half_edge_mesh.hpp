@@ -142,6 +142,21 @@ public:
     vector<vertex_handle> get_vertices_of_face(face_handle handle) const;
 
     /**
+     * @brief Adds the vertices surrounding the given face to the given vector.
+     *
+     * @return The vertex-handles in counter-clockwise order. The vertex handles are written
+     * into the `vertices_out` vector. This is done
+     * to reduce the number of heap allocations if this method is called in
+     * a loop. If you are not calling it in a loop or can't, for some reason,
+     * take advantages of this method's signature, you can call the other
+     * overload of this method which just returns the vector. Such convinient.
+     *
+     * Note: you probably should remember to `clear()` the vector before
+     * passing it into this method.
+     */
+    void get_vertices_of_face(face_handle handle, vector<vertex_handle>& vertices_out) const;
+
+    /**
      * @brief Get the two vertices of an edge.
      *
      * The order of the vertices is not specified
