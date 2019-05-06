@@ -992,14 +992,12 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
         }
         case object_type::edge: {
             edge_handle eh(elem.handle.get_idx());
-            auto vertices = tmesh.mesh.get_vertices_of_edge(eh);
-            vertices_to_move.insert(vertices_to_move.end(), vertices.begin(), vertices.end());
+            tmesh.mesh.get_vertices_of_edge(eh, vertices_to_move);
             break;
         }
         case object_type::face: {
             face_handle fh(elem.handle.get_idx());
-            auto vertices = tmesh.mesh.get_vertices_of_face(fh);
-            vertices_to_move.insert(vertices_to_move.end(), vertices.begin(), vertices.end());
+            tmesh.mesh.get_vertices_of_face(fh, vertices_to_move);
             break;
         }
         default:
