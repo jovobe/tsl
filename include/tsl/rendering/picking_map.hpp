@@ -27,6 +27,7 @@ struct picking_element {
     base_handle<index> handle;
 
     picking_element(object_type type, base_handle<index> handle) : type(type), handle(handle) {}
+    bool operator<(const picking_element& r) const;
 };
 
 class picking_map {

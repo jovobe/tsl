@@ -24,4 +24,8 @@ void picking_map::clear()
     map.clear();
 }
 
+bool picking_element::operator<(const picking_element& r) const {
+    return handle < r.handle;
+}
+
 }

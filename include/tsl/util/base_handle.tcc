@@ -1,6 +1,8 @@
 #include <limits>
 
 #include <tsl/util/panic.hpp>
+#include "base_handle.hpp"
+
 
 using std::numeric_limits;
 
@@ -40,6 +42,11 @@ template <typename idx_t>
 bool base_handle<idx_t>::operator!=(const base_handle& other) const
 {
     return idx != other.idx;
+}
+
+template<typename idx_t>
+bool base_handle<idx_t>::operator<(const base_handle& other) const {
+    return idx < other.idx;
 }
 
 template <typename idx_t, typename non_optional_t>

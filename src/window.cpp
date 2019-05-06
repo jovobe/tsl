@@ -39,6 +39,7 @@ using glm::value_ptr;
 using glm::perspective;
 using glm::lookAt;
 using glm::rotate;
+using glm::length;
 
 namespace tsl {
 
@@ -312,7 +313,9 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                     break;
                 case GLFW_MOUSE_BUTTON_LEFT: {
                     if (!ImGui::GetIO().WantCaptureMouse) {
-                        request_pick = get_mouse_pos();
+                        // if ctrl is pressed, add element to current selections
+                        bool single_selection = (mods & GLFW_MOD_CONTROL) == 0;
+                        request_pick = request_pick_data(get_mouse_pos(), single_selection);
                     }
                     break;
                 }
@@ -331,6 +334,14 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
                 case GLFW_MOUSE_BUTTON_LEFT: {
                     move_object = false;
                     start_move = nullopt;
+                    if (request_remove) {
+                        auto elem = *request_remove;
+                        if (picked_elements.find(elem) != picked_elements.end()) {
+                            picked_elements.erase(elem);
+                            update_picked_buffer();
+                        }
+                        request_remove = nullopt;
+                    }
                     break;
                 }
                 default:
@@ -384,10 +395,19 @@ void window::render() {
 
 void window::picking_phase(const mat4& model, const mat4& vp) {
     if (request_pick) {
-        auto id = read_pixel(*request_pick);
+        auto data = *request_pick;
+        auto id = read_pixel(data.pos);
         if (id != 0) {
-            picked_elements.clear();
-            picked_elements.push_back(*picking_map.get_object(id));
+            if (data.single_select) {
+                picked_elements.clear();
+                picked_elements.insert(*picking_map.get_object(id));
+            } else {
+                auto [it, inserted] = picked_elements.insert(*picking_map.get_object(id));
+                // If element already picked, remove selection
+                if (!inserted) {
+                    request_remove = *it;
+                }
+            }
             update_picked_buffer();
             move_object = true;
         }
@@ -485,21 +505,23 @@ void window::draw_gui() {
             }
         };
 
-        ImGui::Begin("Selected element");
-        if (!picked_elements.empty()) {
-            // TODO: Do this for all selected elements!
-            auto& elem = picked_elements.front();
+        ImGui::Begin("Selected elements");
+        ImGui::Text("Count: %lu", picked_elements.size());
+        ImGui::Separator();
+        for (auto&& elem: picked_elements) {
 
             switch (elem.type) {
                 case object_type::vertex: {
                     vertex_handle vh(elem.handle.get_idx());
-                    ImGui::Text("Vertex (id: %u)", vh.get_idx());
-                    ImGui::BulletText("extended valence: %u", tmesh.get_extended_valence(vh));
-                    ImGui::Separator();
+                    if (ImGui::TreeNode((void*)(intptr_t) vh.get_idx(),"Vertex (id: %u)", vh.get_idx())) {
+                        ImGui::BulletText("extended valence: %u", tmesh.get_extended_valence(vh));
+                        ImGui::Separator();
 
-                    if (ImGui::TreeNode("ingoing half edges (cw order)")) {
-                        for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
-                            draw_edge_information(eh);
+                        if (ImGui::TreeNode("ingoing half edges (cw order)")) {
+                            for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
+                                draw_edge_information(eh);
+                            }
+                            ImGui::TreePop();
                         }
                         ImGui::TreePop();
                     }
@@ -508,55 +530,62 @@ void window::draw_gui() {
                 }
                 case object_type::edge: {
                     edge_handle eh(elem.handle.get_idx());
-                    ImGui::Text("Edge (id: %u)", eh.get_idx());
-                    ImGui::Separator();
+                    if (ImGui::TreeNode((void*)(intptr_t) eh.get_idx(), "Edge (id: %u)", eh.get_idx())) {
+                        ImGui::Separator();
 
-                    if (ImGui::TreeNode("consisting of half edges")) {
-                        for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
-                            draw_edge_information(heh);
+                        if (ImGui::TreeNode("consisting of half edges")) {
+                            for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
+                                draw_edge_information(heh);
+                            }
+                            ImGui::TreePop();
                         }
                         ImGui::TreePop();
                     }
+
                     break;
                 }
                 case object_type::face: {
                     face_handle fh(elem.handle.get_idx());
-                    ImGui::Text("Face (id: %u)", elem.handle.get_idx());
+                    if (ImGui::TreeNode((void*)(intptr_t) fh.get_idx(), "Face (id: %u)", elem.handle.get_idx())) {
+                        auto max_local_coords = tmesh.get_local_max_coordinates(fh);
+                        ImGui::BulletText("local coordinates: (%.2f, %.2f)", max_local_coords.x, max_local_coords.y);
 
-                    auto max_local_coords = tmesh.get_local_max_coordinates(fh);
-                    ImGui::BulletText("local coordinates: (%.2f, %.2f)", max_local_coords.x, max_local_coords.y);
+                        ImGui::Separator();
 
-                    ImGui::Separator();
-
-                    auto support = tmesh.support_map[fh];
-                    if (ImGui::TreeNode((void*) nullptr, "supporting basis functions: (%lu)", support.size())) {
-                        for (auto&& [index, trans]: support) {
-                            if (ImGui::TreeNode((void*)(intptr_t) index.vertex.get_idx(), "vertex: %u", index.vertex.get_idx())) {
-                                auto [uv, vv] = tmesh.get_knot_vectors(index);
-                                if (ImGui::TreeNode("knot vector u")) {
-                                    for (auto&& u: uv) {
-                                        ImGui::BulletText("%.2f", u);
+                        auto support = tmesh.support_map[fh];
+                        if (ImGui::TreeNode((void*) nullptr, "supporting basis functions: (%lu)", support.size())) {
+                            for (auto&& [index, trans]: support) {
+                                if (ImGui::TreeNode((void*)(intptr_t) index.vertex.get_idx(), "vertex: %u", index.vertex.get_idx())) {
+                                    auto [uv, vv] = tmesh.get_knot_vectors(index);
+                                    if (ImGui::TreeNode("knot vector u")) {
+                                        for (auto&& u: uv) {
+                                            ImGui::BulletText("%.2f", u);
+                                        }
+                                        ImGui::TreePop();
+                                    }
+                                    if (ImGui::TreeNode("knot vector v")) {
+                                        for (auto&& v: vv) {
+                                            ImGui::BulletText("%.2f", v);
+                                        }
+                                        ImGui::TreePop();
                                     }
                                     ImGui::TreePop();
                                 }
-                                if (ImGui::TreeNode("knot vector v")) {
-                                    for (auto&& v: vv) {
-                                        ImGui::BulletText("%.2f", v);
-                                    }
-                                    ImGui::TreePop();
-                                }
-                                ImGui::TreePop();
                             }
+                            ImGui::TreePop();
                         }
                         ImGui::TreePop();
                     }
+
                     break;
                 }
                 default:
                     panic("unknown object type picked!");
             }
+        }
 
-            if (ImGui::Button("Deselect")) {
+        if (!picked_elements.empty()) {
+            if (ImGui::Button("Clear (deselect all)")) {
                 picked_elements.clear();
                 update_picked_buffer();
             }
@@ -809,6 +838,7 @@ window& window::operator=(window&& window) noexcept {
     camera = move(window.camera);
     request_pick = move(window.request_pick);
     start_move = move(window.start_move);
+    request_remove = move(window.request_remove);
 
     picking_map = move(window.picking_map);
     picking_frame = exchange(window.picking_frame, 0);
@@ -982,28 +1012,30 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
         return;
     }
 
-    vector<vertex_handle> vertices_to_move;
-
-    auto elem = picked_elements.front();
-    switch (elem.type) {
-        case object_type::vertex: {
-            vertices_to_move.emplace_back(elem.handle.get_idx());
-            break;
+    // Collect all vertex handles which should be moved
+    set<vertex_handle> vertices_to_move;
+    for (auto&& elem: picked_elements) {
+        switch (elem.type) {
+            case object_type::vertex: {
+                vertices_to_move.emplace(elem.handle.get_idx());
+                break;
+            }
+            case object_type::edge: {
+                edge_handle eh(elem.handle.get_idx());
+                tmesh.mesh.get_vertices_of_edge(eh, vertices_to_move);
+                break;
+            }
+            case object_type::face: {
+                face_handle fh(elem.handle.get_idx());
+                tmesh.mesh.get_vertices_of_face(fh, vertices_to_move);
+                break;
+            }
+            default:
+                break;
         }
-        case object_type::edge: {
-            edge_handle eh(elem.handle.get_idx());
-            tmesh.mesh.get_vertices_of_edge(eh, vertices_to_move);
-            break;
-        }
-        case object_type::face: {
-            face_handle fh(elem.handle.get_idx());
-            tmesh.mesh.get_vertices_of_face(fh, vertices_to_move);
-            break;
-        }
-        default:
-            break;
     }
 
+    // Calc the support vector of the move plane
     vector<reference_wrapper<vec3>> positions;
     positions.reserve(vertices_to_move.size());
     vec3 center(0, 0, 0);
@@ -1014,21 +1046,37 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
     }
     center /= positions.size();
 
+    // Create plane and ray
     line ray(camera.get_pos(), get_ray(get_mouse_pos(), vp));
     plane move_plane(center, camera.get_direction());
 
+    // Cast ray and move all points by the offset between the last intersection and the current
     auto intersection = *(ray.intersect(move_plane));
     if (!start_move) {
         start_move = intersection;
     } else {
+        auto offset = *start_move - intersection;
+
+        // If we actually moved, delete the request to deselect the clicked element
+        if (length(offset) > 0.1) {
+            request_remove = nullopt;
+        }
+
+        // Actually move points
         for (auto&& pos: positions) {
-            pos.get() -= *start_move - intersection;
+            pos.get() -= offset;
         }
         start_move = intersection;
     }
 
+    // Save picked elements
+    set<picking_element> old_picked(picked_elements);
+
+    // Update all buffers
     update_buffer();
-    picked_elements.emplace_back(elem);
+
+    // Restore the picked elements and update the picked buffer to make them visible
+    picked_elements.insert(old_picked.begin(), old_picked.end());
     update_picked_buffer();
 }
 

@@ -30,6 +30,7 @@ public:
 
     bool operator==(const base_handle& other) const;
     bool operator!=(const base_handle& other) const;
+    bool operator<(const base_handle& other) const;
 
 protected:
     idx_t idx;

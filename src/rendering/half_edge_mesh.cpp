@@ -12,7 +12,7 @@ using std::find;
 
 namespace tsl {
 
-vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const vector<picking_element>& picked) {
+vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const set<picking_element>& picked) {
 
     // Filter type edges
     vector<reference_wrapper<const picking_element>> edges_picked;
@@ -46,7 +46,7 @@ vector<uint8_t> get_picked_edges_buffer(const half_edge_mesh& mesh, const vector
     return out;
 }
 
-vector<uint8_t> get_picked_vertices_buffer(const half_edge_mesh& mesh, const vector<picking_element>& picked) {
+vector<uint8_t> get_picked_vertices_buffer(const half_edge_mesh& mesh, const set<picking_element>& picked) {
     // Filter type vertices
     vector<reference_wrapper<const picking_element>> vertices_picked;
     copy_if(picked.begin(), picked.end(), back_inserter(vertices_picked), [](const picking_element& elem) {

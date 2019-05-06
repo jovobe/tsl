@@ -6,6 +6,7 @@
 
 #include <string>
 #include <functional>
+#include <set>
 
 #include <tsl/mouse_pos.hpp>
 #include <tsl/application.hpp>
@@ -17,8 +18,16 @@
 
 using std::string;
 using std::reference_wrapper;
+using std::set;
 
 namespace tsl {
+
+struct request_pick_data {
+    mouse_pos pos;
+    bool single_select;
+
+    request_pick_data(const mouse_pos& pos, bool single_select) : pos(pos), single_select(single_select) {}
+};
 
 class window {
 public:
@@ -82,8 +91,9 @@ private:
     GLuint picking_render;
 
     optional<vec3> start_move;
-    optional<mouse_pos> request_pick;
-    vector<picking_element> picked_elements;
+    optional<request_pick_data> request_pick;
+    set<picking_element> picked_elements;
+    optional<picking_element> request_remove;
 
     // programs
     GLuint vertex_program;
