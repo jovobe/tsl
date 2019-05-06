@@ -243,6 +243,15 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     surface_resolution.decrement();
                     update_buffer();
                     break;
+                case GLFW_KEY_X:
+                    move_direction.x = true;
+                    break;
+                case GLFW_KEY_Z:
+                    move_direction.y = true;
+                    break;
+                case GLFW_KEY_V:
+                    move_direction.z = true;
+                    break;
                 default:
                     break;
             }
@@ -273,6 +282,15 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                 case GLFW_KEY_C:
                     camera.moving_direction.down = false;
                     camera.reset_last_move_time();
+                    break;
+                case GLFW_KEY_X:
+                    move_direction.x = false;
+                    break;
+                case GLFW_KEY_Z:
+                    move_direction.y = false;
+                    break;
+                case GLFW_KEY_V:
+                    move_direction.z = false;
                     break;
                 default:
                     break;
@@ -845,6 +863,7 @@ window& window::operator=(window&& window) noexcept {
     picking_texture = exchange(window.picking_texture, 0);
     picking_render = exchange(window.picking_render, 0);
     picked_elements = move(window.picked_elements);
+    move_direction = move(window.move_direction);
 
     return *this;
 }
@@ -1056,6 +1075,15 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
         start_move = intersection;
     } else {
         auto offset = *start_move - intersection;
+
+        // Check for axis aligned movement
+        if (move_direction.x) {
+            offset *= vec3(1, 0, 0);
+        } else if (move_direction.y) {
+            offset *= vec3(0, 1, 0);
+        } else if (move_direction.z) {
+            offset *= vec3(0, 0, 1);
+        }
 
         // If we actually moved, delete the request to deselect the clicked element
         if (length(offset) > 0) {

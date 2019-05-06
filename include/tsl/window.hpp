@@ -29,6 +29,14 @@ struct request_pick_data {
     request_pick_data(const mouse_pos& pos, bool single_select) : pos(pos), single_select(single_select) {}
 };
 
+struct move_direction_t {
+    bool x;
+    bool y;
+    bool z;
+
+    move_direction_t() : x(false), y(false), z(false) {}
+};
+
 class window {
 public:
     // TODO: make private?
@@ -94,6 +102,7 @@ private:
     optional<request_pick_data> request_pick;
     set<picking_element> picked_elements;
     optional<picking_element> request_remove;
+    move_direction_t move_direction;
 
     // programs
     GLuint vertex_program;
