@@ -292,6 +292,15 @@ void half_edge_mesh::get_vertices_of_face(face_handle handle, vector<vertex_hand
     });
 }
 
+void half_edge_mesh::get_vertices_of_face(face_handle handle, set<vertex_handle>& vertices_out) const
+{
+    circulate_in_face(handle, [&vertices_out, this](auto eh)
+    {
+        vertices_out.insert(get_e(eh).target);
+        return true;
+    });
+}
+
 array<vertex_handle, 2> half_edge_mesh::get_vertices_of_edge(edge_handle edge_h) const
 {
     auto one_edge_h = half_edge_handle::one_half_of(edge_h);

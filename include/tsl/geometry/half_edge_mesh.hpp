@@ -6,6 +6,7 @@
 #include <utility>
 #include <memory>
 #include <algorithm>
+#include <set>
 
 #include <tsl/attrmaps/stable_vector.hpp>
 #include "half_edge.hpp"
@@ -17,6 +18,7 @@ using std::array;
 using std::pair;
 using std::unique_ptr;
 using std::move;
+using std::set;
 
 namespace tsl {
 
@@ -155,6 +157,21 @@ public:
      * passing it into this method.
      */
     void get_vertices_of_face(face_handle handle, vector<vertex_handle>& vertices_out) const;
+
+    /**
+     * @brief Adds the vertices surrounding the given face to the given set.
+     *
+     * @return The vertex-handles in counter-clockwise order. If a vertex does already exist in the set it will
+     * be skipped. The vertex handles are written into the `vertices_out` set. This is done
+     * to reduce the number of heap allocations if this method is called in
+     * a loop. If you are not calling it in a loop or can't, for some reason,
+     * take advantages of this method's signature, you can call the other
+     * overload of this method which just returns a vector. Such convinient.
+     *
+     * Note: you probably should remember to `clear()` the set before
+     * passing it into this method.
+     */
+    void get_vertices_of_face(face_handle handle, set<vertex_handle>& vertices_out) const;
 
     /**
      * @brief Get the two vertices of an edge.
