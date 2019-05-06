@@ -982,81 +982,56 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
         return;
     }
 
-    auto move_points = [&](const vector<vertex_handle>& vertices) {
-        vector<reference_wrapper<vec3>> positions;
-        positions.reserve(2);
-        vec3 center(0, 0, 0);
-        for (auto&& vh: vertices) {
-            auto& pos = tmesh.mesh.get_vertex_position(vh);
-            positions.emplace_back(pos);
-            center += pos;
-        }
-        center /= positions.size();
-
-        line ray(camera.get_pos(), get_ray(get_mouse_pos(), vp));
-        plane move_plane(center, camera.get_direction());
-
-        auto intersection = *(ray.intersect(move_plane));
-        if (!start_move) {
-            start_move = intersection;
-        } else {
-            for (auto&& pos: positions) {
-                pos.get() -= *start_move - intersection;
-            }
-            start_move = intersection;
-        }
-    };
+    vector<vertex_handle> vertices_to_move;
 
     auto elem = picked_elements.front();
     switch (elem.type) {
         case object_type::vertex: {
-            vertex_handle vh(elem.handle.get_idx());
-            auto& pos = tmesh.mesh.get_vertex_position(vh);
-
-            line ray(camera.get_pos(), get_ray(get_mouse_pos(), vp));
-            plane move_plane(pos, camera.get_direction());
-
-            auto intersection = *(ray.intersect(move_plane));
-            if (!start_move) {
-                start_move = intersection;
-            } else {
-                pos -= *start_move - intersection;
-                start_move = intersection;
-            }
-
-            update_buffer();
-            picked_elements.emplace_back(elem);
-            update_picked_buffer();
-
+            vertices_to_move.emplace_back(elem.handle.get_idx());
             break;
         }
         case object_type::edge: {
             edge_handle eh(elem.handle.get_idx());
             auto vertices = tmesh.mesh.get_vertices_of_edge(eh);
-
-            move_points(vector(vertices.begin(), vertices.end()));
-
-            update_buffer();
-            picked_elements.emplace_back(elem);
-            update_picked_buffer();
-
+            vertices_to_move.insert(vertices_to_move.end(), vertices.begin(), vertices.end());
             break;
         }
         case object_type::face: {
             face_handle fh(elem.handle.get_idx());
             auto vertices = tmesh.mesh.get_vertices_of_face(fh);
-
-            move_points(vertices);
-
-            update_buffer();
-            picked_elements.emplace_back(elem);
-            update_picked_buffer();
-
+            vertices_to_move.insert(vertices_to_move.end(), vertices.begin(), vertices.end());
             break;
         }
         default:
             break;
     }
+
+    vector<reference_wrapper<vec3>> positions;
+    positions.reserve(vertices_to_move.size());
+    vec3 center(0, 0, 0);
+    for (auto&& vh: vertices_to_move) {
+        auto& pos = tmesh.mesh.get_vertex_position(vh);
+        positions.emplace_back(pos);
+        center += pos;
+    }
+    center /= positions.size();
+
+    line ray(camera.get_pos(), get_ray(get_mouse_pos(), vp));
+    plane move_plane(center, camera.get_direction());
+
+    auto intersection = *(ray.intersect(move_plane));
+    if (!start_move) {
+        start_move = intersection;
+    } else {
+        for (auto&& pos: positions) {
+            pos.get() -= *start_move - intersection;
+        }
+        start_move = intersection;
+    }
+
+    update_buffer();
+    picked_elements.emplace_back(elem);
+    update_picked_buffer();
 }
 
 vec3 window::get_ray(const mouse_pos& mouse_pos, const mat4& vp) const {
