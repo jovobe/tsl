@@ -14,6 +14,9 @@ find_package(OpenGL REQUIRED)
 add_subdirectory(ext/imgui)
 include_directories(ext/imgui)
 
+# pfd
+include_directories(ext/pfd)
+
 # application
 set(TSL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
