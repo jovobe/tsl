@@ -9,6 +9,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <portable-file-dialogs.h>
+
 #include <tsl/window.hpp>
 #include <tsl/application.hpp>
 #include <tsl/opengl.hpp>
@@ -17,6 +19,7 @@
 #include <tsl/rendering/tmesh.hpp>
 #include <tsl/geometry/line.hpp>
 #include <tsl/geometry/plane.hpp>
+#include <tsl/io/obj.hpp>
 
 #include <string>
 #include <iostream>
@@ -298,6 +301,9 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                 case GLFW_KEY_LEFT_SHIFT:
                     camera.move_boost = false;
                     break;
+                case GLFW_KEY_O:
+                    open_file_dialog_and_load_selected_file();
+                    break;
                 default:
                     break;
             }
@@ -473,7 +479,19 @@ void window::draw_gui() {
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSizeConstraints(ImVec2(450, 0), ImVec2(width, height));
 
-        ImGui::Begin("Settings");
+        ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_MenuBar);
+        // Menu Bar
+        if (ImGui::BeginMenuBar())
+        {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Open", "Ctrl+O")) {
+                    open_file_dialog_and_load_selected_file();
+                }
+                if (ImGui::MenuItem("Save As..")) {}
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
         ImGui::Checkbox("Wireframe mode", &wireframe_mode);
         ImGui::Checkbox("Show control polygon", &control_mode);
         ImGui::Checkbox("Show surface", &surface_mode);
@@ -1123,6 +1141,22 @@ vec3 window::get_ray(const mouse_pos& mouse_pos, const mat4& vp) const {
     auto world_pos = inv_mvp * screen_pos;
 
     return normalize(vec3(world_pos));
+}
+
+void window::open_file_dialog_and_load_selected_file() {
+    auto files = pfd::open_file("Select a file").result();
+    if (!files.empty()) {
+        try {
+            auto hem = read_obj_into_hem(files[0]);
+            this->tmesh = tsl::tmesh(move(hem), dense_half_edge_map<double>(1), dense_half_edge_map<bool>(true));
+            update_buffer();
+        } catch(const exception& e) {
+            std::ostringstream string_stream;
+            string_stream << "An error occurred while loading: " << files[0] << "\n" << e.what();
+            string message = string_stream.str();
+            pfd::message("Problem", message, pfd::choice::ok, pfd::icon::error);
+        }
+    }
 }
 
 }

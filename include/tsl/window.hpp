@@ -160,6 +160,8 @@ private:
     uint32_t read_pixel(const mouse_pos& pos) const;
 
     void picking_phase(const mat4& model, const mat4& vp);
+
+    void open_file_dialog_and_load_selected_file();
 };
 
 }
