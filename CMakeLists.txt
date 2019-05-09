@@ -17,6 +17,9 @@ include_directories(ext/imgui)
 # pfd
 include_directories(ext/pfd)
 
+# tinyobjloader
+include_directories(ext/tinyobjloader)
+
 # application
 set(TSL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 

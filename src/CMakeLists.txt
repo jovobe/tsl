@@ -5,6 +5,7 @@ add_library(tsl SHARED STATIC
     geometry/rectangle.cpp
     subdevision.cpp
     geometry/line.cpp
+    io/obj.cpp
 )
 
 target_link_libraries(tsl
