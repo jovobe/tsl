@@ -36,6 +36,7 @@ struct move_direction {
 class camera {
 public:
     move_direction moving_direction;
+    bool move_boost;
 
     camera() :
         pos(INITIAL_POS),
@@ -44,7 +45,8 @@ public:
         last_cursor_pos(),
         last_mouse_time(0),
         last_move_time(),
-        moving_direction()
+        moving_direction(),
+        move_boost(false)
     {};
 
     mat4 get_view_matrix() const;

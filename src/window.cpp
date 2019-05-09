@@ -252,6 +252,9 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                 case GLFW_KEY_V:
                     move_direction.z = true;
                     break;
+                case GLFW_KEY_LEFT_SHIFT:
+                    camera.move_boost = true;
+                    break;
                 default:
                     break;
             }
@@ -291,6 +294,9 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     break;
                 case GLFW_KEY_V:
                     move_direction.z = false;
+                    break;
+                case GLFW_KEY_LEFT_SHIFT:
+                    camera.move_boost = false;
                     break;
                 default:
                     break;

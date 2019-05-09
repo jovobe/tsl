@@ -64,7 +64,11 @@ void camera::handle_moving_direction(const mouse_pos& mouse_pos) {
     if (moving_direction.down) {
         move -= up * time_delta * MOVE_SPEED;
     }
-    pos += move;
+    double boost_speed = 1;
+    if (move_boost) {
+        boost_speed = 10;
+    }
+    pos += move * boost_speed;
 
     // handle orientation
     if (moving_direction.mouse) {
