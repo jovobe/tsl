@@ -10,7 +10,7 @@ uniform vec3 camera_pos;
 
 const float TINT_FACTOR = 0.5f;
 
-vec3 light_pos = vec3(-5, 10, 10);
+vec3 light_pos = camera_pos + vec3(0, 1, 0);
 vec3 light_color = vec3(1);
 float light_power = 1.0;
 float specular_power = 0.25;
