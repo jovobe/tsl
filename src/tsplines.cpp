@@ -4,6 +4,7 @@
 #include <utility>
 #include <optional>
 #include <iostream>
+#include <tuple>
 
 #include <glm/gtc/type_ptr.hpp>
 #include <tsl/tsplines.hpp>
@@ -19,6 +20,8 @@ using std::get;
 using std::pair;
 using std::make_pair;
 using std::optional;
+using std::move;
+using std::tie;
 
 using glm::value_ptr;
 using glm::cross;
@@ -27,8 +30,7 @@ using glm::normalize;
 namespace tsl {
 
 tmesh tsplines::get_example_data_1() {
-    tmesh out;
-    auto& mesh = out.mesh;
+    half_edge_mesh mesh;
 
     const double EDGE_LENGTH = 1;
 
@@ -248,36 +250,18 @@ tmesh tsplines::get_example_data_1() {
         vpos *= EDGE_LENGTH;
     }
 
-    // Set corners and knots
-    out.knots = dense_half_edge_map<double>(1);
-    out.corners = dense_half_edge_map<bool>(true);
-
-    // Calc basis funs
-    auto [uv, dir] = out.determine_local_coordinate_systems();
-    auto transitions = out.determine_edge_transitions(uv, dir);
-    auto [handles, transforms] = out.setup_basis_function_handles_and_transitions(uv, dir);
-    auto knot_vectors = out.determine_knot_vectors(handles);
-
-    out.handles = handles;
-    out.knot_vectors = knot_vectors;
-    out.support_map = out.determine_support_of_basis_functions(handles, transforms, transitions, uv, knot_vectors);
-    out.uv = uv;
-    out.dir = dir;
-    out.edge_transitions = transitions;
-
-    return out;
+    return tmesh(move(mesh), dense_half_edge_map<double>(1), dense_half_edge_map<bool>(true));
 }
 
 tmesh tsplines::get_example_data_2(uint32_t size) {
     const double EDGE_LENGTH = 1;
 
-    tmesh out;
 //    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, true);
-    out.mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, false);
+    auto mesh = half_edge_mesh::as_cube(EDGE_LENGTH, size, false);
 
     // Set corners and knots
-    out.knots = dense_half_edge_map<double>(1);
-    out.corners = dense_half_edge_map<bool>(true);
+    dense_half_edge_map<double> knots(1);
+    dense_half_edge_map<bool> corners(true);
 
     // this is only valid for size 8
     // edge indices with higher knots
@@ -306,20 +290,7 @@ tmesh tsplines::get_example_data_2(uint32_t size) {
 //    out.corners[edge3] = false;
 //    out.corners[edge4] = false;
 
-    // Calc basis funs
-    auto [uv, dir] = out.determine_local_coordinate_systems();
-    auto transitions = out.determine_edge_transitions(uv, dir);
-    auto [handles, transforms] = out.setup_basis_function_handles_and_transitions(uv, dir);
-    auto knot_vectors = out.determine_knot_vectors(handles);
-
-    out.handles = handles;
-    out.knot_vectors = knot_vectors;
-    out.support_map = out.determine_support_of_basis_functions(handles, transforms, transitions, uv, knot_vectors);
-    out.uv = uv;
-    out.dir = dir;
-    out.edge_transitions = transitions;
-
-    return out;
+    return tmesh(move(mesh), knots, corners);
 }
 
 tuple<dense_half_edge_map<vec2>, dense_half_edge_map<uint8_t>>
@@ -1101,6 +1072,19 @@ vector<vertex_handle> tmesh::get_vertices_for_subd_evaluation(face_handle handle
     out.push_back(mesh.get_target(h));
 
     return out;
+}
+
+tmesh::tmesh(half_edge_mesh mesh, const dense_half_edge_map<double>& knots, const dense_half_edge_map<bool>& corners)
+    : mesh(move(mesh)), knots(knots), corners(corners) {
+
+    // Calc basis funs
+    tie(uv, dir) = determine_local_coordinate_systems();
+    edge_transitions = determine_edge_transitions(uv, dir);
+    auto [handles, transforms] = setup_basis_function_handles_and_transitions(uv, dir);
+    knot_vectors = determine_knot_vectors(handles);
+
+    this->handles = handles;
+    support_map = determine_support_of_basis_functions(handles, transforms, edge_transitions, uv, knot_vectors);
 }
 
 vec2 rotate(uint8_t times, const vec2& vec) {

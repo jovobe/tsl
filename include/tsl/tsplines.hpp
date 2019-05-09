@@ -92,6 +92,8 @@ enum class tag {
 };
 
 struct tmesh {
+    tmesh() = default;
+    tmesh(half_edge_mesh mesh, const dense_half_edge_map<double>& knots, const dense_half_edge_map<bool>& corners);
 
     inline static const string EXPECT_NO_BORDER = "tried to determine support of basis functions for border face - this is not implemented!";
     // TODO: Make degree dynamic
