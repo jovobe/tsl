@@ -225,6 +225,30 @@ public:
     array<optional_face_handle, 2> get_faces_of_edge(edge_handle edge_h) const;
 
     /**
+     * @brief Get the faces of a vertex.
+     *
+     * The handles of the faces around the given vertex will be in clockwise order.
+     */
+    vector<face_handle> get_faces_of_vertex(vertex_handle vh) const;
+
+    /**
+     * @brief Get a list of faces around the given vertex in clockwise order.
+     *
+     * The face handles are written into the `faces_out` vector. This is done
+     * to reduce the number of heap allocations if this method is called in
+     * a loop. If you are not calling it in a loop or can't, for some reason,
+     * take advantages of this method's signature, you can call the other
+     * overload of this method which just returns the vector. Such convinient.
+     *
+     * Note: you probably should remember to `clear()` the vector before
+     * passing it into this method.
+     *
+     * @param faces_out The handles of the faces around `vh` will be written
+     *                 into this vector in clockwise order.
+     */
+    void get_faces_of_vertex(vertex_handle vh, vector<face_handle>& faces_out) const;
+
+    /**
      * @brief Get the face of a half edge.
      */
     optional_face_handle get_face_of_half_edge(half_edge_handle edge_h) const;
@@ -532,7 +556,7 @@ private:
     void circulate_around_vertex(vertex_handle vh, visitor_t visitor, direction way = direction::ingoing) const;
 
     /**
-     * @brief Circulates around the vertex, calling the
+     * @brief Circulates clockwise around the vertex, calling the
      *        `visitor` for each edge of the vertex. If the in or outgoing edges are visited is
      *        determined by the way parameter.
      *

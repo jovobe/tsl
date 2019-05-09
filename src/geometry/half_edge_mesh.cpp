@@ -335,6 +335,23 @@ array<optional_face_handle, 2> half_edge_mesh::get_faces_of_edge(edge_handle edg
     return {one_edge.face, get_e(one_edge.twin).face};
 }
 
+vector<face_handle> half_edge_mesh::get_faces_of_vertex(vertex_handle vh) const {
+    vector<face_handle> out;
+    get_faces_of_vertex(vh, out);
+    return out;
+}
+
+void half_edge_mesh::get_faces_of_vertex(vertex_handle vh, vector<face_handle>& faces_out) const {
+    circulate_around_vertex(vh, [&faces_out, this](auto eh)
+    {
+        auto e = get_e(eh);
+        if (e.face) {
+            faces_out.push_back(e.face.unwrap());
+        }
+        return true;
+    });
+}
+
 optional_face_handle half_edge_mesh::get_face_of_half_edge(half_edge_handle edge_h) const
 {
     auto edge = get_e(edge_h);

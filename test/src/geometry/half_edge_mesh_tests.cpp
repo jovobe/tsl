@@ -507,6 +507,16 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfEdge) {
     ASSERT_THAT(faces, ::testing::UnorderedElementsAre(f0, f2));
 }
 
+TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfVertex) {
+    auto v2 = vertex_handles[2];
+    auto f0 = face_handles[0];
+    auto f1 = face_handles[1];
+    auto f2 = face_handles[2];
+    auto f3 = face_handles[3];
+    auto faces = mesh.get_faces_of_vertex(v2);
+    ASSERT_THAT(faces, ::testing::UnorderedElementsAre(f0, f1, f2, f3));
+}
+
 TEST_F(HalfEdgeMeshTestWithCubeData, GetValenceOfVertexThreeEdges) {
     auto v2 = vertex_handles[0];
     EXPECT_EQ(3, mesh.get_valence(v2));
