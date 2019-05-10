@@ -1119,7 +1119,12 @@ void tmesh::check_integrity() const {
             std::ostringstream string_stream;
             string_stream << "cycle condition violated at vertex with handle id: " << vh.get_idx();
             string message = string_stream.str();
-            panic(message);
+
+            if (config.panic_at_integrity_violations) {
+                panic(message);
+            } else {
+                std::cerr << message << std::endl;
+            }
         }
 
         // check three regular rings around each extraordinary vertex
@@ -1127,7 +1132,12 @@ void tmesh::check_integrity() const {
             std::ostringstream string_stream;
             string_stream << "mesh is not regular in three rings around extraordinary vertex with handle id: " << vh.get_idx();
             string message = string_stream.str();
-            panic(message);
+
+            if (config.panic_at_integrity_violations) {
+                panic(message);
+            } else {
+                std::cerr << message << std::endl;
+            }
         }
     }
 

@@ -91,6 +91,12 @@ enum class tag {
     negative_v
 };
 
+struct tmesh_config {
+    bool panic_at_integrity_violations;
+
+    tmesh_config() : panic_at_integrity_violations(false) {}
+};
+
 struct tmesh {
     tmesh() = default;
     tmesh(half_edge_mesh mesh, const dense_half_edge_map<double>& knots, const dense_half_edge_map<bool>& corners);
@@ -98,6 +104,8 @@ struct tmesh {
     inline static const string EXPECT_NO_BORDER = "tried to determine support of basis functions for border face - this is not implemented!";
     // TODO: Make degree dynamic
     inline static const uint8_t DEGREE = 3;
+
+    tmesh_config config;
 
     half_edge_mesh mesh;
     dense_half_edge_map<double> knots;
