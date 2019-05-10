@@ -1085,6 +1085,114 @@ tmesh::tmesh(half_edge_mesh mesh, const dense_half_edge_map<double>& knots, cons
 
     this->handles = handles;
     support_map = determine_support_of_basis_functions(handles, transforms, edge_transitions, uv, knot_vectors);
+
+    check_integrity();
+}
+
+void tmesh::check_integrity() const {
+    // Create buffer for outgoing half edges around a vertex. This should usually not exceed 64, so we reserve
+    // memory beforehand to reduce allocations.
+    vector<half_edge_handle> half_edges;
+    half_edges.reserve(64);
+
+    // This buffer will be used in the loop to store face handles. To reduce allocations we reuse the buffer each loop
+    // and start with a estimated size of 10.
+    vector<face_handle> neighbouring_faces;
+    neighbouring_faces.reserve(10);
+    for (auto&& vh: mesh.get_vertices()) {
+
+        // check cycle condition
+        half_edges.clear();
+        mesh.get_half_edges_of_vertex(vh, half_edges, direction::outgoing);
+        double sum = 1;
+        for (auto&& eh: half_edges) {
+            sum *= fac(eh);
+        }
+        if (sum != 1) {
+            std::ostringstream string_stream;
+            string_stream << "cycle condition violated at vertex with handle id: " << vh.get_idx();
+            string message = string_stream.str();
+            panic(message);
+        }
+
+        // check three regular rings around each extraordinary vertex
+        if (is_extraordinary(vh) && !check_regularity_around_vertex(vh, 3)) {
+            std::ostringstream string_stream;
+            string_stream << "mesh is not regular in three rings around extraordinary vertex with handle id: " << vh.get_idx();
+            string message = string_stream.str();
+            panic(message);
+        }
+    }
+
+    // TODO: check consistency condition
+}
+
+bool tmesh::check_regularity_around_vertex(vertex_handle vh, uint32_t rings) const {
+    assert(rings > 0);
+    // regular:
+    // - no extraordinary vertices
+    // - the same knot intervall on all half edges
+    // - valence == 4 within rings (except start extraordinary vertex)
+    auto outgoing = mesh.get_half_edges_of_vertex(vh, direction::outgoing);
+
+    // create space for vertices ordered by ring
+    vector<vector<vertex_handle>> vertices;
+    {
+        auto valence = mesh.get_valence(vh);
+        vertices.reserve(rings);
+        for (uint32_t i = 0; i < rings; ++i) {
+            vertices.emplace_back();
+            vertices.back().reserve((i + 1) * valence * 2);
+        }
+    }
+
+    // circulate around vertex and handle every "quadrant" in one loop
+    for (auto&& heh: outgoing) {
+
+        // for each ring
+        for (uint32_t ring = 0; ring < rings; ++ring) {
+            auto loop_edge = heh;
+
+            // march forward to ring
+            for (uint32_t j = 0; j < ring; ++j) {
+                loop_edge = mesh.get_next(mesh.get_twin(mesh.get_next(loop_edge)));
+            }
+
+            // thanks to symmetry we need to do this exactly twice
+            for (uint32_t k = 0; k < 2; ++k) {
+                vertices[ring].push_back(mesh.get_target(loop_edge));
+                loop_edge = mesh.get_next(loop_edge);
+
+                // march line in ring
+                for (uint32_t j = 0; j < ring; ++j) {
+                    vertices[ring].push_back(mesh.get_target(loop_edge));
+                    loop_edge = mesh.get_next(mesh.get_twin(mesh.get_next(loop_edge)));
+                }
+            }
+        }
+    }
+
+    // check valence == 4 in inner rings and no extraordinary vertices in any ring
+    for (uint32_t ring = 0; ring < rings; ++ring) {
+        for (auto&& vertex: vertices[ring]) {
+            // check valence == 4 in inner rings
+            if (ring < rings - 1) {
+                auto valence = mesh.get_valence(vertex);
+                if (valence != 4) {
+                    return false;
+                }
+            }
+
+            // check for extraordinary vertices
+            if (is_extraordinary(vertex)) {
+                return false;
+            }
+        }
+    }
+
+    // TODO: implement further checks (uniform knots, etc.)
+
+    return true;
 }
 
 vec2 rotate(uint8_t times, const vec2& vec) {

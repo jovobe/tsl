@@ -169,6 +169,9 @@ struct tmesh {
     regular_grid evaluate_subd_for_face(uint32_t resolution, face_handle& fh) const;
 
     vector<vertex_handle> get_vertices_for_subd_evaluation(face_handle handle) const;
+
+    void check_integrity() const;
+    bool check_regularity_around_vertex(vertex_handle vh, uint32_t rings) const;
 };
 
 /**
