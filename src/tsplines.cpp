@@ -593,23 +593,30 @@ vector<regular_grid> tmesh::get_grids(uint32_t resolution) const {
     vector<regular_grid> out;
     out.reserve(mesh.num_faces());
 
+    // This buffer will be used in the loop to store vertex handles. To reduce allocations we reuse the buffer
+    // and start with a estimated size of 10.
+    vector<vertex_handle> vertices_buffer;
+    vertices_buffer.reserve(10);
     for (auto&& fh: mesh.get_faces()) {
-        // TODO: Get correct distance to extraordinary vertex and then skip faces below distance
-        // Skip faces containing an extraordinary vertex
-        vector<face_handle> faces_to_check;
-        faces_to_check.push_back(fh);
         auto contains_extraordinary_vertex = false;
-        for (auto&& cfh: faces_to_check) {
-            for (auto&& vh: mesh.get_vertices_of_face(cfh)) {
-                if (is_extraordinary(vh)) {
-                    contains_extraordinary_vertex = true;
-                }
+        auto contains_invalid_valence = false;
+        vertices_buffer.clear();
+        mesh.get_vertices_of_face(fh, vertices_buffer);
+        for (auto&& vh: vertices_buffer) {
+            if (is_extraordinary(vh)) {
+                contains_extraordinary_vertex = true;
+            }
+            // TODO: this will be fixed, when evaluation near borders is implemented
+            if (mesh.get_valence(vh) < 3) {
+                contains_invalid_valence = true;
             }
         }
 
         if (contains_extraordinary_vertex) {
-            auto grid = evaluate_subd_for_face(resolution, fh);
-            out.emplace_back(grid);
+            if (!contains_invalid_valence) {
+                auto grid = evaluate_subd_for_face(resolution, fh);
+                out.emplace_back(grid);
+            }
         } else {
             auto grid = evaluate_bsplines_for_face(resolution, fh);
             out.emplace_back(grid);
