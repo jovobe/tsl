@@ -503,6 +503,11 @@ vertex_handle half_edge_mesh::get_target(half_edge_handle handle) const
     return get_e(handle).target;
 }
 
+optional_half_edge_handle half_edge_mesh::get_out(vertex_handle handle) const
+{
+    return get_v(handle).outgoing;
+}
+
 // TODO: this does not detect non-manifold edges!
 bool half_edge_mesh::is_face_insertion_valid(const vector<vertex_handle>& handles) const
 {

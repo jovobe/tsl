@@ -395,6 +395,11 @@ public:
     vertex_handle get_target(half_edge_handle handle) const;
 
     /**
+     * @brief Get handle of the half edge the given vertex handle points to.
+     */
+    optional_half_edge_handle get_out(vertex_handle handle) const;
+
+    /**
      * @brief Check whether or not inserting a face between the given vertices
      *        would be valid.
      *
