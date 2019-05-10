@@ -390,7 +390,7 @@ void window::render() {
     camera.handle_moving_direction(get_mouse_pos());
 
     // projection
-    auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 100.0f);
+    auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 1000.0f);
     auto view = camera.get_view_matrix();
 
     // TODO: If this is commented in, it breaks the object movement -> check why
