@@ -56,7 +56,8 @@ window::window(string title, uint32_t width, uint32_t height) :
     surface_mode(true),
     move_object(false),
     normal_mode(false),
-    surface_resolution(1)
+    surface_resolution(1),
+    dialogs()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -98,7 +99,7 @@ window::window(string title, uint32_t width, uint32_t height) :
     const char* glsl_version = "#version 330";
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.IniFilename = nullptr;
+    //io.IniFilename = nullptr;
 
     ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
@@ -475,49 +476,99 @@ void window::draw_gui() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    {
-        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+    bool show_about_popup = false;
+
+    // Menu Bar
+    ImGui::BeginMainMenuBar();
+    if (ImGui::BeginMenu("TSE")) {
+        if (ImGui::MenuItem("About TSE")) {
+            show_about_popup = true;
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Settings")) {
+            dialogs.settings = !dialogs.settings;
+        }
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("File")) {
+        if (ImGui::MenuItem("Open", "Ctrl+O")) {
+            open_file_dialog_and_load_selected_file();
+        }
+        if (ImGui::MenuItem("Save As..")) {}
+        ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("View")) {
+        if (ImGui::BeginMenu("Tool Windows")) {
+            if (ImGui::MenuItem("Selected Element")) {
+                dialogs.selected_elements = !dialogs.selected_elements;
+            }
+            if (ImGui::MenuItem("Remove Edges")) {}
+            ImGui::EndMenu();
+        }
+        ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
+
+    if (show_about_popup) {
+        ImGui::OpenPopup("abouttse");
+    }
+
+    ImGui::SetNextWindowPosCenter();
+    if (ImGui::BeginPopup("abouttse")) {
+
+        ImGui::Text("T-Spline Editor");
+        ImGui::Text("\n\n");
+        ImGui::Text("Developed by: Johan M. von Behren (johan@vonbehren.eu)");
+        ImGui::Text("Published under GPL");
+        ImGui::Text("\n\n");
+        ImGui::Text("Powered by open source software:");
+        ImGui::Text("- GLFW");
+        ImGui::Text("- GLEW");
+        ImGui::Text("- OpenBLAS");
+        ImGui::Text("- Google Test");
+        ImGui::Text("- GLM");
+        ImGui::Text("- Dear ImGui");
+        ImGui::Text("- Portable File Dialogs");
+        ImGui::Text("- tinyobjloader");
+
+        ImGui::EndPopup();
+    }
+
+    if (dialogs.settings) {
+        ImGui::SetNextWindowPos(ImVec2(0, 30), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSizeConstraints(ImVec2(450, 0), ImVec2(width, height));
 
-        ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_MenuBar);
-        // Menu Bar
-        if (ImGui::BeginMenuBar())
-        {
-            if (ImGui::BeginMenu("File")) {
-                if (ImGui::MenuItem("Open", "Ctrl+O")) {
-                    open_file_dialog_and_load_selected_file();
+        if (ImGui::Begin("Settings", &dialogs.settings)) {
+            ImGui::Checkbox("Wireframe mode", &wireframe_mode);
+            ImGui::Checkbox("Show control polygon", &control_mode);
+            ImGui::Checkbox("Show surface", &surface_mode);
+            ImGui::Checkbox("Show surface normals", &normal_mode);
+            ImGui::Checkbox("Prevent broken meshes to be imported", &tmesh.config.panic_at_integrity_violations);
+
+            if (ImGui::InputInt("Resolution", (int*) surface_resolution.data(), 1, 1)) {
+                if (surface_resolution.get() < 1) {
+                    surface_resolution.set(1);
                 }
-                if (ImGui::MenuItem("Save As..")) {}
-                ImGui::EndMenu();
+                update_buffer();
             }
-            ImGui::EndMenuBar();
-        }
-        ImGui::Checkbox("Wireframe mode", &wireframe_mode);
-        ImGui::Checkbox("Show control polygon", &control_mode);
-        ImGui::Checkbox("Show surface", &surface_mode);
-        ImGui::Checkbox("Show surface normals", &normal_mode);
 
-        if (ImGui::InputInt("Resolution", (int*) surface_resolution.data(), 1, 1)) {
-            if (surface_resolution.get() < 1) {
-                surface_resolution.set(1);
+            auto& app = application::get_instance();
+            auto last_num_frames = app.get_last_num_frames();
+            if (last_num_frames > 0) {
+                auto ms_per_frame = 1000.0f / last_num_frames;
+                auto sleep_per_frame = app.get_last_sleep() / last_num_frames;
+                ImGui::Text("Rendering: %.3f ms/frame (%.1f FPS, sleeping: %d ms)", ms_per_frame, ImGui::GetIO().Framerate, sleep_per_frame);
+            } else {
+                ImGui::Text("Rendering: / ms/frame (%.1f FPS, sleeping: / ms)", ImGui::GetIO().Framerate);
             }
-            update_buffer();
+
+            ImGui::End();
         }
+    }
 
-        auto& app = application::get_instance();
-        auto last_num_frames = app.get_last_num_frames();
-        if (last_num_frames > 0) {
-            auto ms_per_frame = 1000.0f / last_num_frames;
-            auto sleep_per_frame = app.get_last_sleep() / last_num_frames;
-            ImGui::Text("Rendering: %.3f ms/frame (%.1f FPS, sleeping: %d ms)", ms_per_frame, ImGui::GetIO().Framerate, sleep_per_frame);
-        } else {
-            ImGui::Text("Rendering: / ms/frame (%.1f FPS, sleeping: / ms)", ImGui::GetIO().Framerate);
-        }
-
-        ImGui::End();
-
+    if (dialogs.selected_elements) {
         auto picked_elem_window_width = 200;
-        ImGui::SetNextWindowPos(ImVec2(this->width - picked_elem_window_width, 0), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(this->width - picked_elem_window_width, 30), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSizeConstraints(ImVec2(picked_elem_window_width, 100), ImVec2(width, height));
 
         auto draw_edge_information = [&] (const half_edge_handle& eh) {
@@ -547,93 +598,94 @@ void window::draw_gui() {
             }
         };
 
-        ImGui::Begin("Selected elements");
-        ImGui::Text("Count: %lu", picked_elements.size());
-        ImGui::Separator();
-        for (auto&& elem: picked_elements) {
+        if (ImGui::Begin("Selected elements", &dialogs.selected_elements)) {
+            ImGui::Text("Count: %lu", picked_elements.size());
+            ImGui::Separator();
+            for (auto&& elem: picked_elements) {
 
-            switch (elem.type) {
-                case object_type::vertex: {
-                    vertex_handle vh(elem.handle.get_idx());
-                    if (ImGui::TreeNode((void*)(intptr_t) vh.get_idx(),"Vertex (id: %u)", vh.get_idx())) {
-                        ImGui::BulletText("extended valence: %u", tmesh.get_extended_valence(vh));
-                        ImGui::Separator();
+                switch (elem.type) {
+                    case object_type::vertex: {
+                        vertex_handle vh(elem.handle.get_idx());
+                        if (ImGui::TreeNode((void*)(intptr_t) vh.get_idx(),"Vertex (id: %u)", vh.get_idx())) {
+                            ImGui::BulletText("extended valence: %u", tmesh.get_extended_valence(vh));
+                            ImGui::Separator();
 
-                        if (ImGui::TreeNode("ingoing half edges (cw order)")) {
-                            for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
-                                draw_edge_information(eh);
-                            }
-                            ImGui::TreePop();
-                        }
-                        ImGui::TreePop();
-                    }
-
-                    break;
-                }
-                case object_type::edge: {
-                    edge_handle eh(elem.handle.get_idx());
-                    if (ImGui::TreeNode((void*)(intptr_t) eh.get_idx(), "Edge (id: %u)", eh.get_idx())) {
-                        ImGui::Separator();
-
-                        if (ImGui::TreeNode("consisting of half edges")) {
-                            for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
-                                draw_edge_information(heh);
-                            }
-                            ImGui::TreePop();
-                        }
-                        ImGui::TreePop();
-                    }
-
-                    break;
-                }
-                case object_type::face: {
-                    face_handle fh(elem.handle.get_idx());
-                    if (ImGui::TreeNode((void*)(intptr_t) fh.get_idx(), "Face (id: %u)", elem.handle.get_idx())) {
-                        auto max_local_coords = tmesh.get_local_max_coordinates(fh);
-                        ImGui::BulletText("local coordinates: (%.2f, %.2f)", max_local_coords.x, max_local_coords.y);
-
-                        ImGui::Separator();
-
-                        auto support = tmesh.support_map[fh];
-                        if (ImGui::TreeNode((void*) nullptr, "supporting basis functions: (%lu)", support.size())) {
-                            for (auto&& [index, trans]: support) {
-                                if (ImGui::TreeNode((void*)(intptr_t) index.vertex.get_idx(), "vertex: %u", index.vertex.get_idx())) {
-                                    auto [uv, vv] = tmesh.get_knot_vectors(index);
-                                    if (ImGui::TreeNode("knot vector u")) {
-                                        for (auto&& u: uv) {
-                                            ImGui::BulletText("%.2f", u);
-                                        }
-                                        ImGui::TreePop();
-                                    }
-                                    if (ImGui::TreeNode("knot vector v")) {
-                                        for (auto&& v: vv) {
-                                            ImGui::BulletText("%.2f", v);
-                                        }
-                                        ImGui::TreePop();
-                                    }
-                                    ImGui::TreePop();
+                            if (ImGui::TreeNode("ingoing half edges (cw order)")) {
+                                for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
+                                    draw_edge_information(eh);
                                 }
+                                ImGui::TreePop();
                             }
                             ImGui::TreePop();
                         }
-                        ImGui::TreePop();
+
+                        break;
                     }
+                    case object_type::edge: {
+                        edge_handle eh(elem.handle.get_idx());
+                        if (ImGui::TreeNode((void*)(intptr_t) eh.get_idx(), "Edge (id: %u)", eh.get_idx())) {
+                            ImGui::Separator();
 
-                    break;
+                            if (ImGui::TreeNode("consisting of half edges")) {
+                                for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
+                                    draw_edge_information(heh);
+                                }
+                                ImGui::TreePop();
+                            }
+                            ImGui::TreePop();
+                        }
+
+                        break;
+                    }
+                    case object_type::face: {
+                        face_handle fh(elem.handle.get_idx());
+                        if (ImGui::TreeNode((void*)(intptr_t) fh.get_idx(), "Face (id: %u)", elem.handle.get_idx())) {
+                            auto max_local_coords = tmesh.get_local_max_coordinates(fh);
+                            ImGui::BulletText("local coordinates: (%.2f, %.2f)", max_local_coords.x, max_local_coords.y);
+
+                            ImGui::Separator();
+
+                            auto support = tmesh.support_map[fh];
+                            if (ImGui::TreeNode((void*) nullptr, "supporting basis functions: (%lu)", support.size())) {
+                                for (auto&& [index, trans]: support) {
+                                    if (ImGui::TreeNode((void*)(intptr_t) index.vertex.get_idx(), "vertex: %u", index.vertex.get_idx())) {
+                                        auto [uv, vv] = tmesh.get_knot_vectors(index);
+                                        if (ImGui::TreeNode("knot vector u")) {
+                                            for (auto&& u: uv) {
+                                                ImGui::BulletText("%.2f", u);
+                                            }
+                                            ImGui::TreePop();
+                                        }
+                                        if (ImGui::TreeNode("knot vector v")) {
+                                            for (auto&& v: vv) {
+                                                ImGui::BulletText("%.2f", v);
+                                            }
+                                            ImGui::TreePop();
+                                        }
+                                        ImGui::TreePop();
+                                    }
+                                }
+                                ImGui::TreePop();
+                            }
+                            ImGui::TreePop();
+                        }
+
+                        break;
+                    }
+                    default:
+                        panic("unknown object type picked!");
                 }
-                default:
-                    panic("unknown object type picked!");
             }
-        }
 
-        if (!picked_elements.empty()) {
-            if (ImGui::Button("Clear (deselect all)")) {
-                picked_elements.clear();
-                update_picked_buffer();
+            if (!picked_elements.empty()) {
+                if (ImGui::Button("Clear (deselect all)")) {
+                    picked_elements.clear();
+                    update_picked_buffer();
+                }
             }
-        }
 
-        ImGui::End();
+            ImGui::End();
+        }
     }
 
     ImGui::Render();
@@ -871,6 +923,7 @@ window& window::operator=(window&& window) noexcept {
     control_mode = exchange(window.control_mode, false);
     surface_mode = exchange(window.surface_mode, false);
     move_object = exchange(window.move_object, false);
+    dialogs = move(window.dialogs);
 
     normal_mode = exchange(window.normal_mode, false);
     surface_buffer = move(window.surface_buffer);
@@ -1148,7 +1201,7 @@ void window::open_file_dialog_and_load_selected_file() {
     if (!files.empty()) {
         try {
             auto hem = read_obj_into_hem(files[0]);
-            this->tmesh = tsl::tmesh(move(hem), dense_half_edge_map<double>(1), dense_half_edge_map<bool>(true));
+            tmesh = tsl::tmesh(move(hem), dense_half_edge_map<double>(1), dense_half_edge_map<bool>(true), tmesh.config);
             update_buffer();
         } catch(const exception& e) {
             std::ostringstream string_stream;

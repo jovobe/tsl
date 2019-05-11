@@ -1081,8 +1081,8 @@ vector<vertex_handle> tmesh::get_vertices_for_subd_evaluation(face_handle handle
     return out;
 }
 
-tmesh::tmesh(half_edge_mesh mesh, const dense_half_edge_map<double>& knots, const dense_half_edge_map<bool>& corners)
-    : mesh(move(mesh)), knots(knots), corners(corners) {
+tmesh::tmesh(half_edge_mesh mesh, const dense_half_edge_map<double>& knots, const dense_half_edge_map<bool>& corners, tmesh_config config)
+    : mesh(move(mesh)), knots(knots), corners(corners), config(config) {
 
     // Calc basis funs
     tie(uv, dir) = determine_local_coordinate_systems();

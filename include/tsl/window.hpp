@@ -37,6 +37,14 @@ struct move_direction_t {
     move_direction_t() : x(false), y(false), z(false) {}
 };
 
+struct show_dialogs {
+    bool settings;
+    bool selected_elements;
+    bool remove_edges;
+
+    show_dialogs() : settings(false), selected_elements(false), remove_edges(false) {}
+};
+
 class window {
 public:
     // TODO: make private?
@@ -75,6 +83,8 @@ private:
     bool normal_mode;
 
     bool move_object;
+
+    show_dialogs dialogs;
 
     gl_multi_buffer surface_buffer;
     gl_buffer control_edges_buffer;
