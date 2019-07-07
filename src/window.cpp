@@ -66,6 +66,7 @@ window::window(string&& title, uint32_t width, uint32_t height) :
     surface_mode(true),
     move_object(false),
     normal_mode(false),
+    show_reflection_lines(false),
     surface_resolution(1),
     edge_remove_percentage(10.0f),
     dialogs(),
@@ -557,6 +558,7 @@ void window::draw_gui() {
             ImGui::Checkbox("Show control polygon", &control_mode);
             ImGui::Checkbox("Show surface", &surface_mode);
             ImGui::Checkbox("Show surface normals", &normal_mode);
+            ImGui::Checkbox("Show reflection lines", &show_reflection_lines);
             ImGui::Checkbox("Prevent broken meshes to be imported", &evaluator.config.panic_at_integrity_violations);
 
             ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
@@ -873,11 +875,13 @@ void window::draw_surface(const mat4& model, const mat4& vp) const {
     auto m_location_phong = glGetUniformLocation(phong_program, "M");
     auto color_location_phong = glGetUniformLocation(phong_program, "color_in");
     auto camera_location = glGetUniformLocation(phong_program, "camera_pos");
+    auto reflection_lines_location = glGetUniformLocation(phong_program, "show_reflection_lines");
 
     glUniformMatrix4fv(vp_location_phong, 1, GL_FALSE, value_ptr(vp));
     glUniformMatrix4fv(m_location_phong, 1, GL_FALSE, value_ptr(model));
     glUniform3fv(color_location_phong, 1, value_ptr(fvec3(0, 1, 0)));
     glUniform3fv(camera_location, 1, value_ptr(camera.get_pos()));
+    glUniform1ui(reflection_lines_location, show_reflection_lines);
 
     glBindVertexArray(surface_vertex_array);
     if (wireframe_mode) {

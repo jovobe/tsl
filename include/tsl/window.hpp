@@ -92,6 +92,7 @@ private:
     bool control_mode;
     bool surface_mode;
     bool normal_mode;
+    bool show_reflection_lines;
 
     bool move_object;
 
