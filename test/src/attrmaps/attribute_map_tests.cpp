@@ -3,18 +3,20 @@
 #pragma ide diagnostic ignored "cert-err58-cpp"
 
 #include <memory>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <tsl/attrmaps/attribute_map.hpp>
-#include <tsl/attrmaps/vector_map.hpp>
-#include <tsl/attrmaps/hash_map.hpp>
+#include "tsl/attrmaps/attribute_map.hpp"
+#include "tsl/attrmaps/vector_map.hpp"
+#include "tsl/attrmaps/hash_map.hpp"
 
-#include <tsl_tests/mocks.hpp>
+#include "tsl_tests/mocks.hpp"
 
 using std::make_unique;
 using std::unique_ptr;
+using std::vector;
 
 using namespace tsl;
 
@@ -41,7 +43,21 @@ unique_ptr<attribute_map<test_handle, dummy>> CreateMap<hash_map<test_handle, du
     }
 }
 
+template<class T>
+unique_ptr<attribute_map<test_handle, vector<dummy>>> CreateMapVector();
+
+template<>
+unique_ptr<attribute_map<test_handle, vector<dummy>>> CreateMapVector<vector_map<test_handle, vector<dummy>>>() {
+    return make_unique<vector_map<test_handle, vector<dummy>>>(vector<dummy>());
+}
+
+template<>
+unique_ptr<attribute_map<test_handle, vector<dummy>>> CreateMapVector<hash_map<test_handle, vector<dummy>>>() {
+    return make_unique<hash_map<test_handle, vector<dummy>>>(vector<dummy>());
+}
+
 using Implementations = ::testing::Types<vector_map<test_handle, dummy>, hash_map<test_handle, dummy>>;
+using ImplementationsVector = ::testing::Types<vector_map<test_handle, vector<dummy>>, hash_map<test_handle, vector<dummy>>>;
 
 template<class T>
 class AttributeMapTest : public ::testing::Test {
@@ -55,6 +71,13 @@ class AttributeMapWithDefaultTest : public ::testing::Test {
 protected:
     AttributeMapWithDefaultTest() : map(CreateMap<T>(true)) {}
     const unique_ptr<attribute_map<test_handle, dummy>> map;
+};
+
+template<class T>
+class AttributeMapWithDefaultAsVectorTest : public ::testing::Test {
+protected:
+    AttributeMapWithDefaultAsVectorTest() : map(CreateMapVector<T>()) {}
+    const unique_ptr<attribute_map<test_handle, vector<dummy>>> map;
 };
 
 TYPED_TEST_CASE(AttributeMapTest, Implementations);
@@ -196,6 +219,18 @@ TYPED_TEST(AttributeMapWithDefaultTest, Iterator) {
 
     ASSERT_THAT(handles, ::testing::UnorderedElementsAreArray(expected_handles));
     ASSERT_THAT(dummies, ::testing::UnorderedElementsAreArray(expected_dummies));
+}
+
+TYPED_TEST_CASE(AttributeMapWithDefaultAsVectorTest, ImplementationsVector);
+
+TYPED_TEST(AttributeMapWithDefaultAsVectorTest, Default) {
+    auto& map = *(this->map);
+    test_handle h0(0);
+    test_handle h1(1);
+    ASSERT_EQ(0, map[h0].size());
+    map[h0].emplace_back();
+    ASSERT_EQ(1, map[h0].size());
+    ASSERT_EQ(0, map[h1].size());
 }
 
 }

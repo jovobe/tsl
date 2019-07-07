@@ -1,260 +1,60 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "cppcoreguidelines-avoid-goto"
-#pragma ide diagnostic ignored "cert-err58-cpp"
-
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <tsl/geometry/half_edge_mesh.hpp>
+#include "tsl/geometry/tmesh/tmesh.hpp"
+#include "tsl_tests/geometry/tmesh/tmesh_fixtures.hpp"
 
 using namespace tsl;
 
 namespace tsl_tests {
 
-class HalfEdgeMeshTestWithCubeData : public ::testing::Test {
+class TmeshTest : public ::testing::Test {
 protected:
-    void SetUp() override {
-        // =============================================
-        // FRONT SIDE
-        // =============================================
-        //
-        //       (v4) ====== (v1) ====== (v0)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f1    ||   f0     ||
-        //        ||          ||          ||
-        //       (v5) ====== (v2) ====== (v3)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f3    ||   f2     ||
-        //        ||          ||          ||
-        //       (v8) ====== (v7) ====== (v6)
-
-        // f0
-        auto v0 = mesh.add_vertex({0, 0, 0});
-        auto v1 = mesh.add_vertex({0, 0, 0});
-        auto v2 = mesh.add_vertex({0, 0, 0});
-        auto v3 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v0, v1, v2, v3}));
-        vertex_handles.insert(vertex_handles.end(), {v0, v1, v2, v3});
-
-        // f1
-        auto v4 = mesh.add_vertex({0, 0, 0});
-        auto v5 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v1, v4, v5, v2}));
-        vertex_handles.insert(vertex_handles.end(), {v4, v5});
-
-        // f2
-        auto v6 = mesh.add_vertex({0, 0, 0});
-        auto v7 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v3, v2, v7, v6}));
-        vertex_handles.insert(vertex_handles.end(), {v6, v7});
-
-        // f3
-        auto v8 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v2, v5, v8, v7}));
-        vertex_handles.insert(vertex_handles.end(), {v8});
-
-        // =============================================
-        // LEFT SIDE
-        // =============================================
-        //
-        //       (v11) ===== (v9) ====== (v4)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f5    ||   f4     ||
-        //        ||          ||          ||
-        //       (v12) ===== (v10) ===== (v5)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f7    ||   f6     ||
-        //        ||          ||          ||
-        //       (v14) ===== (v13) ===== (v8)
-
-        // f4
-        auto v9 = mesh.add_vertex({0, 0, 0});
-        auto v10 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v4, v9, v10, v5}));
-        vertex_handles.insert(vertex_handles.end(), {v9, v10});
-
-        // f5
-        auto v11 = mesh.add_vertex({0, 0, 0});
-        auto v12 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v9, v11, v12, v10}));
-        vertex_handles.insert(vertex_handles.end(), {v11, v12});
-
-        // f6
-        auto v13 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v5, v10, v13, v8}));
-        vertex_handles.insert(vertex_handles.end(), {v13});
-
-        // f7
-        auto v14 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v10, v12, v14, v13}));
-        vertex_handles.insert(vertex_handles.end(), {v14});
-
-        // =============================================
-        // BACK SIDE
-        // =============================================
-        //
-        //       (v17) ===== (v15) ===== (v11)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f9    ||   f8     ||
-        //        ||          ||          ||
-        //       (v18) ===== (v16) ===== (v12)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f11   ||   f10    ||
-        //        ||          ||          ||
-        //       (v20) ===== (v19) ===== (v14)
-
-        // f8
-        auto v15 = mesh.add_vertex({0, 0, 0});
-        auto v16 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v11, v15, v16, v12}));
-        vertex_handles.insert(vertex_handles.end(), {v15, v16});
-
-        // f9
-        auto v17 = mesh.add_vertex({0, 0, 0});
-        auto v18 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v15, v17, v18, v16}));
-        vertex_handles.insert(vertex_handles.end(), {v17, v18});
-
-        // f10
-        auto v19 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v12, v16, v19, v14}));
-        vertex_handles.insert(vertex_handles.end(), {v19});
-
-        // f11
-        auto v20 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v16, v18, v20, v19}));
-        vertex_handles.insert(vertex_handles.end(), {v20});
-
-        // =============================================
-        // RIGHT SIDE
-        // =============================================
-        //
-        //       (v0) ====== (v21) ===== (v17)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f13   ||   f12    ||
-        //        ||          ||          ||
-        //       (v3) ====== (v22) ===== (v18)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //        ||    f15   ||   f14    ||
-        //        ||          ||          ||
-        //       (v6) ====== (v23) ===== (v20)
-
-        // f12
-        auto v21 = mesh.add_vertex({0, 0, 0});
-        auto v22 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v17, v21, v22, v18}));
-        vertex_handles.insert(vertex_handles.end(), {v21, v22});
-
-        // f13
-        face_handles.push_back(mesh.add_face({v21, v0, v3, v22}));
-
-        // f14
-        auto v23 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v18, v22, v23, v20}));
-        vertex_handles.insert(vertex_handles.end(), {v23});
-
-        // f15
-        face_handles.push_back(mesh.add_face({v22, v3, v6, v23}));
-
-        // =============================================
-        // TOP SIDE
-        // =============================================
-        //
-        //                   BACK
-        //
-        //       (v11) ===== (v15) ===== (v17)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //     L  ||    f17   ||   f16    ||   R
-        //     E  ||          ||          ||   I
-        //     F (v9) ====== (v24) ===== (v21) G
-        //     T  ||          ||          ||   H
-        //        ||          ||          ||   T
-        //        ||    f19   ||   f18    ||
-        //        ||          ||          ||
-        //       (v4) ====== (v1) ====== (v0)
-        //
-        //                   FRONT
-
-        // f16
-        auto v24 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v17, v15, v24, v21}));
-        vertex_handles.insert(vertex_handles.end(), {v24});
-
-        // f17
-        face_handles.push_back(mesh.add_face({v15, v11, v9, v24}));
-
-        // f18
-        face_handles.push_back(mesh.add_face({v21, v24, v1, v0}));
-
-        // f19
-        face_handles.push_back(mesh.add_face({v24, v9, v4, v1}));
-
-        // =============================================
-        // BOTTOM SIDE
-        // =============================================
-        //
-        //                   FRONT
-        //
-        //       (v8) ====== (v7) ====== (v6)
-        //        ||          ||          ||
-        //        ||          ||          ||
-        //     L  ||    f21   ||   f20    ||   R
-        //     E  ||          ||          ||   I
-        //     F (v13) ===== (v25) ===== (v23) G
-        //     T  ||          ||          ||   H
-        //        ||          ||          ||   T
-        //        ||    f23   ||   f22    ||
-        //        ||          ||          ||
-        //       (v14) ===== (v19) ===== (v20)
-        //
-        //                   BACK
-
-        // f20
-        auto v25 = mesh.add_vertex({0, 0, 0});
-        face_handles.push_back(mesh.add_face({v6, v7, v25, v23}));
-        vertex_handles.insert(vertex_handles.end(), {v25});
-
-        // f21
-        face_handles.push_back(mesh.add_face({v7, v8, v13, v25}));
-
-        // f22
-        face_handles.push_back(mesh.add_face({v23, v25, v19, v20}));
-
-        // f23
-        face_handles.push_back(mesh.add_face({v25, v13, v14, v19}));
-    }
-
-    half_edge_mesh mesh;
-    vector<vertex_handle> vertex_handles;
-    vector<face_handle> face_handles;
+    tmesh mesh;
 };
 
-class HalfEdgeMeshTest : public ::testing::Test {
-protected:
-    half_edge_mesh mesh;
-};
-
-TEST_F(HalfEdgeMeshTest, IsFaceInsertionValid) {
+TEST_F(TmeshTest, IsFaceInsertionValid) {
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
     auto v3 = mesh.add_vertex({0, 0, 0});
     auto v4 = mesh.add_vertex({0, 0, 0});
+    auto v5 = mesh.add_vertex({0, 0, 0});
 
-    EXPECT_FALSE(mesh.is_face_insertion_valid({}));
-    EXPECT_FALSE(mesh.is_face_insertion_valid({v1, v2, v3}));
+    // Test number of vertices
+    EXPECT_FALSE(mesh.is_face_insertion_valid(vector<new_face_vertex>()));
+    EXPECT_FALSE(mesh.is_face_insertion_valid({
+        new_face_vertex(v1),
+        new_face_vertex(v2),
+        new_face_vertex(v3)
+    }));
     EXPECT_TRUE(mesh.is_face_insertion_valid({v1, v2, v3, v4}));
+
+    // Test corner combinations
+    EXPECT_FALSE(mesh.is_face_insertion_valid({
+        new_face_vertex(v1, false, 1.0),
+        new_face_vertex(v2, true, 1.0),
+        new_face_vertex(v3, true, 1.0),
+        new_face_vertex(v4, true, 1.0)
+    }));
+    EXPECT_TRUE(mesh.is_face_insertion_valid({
+        new_face_vertex(v1, true, 1.0),
+        new_face_vertex(v2, false, 1.0),
+        new_face_vertex(v3, true, 1.0),
+        new_face_vertex(v4, true, 1.0),
+        new_face_vertex(v5, true, 1.0)
+    }));
+
+    // Test knot values
+    EXPECT_FALSE(mesh.is_face_insertion_valid({
+        new_face_vertex(v1, true, 0.0),
+        new_face_vertex(v2, false, 1.0),
+        new_face_vertex(v3, true, 1.0),
+        new_face_vertex(v4, true, 1.0),
+        new_face_vertex(v5, true, 1.0)
+    }));
 }
 
-TEST_F(HalfEdgeMeshTest, IsFaceInsertionValidSameVertices) {
+TEST_F(TmeshTest, IsFaceInsertionValidSameVertices) {
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
     auto v3 = mesh.add_vertex({0, 0, 0});
@@ -278,7 +78,38 @@ TEST_F(HalfEdgeMeshTest, IsFaceInsertionValidSameVertices) {
     EXPECT_FALSE(mesh.is_face_insertion_valid({v1, v1, v1, v1}));
 }
 
-TEST_F(HalfEdgeMeshTest, GetVertexPosition) {
+TEST_F(TmeshTest, IsFaceInsertionValidTmeshConstraints) {
+    // TODO: This has to be checked in `tmesh::add_face` when border edges are implemented
+    // Cycle condition (check `tsplines::tmesh::check_integrity/check_regularity_around_vertex` in git history)
+    // Consistency condition
+    // Extraordinary checks:
+    // - three rings regular around extraordinary vertex
+    // - same knot intervall on all half edges
+    // - valence == 4 within rings
+    // - simply connected in rings
+}
+
+TEST_F(TmeshTest, AddFace) {
+    auto v1 = new_face_vertex(mesh.add_vertex({0, 0, 0}), false, 1.0);
+    auto v2 = new_face_vertex(mesh.add_vertex({0, 0, 0}), true, 1.0);
+    auto v3 = new_face_vertex(mesh.add_vertex({0, 0, 0}), true, 1.0);
+    auto v4 = new_face_vertex(mesh.add_vertex({0, 0, 0}), true, 1.0);
+    auto v5 = new_face_vertex(mesh.add_vertex({0, 0, 0}), true, 1.0);
+
+    EXPECT_TRUE(mesh.is_face_insertion_valid({v1, v2, v3, v4, v5}));
+
+    // Add the following face (f1):
+    //
+    //       (v2) ====(v1)===== (v5)
+    //        ||                 ||
+    //        ||                 ||
+    //        ||       f1        ||
+    //        ||                 ||
+    //       (v3) ============= (v4)
+    EXPECT_EQ(face_handle(0), mesh.add_face({v1, v2, v3, v4, v5}));
+}
+
+TEST_F(TmeshTest, GetVertexPosition) {
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({1, 2, 3});
 
@@ -295,7 +126,7 @@ TEST_F(HalfEdgeMeshTest, GetVertexPosition) {
     EXPECT_EQ(vec3(42, 2, 3), v2_pos);
 }
 
-TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
+TEST_F(TmeshTest, GetVerticesOfFace) {
     auto v0 = mesh.add_vertex({0, 0, 0});
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
@@ -332,8 +163,8 @@ TEST_F(HalfEdgeMeshTest, GetVerticesOfFace) {
     ASSERT_THAT(mesh.get_vertices_of_face(face_handles[1]), ::testing::UnorderedElementsAre(v1, v2, v4, v5));
 }
 
-// TODO: Implement orientability check in `half_edge_mesh::add_face()`
-TEST_F(HalfEdgeMeshTest, Orientability) {
+// TODO: Implement orientability check in `tmesh::add_face()`
+TEST_F(TmeshTest, Orientability) {
     auto v0 = mesh.add_vertex({0, 0, 0});
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
@@ -348,7 +179,7 @@ TEST_F(HalfEdgeMeshTest, Orientability) {
 //    ASSERT_THROW(mesh.add_face({v1, v2, v4, v5}), panic_exception);
 }
 
-TEST_F(HalfEdgeMeshTest, VertexIterator) {
+TEST_F(TmeshTest, VertexIterator) {
     auto v0 = mesh.add_vertex({0, 0, 0});
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
@@ -357,14 +188,14 @@ TEST_F(HalfEdgeMeshTest, VertexIterator) {
     vector<vertex_handle> expected_handles;
     expected_handles.insert(expected_handles.begin(), {v0, v1, v2, v3});
     vector<vertex_handle> vertex_handles;
-    for (auto&& vh: mesh.get_vertices()) {
+    for (const auto& vh: mesh.get_vertices()) {
         vertex_handles.push_back(vh);
     }
 
     ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
-TEST_F(HalfEdgeMeshTest, FaceIterator) {
+TEST_F(TmeshTest, FaceIterator) {
     auto v0 = mesh.add_vertex({0, 0, 0});
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
@@ -396,14 +227,14 @@ TEST_F(HalfEdgeMeshTest, FaceIterator) {
     EXPECT_EQ(3, mesh.num_faces());
 
     vector<face_handle> face_handles;
-    for (auto&& fh: mesh.get_faces()) {
+    for (const auto& fh: mesh.get_faces()) {
         face_handles.push_back(fh);
     }
 
     ASSERT_THAT(face_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
-TEST_F(HalfEdgeMeshTest, HalfEdgeIterator) {
+TEST_F(TmeshTest, HalfEdgeIterator) {
     auto v0 = mesh.add_vertex({0, 0, 0});
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
@@ -422,14 +253,14 @@ TEST_F(HalfEdgeMeshTest, HalfEdgeIterator) {
     expected_handles.insert(expected_handles.begin(), {v0, v0, v1, v1, v2, v2, v3, v3});
 
     vector<vertex_handle> vertex_handles;
-    for (auto&& eh: mesh.get_half_edges()) {
+    for (const auto& eh: mesh.get_half_edges()) {
         vertex_handles.push_back(mesh.get_vertices_of_half_edge(eh)[0]);
     }
 
     ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
-TEST_F(HalfEdgeMeshTest, EdgeIterator) {
+TEST_F(TmeshTest, EdgeIterator) {
     auto v0 = mesh.add_vertex({0, 0, 0});
     auto v1 = mesh.add_vertex({0, 0, 0});
     auto v2 = mesh.add_vertex({0, 0, 0});
@@ -448,14 +279,14 @@ TEST_F(HalfEdgeMeshTest, EdgeIterator) {
     expected_handles.insert(expected_handles.begin(), {v0, v1, v2, v3});
 
     vector<vertex_handle> vertex_handles;
-    for (auto&& eh: mesh.get_edges()) {
+    for (const auto& eh: mesh.get_edges()) {
         vertex_handles.push_back(mesh.get_vertices_of_edge(eh)[0]);
     }
 
     ASSERT_THAT(vertex_handles, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, IsFaceInsertionValidNonManifoldTripleEdge) {
+TEST_F(TmeshTestWithCubeData, IsFaceInsertionValidNonManifoldTripleEdge) {
     // Create non manifold triple edge
     auto vte0 = mesh.add_vertex({0, 0, 0});
     auto vte1 = mesh.add_vertex({0, 0, 0});
@@ -465,7 +296,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, IsFaceInsertionValidNonManifoldTripleEdge) 
     ASSERT_THROW(mesh.add_face({v0, v3, vte0, vte1}), panic_exception);
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfFace) {
+TEST_F(TmeshTestWithCubeData, GetVerticesOfFace) {
     auto vertices = mesh.get_vertices_of_face(face_handles[0]);
     auto v0 = vertex_handles[0];
     auto v1 = vertex_handles[1];
@@ -474,14 +305,14 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfFace) {
     ASSERT_THAT(vertices, ::testing::UnorderedElementsAre(v0, v1, v2, v3));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, NumFacesEdgesVertices) {
+TEST_F(TmeshTestWithCubeData, NumFacesEdgesVertices) {
     EXPECT_EQ(24, mesh.num_faces());
     EXPECT_EQ(26, mesh.num_vertices());
     EXPECT_EQ(48, mesh.num_edges());
     EXPECT_EQ(96, mesh.num_half_edges());
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfEdgeAndGetEdgeBetween) {
+TEST_F(TmeshTestWithCubeData, GetVerticesOfEdgeAndGetEdgeBetween) {
     auto v2 = vertex_handles[2];
     auto v3 = vertex_handles[3];
     auto edge_handle = mesh.get_edge_between(v2, v3);
@@ -489,7 +320,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetVerticesOfEdgeAndGetEdgeBetween) {
     ASSERT_THAT(vertices, ::testing::UnorderedElementsAre(v2, v3));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgeBetween) {
+TEST_F(TmeshTestWithCubeData, GetHalfEdgeBetween) {
     auto v2 = vertex_handles[2];
     auto v3 = vertex_handles[3];
     auto edge_handle = mesh.get_half_edge_between(v2, v3);
@@ -497,7 +328,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgeBetween) {
     ASSERT_THAT(vertices, ::testing::UnorderedElementsAre(v2, v3));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfEdge) {
+TEST_F(TmeshTestWithCubeData, GetFacesOfEdge) {
     auto v2 = vertex_handles[2];
     auto v3 = vertex_handles[3];
     auto f0 = optional_face_handle(face_handles[0]);
@@ -507,7 +338,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfEdge) {
     ASSERT_THAT(faces, ::testing::UnorderedElementsAre(f0, f2));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfVertex) {
+TEST_F(TmeshTestWithCubeData, GetFacesOfVertex) {
     auto v2 = vertex_handles[2];
     auto f0 = face_handles[0];
     auto f1 = face_handles[1];
@@ -517,17 +348,17 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetFacesOfVertex) {
     ASSERT_THAT(faces, ::testing::UnorderedElementsAre(f0, f1, f2, f3));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetValenceOfVertexThreeEdges) {
+TEST_F(TmeshTestWithCubeData, GetValenceOfVertexThreeEdges) {
     auto v2 = vertex_handles[0];
     EXPECT_EQ(3, mesh.get_valence(v2));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetValenceOfVertexFourEdges) {
+TEST_F(TmeshTestWithCubeData, GetValenceOfVertexFourEdges) {
     auto v2 = vertex_handles[2];
     EXPECT_EQ(4, mesh.get_valence(v2));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexFourEdges) {
+TEST_F(TmeshTestWithCubeData, GetEdgesOfVertexFourEdges) {
     auto v2 = vertex_handles[2];
     auto edges = mesh.get_edges_of_vertex(v2);
     EXPECT_EQ(4, edges.size());
@@ -545,7 +376,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexFourEdges) {
     ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_21, edge_23, edge_25, edge_27));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexFourEdges) {
+TEST_F(TmeshTestWithCubeData, GetHalfEdgesOfVertexFourEdges) {
     auto v2 = vertex_handles[2];
     auto edges = mesh.get_half_edges_of_vertex(v2);
     EXPECT_EQ(4, edges.size());
@@ -563,7 +394,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexFourEdges) {
     ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_21, edge_23, edge_25, edge_27));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexThreeEdges) {
+TEST_F(TmeshTestWithCubeData, GetEdgesOfVertexThreeEdges) {
     auto v0 = vertex_handles[0];
     auto edges = mesh.get_edges_of_vertex(v0);
     EXPECT_EQ(3, edges.size());
@@ -579,7 +410,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfVertexThreeEdges) {
     ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_01, edge_03, edge_021));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexThreeEdges) {
+TEST_F(TmeshTestWithCubeData, GetHalfEdgesOfVertexThreeEdges) {
     auto v0 = vertex_handles[0];
     auto edges = mesh.get_half_edges_of_vertex(v0);
     EXPECT_EQ(3, edges.size());
@@ -595,9 +426,9 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexThreeEdges) {
     ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_01, edge_03, edge_021));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexThreeEdgesOutgoing) {
+TEST_F(TmeshTestWithCubeData, GetHalfEdgesOfVertexThreeEdgesOutgoing) {
     auto v0 = vertex_handles[0];
-    auto edges = mesh.get_half_edges_of_vertex(v0, direction::outgoing);
+    auto edges = mesh.get_half_edges_of_vertex(v0, edge_direction::outgoing);
     EXPECT_EQ(3, edges.size());
 
     auto v1 = vertex_handles[1];
@@ -611,7 +442,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfVertexThreeEdgesOutgoing) {
     ASSERT_THAT(edges, ::testing::UnorderedElementsAre(edge_01, edge_03, edge_021));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetFaceBetween) {
+TEST_F(TmeshTestWithCubeData, GetFaceBetween) {
     auto v1 = vertex_handles[1];
     auto v4 = vertex_handles[4];
     auto v5 = vertex_handles[5];
@@ -627,14 +458,14 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetFaceBetween) {
 #endif
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, NumAdjacentFaces) {
+TEST_F(TmeshTestWithCubeData, NumAdjacentFaces) {
     auto v2 = vertex_handles[2];
     auto v3 = vertex_handles[3];
     auto edge_handle = mesh.get_edge_between(v2, v3);
     EXPECT_EQ(2, mesh.num_adjacent_faces(edge_handle.unwrap()));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfFace) {
+TEST_F(TmeshTestWithCubeData, GetEdgesOfFace) {
     auto f0 = face_handles[0];
     auto half_edges = mesh.get_half_edges_of_face(f0);
     EXPECT_EQ(4, half_edges.size());
@@ -649,7 +480,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetEdgesOfFace) {
     ASSERT_THAT(half_edges, ::testing::UnorderedElementsAreArray(expected_handles));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgeBetweenFaces) {
+TEST_F(TmeshTestWithCubeData, GetHalfEdgeBetweenFaces) {
     auto f0 = face_handles[0];
     auto f1 = face_handles[1];
     auto v1 = vertex_handles[1];
@@ -659,7 +490,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgeBetweenFaces) {
     EXPECT_EQ(eeh, eh);
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfFace) {
+TEST_F(TmeshTestWithCubeData, GetHalfEdgesOfFace) {
     auto f0 = face_handles[0];
     auto half_edges = mesh.get_half_edges_of_face(f0);
     EXPECT_EQ(4, half_edges.size());
@@ -677,7 +508,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfFace) {
     ASSERT_THAT(half_edges, ::testing::UnorderedElementsAre(edge_01, edge_12, edge_23, edge_30));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetNeighboursOfFace) {
+TEST_F(TmeshTestWithCubeData, GetNeighboursOfFace) {
     auto f0 = face_handles[0];
     auto neighbours = mesh.get_neighbours_of_face(f0);
     EXPECT_EQ(4, neighbours.size());
@@ -689,7 +520,7 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetNeighboursOfFace) {
     ASSERT_THAT(neighbours, ::testing::UnorderedElementsAre(f1, f2, f13, f18));
 }
 
-TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfEdge) {
+TEST_F(TmeshTestWithCubeData, GetHalfEdgesOfEdge) {
     auto v0 = vertex_handles[0];
     auto v1 = vertex_handles[1];
     auto edge_handle = mesh.get_edge_between(v0, v1);
@@ -701,6 +532,44 @@ TEST_F(HalfEdgeMeshTestWithCubeData, GetHalfEdgesOfEdge) {
     ASSERT_THAT(half_edges, ::testing::UnorderedElementsAre(expected_half_edge01, expected_half_edge10));
 }
 
+TEST_F(TmeshTestWithCubeData, RemoveEdge) {
+    auto v0 = vertex_handles[0];
+    auto v1 = vertex_handles[1];
+    auto v2 = vertex_handles[2];
+    auto v3 = vertex_handles[3];
+
+    auto num_faces = mesh.num_faces();
+    auto num_vertices = mesh.num_vertices();
+    auto num_edges = mesh.num_edges();
+    auto num_half_edges = mesh.num_half_edges();
+
+    auto edge12 = mesh.get_edge_between(v1, v2);
+    ASSERT_TRUE(mesh.remove_edge(edge12.unwrap()));
+
+    // test valence
+    EXPECT_EQ(4, mesh.get_extended_valence(v2));
+    EXPECT_EQ(3, mesh.get_valence(v2));
+    EXPECT_EQ(4, mesh.get_extended_valence(v1));
+    EXPECT_EQ(3, mesh.get_valence(v1));
+
+    // try to get deleted edge
+    edge12 = mesh.get_edge_between(v1, v2);
+    ASSERT_FALSE(edge12);
+
+    // check edge and face count decresed
+    EXPECT_EQ(num_faces - 1, mesh.num_faces());
+    EXPECT_EQ(num_vertices, mesh.num_vertices());
+    EXPECT_EQ(num_edges - 1, mesh.num_edges());
+    EXPECT_EQ(num_half_edges - 2, mesh.num_half_edges());
+
+    // try to get deleted face
+    auto face0 = mesh.get_face_between({v0, v1, v2, v3});
+    EXPECT_NE(face_handles[0], face0.unwrap());
+    EXPECT_EQ(face_handles[1], face0.unwrap());
 }
 
-#pragma clang diagnostic pop
+TEST_F(TmeshTestWithTfaceTest, GetExtendedValence) {
+    EXPECT_EQ(4, mesh.get_extended_valence(vertex_handles[4]));
+}
+
+}

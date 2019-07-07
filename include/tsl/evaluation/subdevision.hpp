@@ -3,8 +3,10 @@
 
 #include <vector>
 
-#include <tsl/geometry/handles.hpp>
-#include <tsl/attrmaps/stable_vector.hpp>
+#include "tsl/geometry/tmesh/handles.hpp"
+#include "tsl/attrmaps/stable_vector.hpp"
+
+using std::vector;
 
 namespace tsl {
 
@@ -15,9 +17,9 @@ struct eigen_struct {
     int twoN_;
     int K_;
     int M_;
-    std::vector<double> V_;
-    std::vector<double> L_;
-    std::vector<double> iV_;
+    vector<double> V_;
+    vector<double> L_;
+    vector<double> iV_;
     bool loaded_;
 
     eigen_struct() : N_(0), twoN_(0), K_(0), M_(0), loaded_(false) {}
@@ -38,20 +40,20 @@ private:
 };
 
 void subd_eval(double& u, //parametric u value
-          double& v, //parametric v value
-          int K,   //number of control points
-          const double* Cx,//control points in x
-          const double* Cy,//control points in y
-          const double* Cz,//control points in z
-          double* pt,      //results
-          double* du,
-          double* dv,
-          double* duu,
-          double* duv,
-          double* dvv);
+               double& v, //parametric v value
+               int K,   //number of control points
+               const double* Cx,//control points in x
+               const double* Cy,//control points in y
+               const double* Cz,//control points in z
+               double* pt,      //results
+               double* du,
+               double* dv,
+               double* duu,
+               double* duv,
+               double* dvv);
 
 }
 
-handle_formatter(eigen_handle, "EI")
+handle_formatter(tsl::eigen_handle, "EI")
 
 #endif //TSL_SUBDEVISION_HPP

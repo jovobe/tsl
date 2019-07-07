@@ -1,12 +1,12 @@
 #ifndef TSL_APPLICATION_HPP
 #define TSL_APPLICATION_HPP
 
+#include <map>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <tsl/window.hpp>
-
-#include <map>
+#include "tsl/window.hpp"
 
 using std::string;
 using std::map;

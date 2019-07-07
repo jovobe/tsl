@@ -1,5 +1,5 @@
-#include <tsl/io/obj.hpp>
-#include <tsl/geometry/vector.hpp>
+#include "tsl/io/obj.hpp"
+#include "tsl/geometry/vector.hpp"
 
 #define TINYOBJLOADER_USE_DOUBLE
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -7,7 +7,7 @@
 
 namespace tsl {
 
-half_edge_mesh read_obj_into_hem(const string& file_path) {
+tmesh read_obj_into_tmesh(const string& file_path) {
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -33,7 +33,7 @@ half_edge_mesh read_obj_into_hem(const string& file_path) {
     }
 
     auto mesh = shapes.front();
-    half_edge_mesh out;
+    tmesh out;
     vector<vertex_handle> vertex_handles;
     vertex_handles.reserve(attrib.vertices.size() / 3);
     for (size_t i = 0; i < attrib.vertices.size(); i += 3) {
@@ -45,7 +45,7 @@ half_edge_mesh read_obj_into_hem(const string& file_path) {
     }
 
     // Loop over faces
-    vector<vertex_handle> vertices;
+    vector<new_face_vertex> vertices;
     size_t index_offset = 0;
     for (const auto& fv: mesh.mesh.num_face_vertices) {
         vertices.clear();
@@ -54,7 +54,7 @@ half_edge_mesh read_obj_into_hem(const string& file_path) {
         for (size_t v = 0; v < fv; v++) {
             // access to vertex
             tinyobj::index_t idx = mesh.mesh.indices[index_offset + v];
-            vertices.push_back(vertex_handles[idx.vertex_index]);
+            vertices.emplace_back(vertex_handles[idx.vertex_index]);
         }
         index_offset += fv;
 

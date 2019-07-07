@@ -1,7 +1,11 @@
 #ifndef TSL_HALF_EDGE_HPP
 #define TSL_HALF_EDGE_HPP
 
+#include <optional>
+
 #include "handles.hpp"
+
+using std::optional;
 
 namespace tsl {
 
@@ -21,17 +25,20 @@ struct half_edge
     /// the next edge of the face, ordered clockwise.
     half_edge_handle prev;
 
-    /// The twin edge.
-    half_edge_handle twin;
+    /// Denotes, if the half edge points into a face corner. `nullopt` if no face is assigned.
+    optional<bool> corner;
+
+    /// Knot interval assigned to this half edge. `nullopt` if no face is assigned.
+    optional<double> knot;
 
 private:
     /**
      * @brief Initializes all fields with dummy values (unsafe, thus private).
      */
-    half_edge() : target(0), next(0), prev(0), twin(0) {}
+    half_edge() : target(0), next(0), prev(0) {}
 
-    /// Several methods of HEM need to invoke the unsafe ctor.
-    friend class half_edge_mesh;
+    /// Several methods of T-Mesh need to invoke the unsafe ctor.
+    friend class tmesh;
 };
 
 }

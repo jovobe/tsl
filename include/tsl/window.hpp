@@ -1,21 +1,23 @@
 #ifndef TSL_WINDOW_HPP
 #define TSL_WINDOW_HPP
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
 #include <string>
 #include <functional>
 #include <set>
 #include <memory>
 
-#include <tsl/mouse_pos.hpp>
-#include <tsl/application.hpp>
-#include <tsl/camera.hpp>
-#include <tsl/gl_buffer.hpp>
-#include <tsl/resolution.hpp>
-#include <tsl/tsplines.hpp>
-#include <tsl/rendering/picking_map.hpp>
+#include <GL/glew.h>
+
+#include <GLFW/glfw3.h>
+
+#include "tsl/mouse_pos.hpp"
+#include "tsl/application.hpp"
+#include "tsl/camera.hpp"
+#include "tsl/gl_buffer.hpp"
+#include "tsl/resolution.hpp"
+#include "tsl/rendering/picking_map.hpp"
+#include "tsl/evaluation/surface_evaluator.hpp"
+#include "grid.hpp"
 
 using std::string;
 using std::reference_wrapper;
@@ -145,8 +147,9 @@ private:
     GLuint control_vertices_vertex_buffer;
     GLuint control_vertices_index_buffer;
 
+    float edge_remove_percentage;
     resolution<uint32_t> surface_resolution;
-    struct tmesh tmesh;
+    surface_evaluator evaluator;
 
     vector<regular_grid> tmesh_faces;
 

@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include <tsl/subdevision.hpp>
+#include <tsl/evaluation/subdevision.hpp>
 
 using namespace tsl;
 

@@ -1,8 +1,8 @@
 #ifndef TSL_TESTS_MOCKS_HPP
 #define TSL_TESTS_MOCKS_HPP
 
-#include <tsl/util/base_handle.hpp>
-#include <tsl/geometry/handles.hpp>
+#include "tsl/util/base_handle.hpp"
+#include "tsl/geometry/tmesh/handles.hpp"
 
 using namespace tsl;
 
@@ -25,6 +25,8 @@ struct dummy {
 };
 
 }
+
+handle_formatter(tsl_tests::test_handle, "t")
 
 namespace std {
 

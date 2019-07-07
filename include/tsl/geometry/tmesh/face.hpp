@@ -1,5 +1,5 @@
-#ifndef TSL_HALF_EDGE_FACE_HPP
-#define TSL_HALF_EDGE_FACE_HPP
+#ifndef TSL_FACE_HPP
+#define TSL_FACE_HPP
 
 #include "handles.hpp"
 
@@ -11,9 +11,9 @@ struct half_edge_handle;
 /**
  * @brief Represents a face in the HEM data structure.
  */
-struct half_edge_face
+struct face
 {
-    explicit half_edge_face(half_edge_handle edge)
+    explicit face(half_edge_handle edge)
         : edge(edge) {}
 
     /// One of the edges bounding this face.
@@ -22,4 +22,4 @@ struct half_edge_face
 
 }
 
-#endif //TSL_HALF_EDGE_FACE_HPP
+#endif //TSL_FACE_HPP

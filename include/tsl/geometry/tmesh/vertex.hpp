@@ -1,8 +1,8 @@
-#ifndef TSL_HALF_EDGE_VERTEX_HPP
-#define TSL_HALF_EDGE_VERTEX_HPP
+#ifndef TSL_VERTEX_HPP
+#define TSL_VERTEX_HPP
 
-#include <tsl/geometry/handles.hpp>
-#include <tsl/geometry/vector.hpp>
+#include "tsl/geometry/tmesh/handles.hpp"
+#include "tsl/geometry/vector.hpp"
 
 namespace tsl {
 
@@ -12,7 +12,7 @@ struct optional_half_edge_handle;
 /**
  * @brief Represents a vertex in the HEM data structure.
  */
-struct half_edge_vertex
+struct vertex
 {
     /// The edge starting at this vertex.
     optional_half_edge_handle outgoing;
@@ -23,4 +23,4 @@ struct half_edge_vertex
 
 }
 
-#endif //TSL_HALF_EDGE_VERTEX_HPP
+#endif //TSL_VERTEX_HPP

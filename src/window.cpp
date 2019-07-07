@@ -1,4 +1,12 @@
+#include <string>
+#include <vector>
+#include <utility>
+#include <functional>
+#include <algorithm>
+#include <iterator>
+
 #include <GL/glew.h>
+
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -14,26 +22,26 @@
 #include <fmt/format.h>
 
 #include "tsl/util/println.hpp"
-#include <tsl/window.hpp>
-#include <tsl/application.hpp>
-#include <tsl/opengl.hpp>
-#include <tsl/tsplines.hpp>
-#include <tsl/rendering/half_edge_mesh.hpp>
-#include <tsl/rendering/tmesh.hpp>
-#include <tsl/geometry/line.hpp>
-#include <tsl/geometry/plane.hpp>
-#include <tsl/io/obj.hpp>
-
-#include <string>
-#include <vector>
-#include <utility>
-#include <functional>
+#include "tsl/window.hpp"
+#include "tsl/application.hpp"
+#include "tsl/opengl.hpp"
+#include "tsl/geometry/tmesh/tmesh.hpp"
+#include "tsl/rendering/tmesh.hpp"
+#include "tsl/geometry/line.hpp"
+#include "tsl/geometry/plane.hpp"
+#include "tsl/io/obj.hpp"
+#include "tsl/algorithm/generator.hpp"
+#include "tsl/evaluation/surface_evaluator.hpp"
+#include "tsl/algorithm/reduction.hpp"
 
 using std::move;
 using std::exchange;
 using std::string;
 using std::vector;
 using std::reference_wrapper;
+using std::find;
+using std::copy_if;
+using std::inserter;
 
 using glm::radians;
 using glm::fvec3;
@@ -59,7 +67,9 @@ window::window(string&& title, uint32_t width, uint32_t height) :
     move_object(false),
     normal_mode(false),
     surface_resolution(1),
-    dialogs()
+    edge_remove_percentage(10.0f),
+    dialogs(),
+    evaluator(move(tmesh_cube(5)))
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -188,9 +198,6 @@ window::window(string&& title, uint32_t width, uint32_t height) :
     glGenBuffers(1, &control_vertices_vertex_buffer);
     glGenBuffers(1, &control_vertices_index_buffer);
     glGenBuffers(1, &vertices_picked_buffer);
-
-//    tmesh = tsplines::get_example_data_1();
-    tmesh = tsplines::get_example_data_2(5);
 
     update_buffer();
 
@@ -504,7 +511,9 @@ void window::draw_gui() {
             if (ImGui::MenuItem("Selected Element")) {
                 dialogs.selected_elements = !dialogs.selected_elements;
             }
-            if (ImGui::MenuItem("Remove Edges")) {}
+            if (ImGui::MenuItem("Remove Edges")) {
+                dialogs.remove_edges = !dialogs.remove_edges;
+            }
             ImGui::EndMenu();
         }
         ImGui::EndMenu();
@@ -519,10 +528,13 @@ void window::draw_gui() {
     if (ImGui::BeginPopup("abouttse")) {
 
         ImGui::Text("T-Spline Editor");
-        ImGui::Text("\n\n");
+        ImGui::Text("\n");
+        ImGui::Text("Version 1.0.0");
+        ImGui::Text("\n");
         ImGui::Text("Developed by: Johan M. von Behren (johan@vonbehren.eu)");
-        ImGui::Text("Published under GPL");
-        ImGui::Text("\n\n");
+        ImGui::Text("This software is licensed under GNU GPL version 3.");
+        ImGui::Text("Source code is available on "); ImGui::SameLine(); ImGui::Selectable("GitHub "); ImGui::SameLine(); ImGui::Text(".");
+        ImGui::Text("\n");
         ImGui::Text("Powered by open source software:");
         ImGui::Text("- GLFW");
         ImGui::Text("- GLEW");
@@ -545,8 +557,9 @@ void window::draw_gui() {
             ImGui::Checkbox("Show control polygon", &control_mode);
             ImGui::Checkbox("Show surface", &surface_mode);
             ImGui::Checkbox("Show surface normals", &normal_mode);
-            ImGui::Checkbox("Prevent broken meshes to be imported", &tmesh.config.panic_at_integrity_violations);
+            ImGui::Checkbox("Prevent broken meshes to be imported", &evaluator.config.panic_at_integrity_violations);
 
+            ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
             if (ImGui::InputInt("Resolution", (int*) surface_resolution.data(), 1, 1)) {
                 if (surface_resolution.get() < 1) {
                     surface_resolution.set(1);
@@ -568,31 +581,106 @@ void window::draw_gui() {
         }
     }
 
+    if (dialogs.remove_edges) {
+        ImGui::SetNextWindowPos(ImVec2(0, 30), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSizeConstraints(ImVec2(450, 0), ImVec2(width, height));
+
+        if (ImGui::Begin("Remove edges", &dialogs.remove_edges)) {
+            if (ImGui::Button("Remove selected edges")) {
+                vector<reference_wrapper<const picking_element>> edges_picked;
+                copy_if(picked_elements.begin(), picked_elements.end(), back_inserter(edges_picked), [](const picking_element& elem) {
+                    return elem.type == object_type::edge;
+                });
+
+                bool continue_after_warn = true;
+                if (edges_picked.empty()) {
+                    pfd::message("Problem", "No edges selected!", pfd::choice::ok, pfd::icon::warning);
+                } else {
+                    auto button = pfd::message("Warning", format("Are you sure you want to delete: {} edges?", edges_picked.size()), pfd::choice::yes_no, pfd::icon::question).result();
+                    continue_after_warn = button == pfd::button::yes;
+                }
+
+                if (continue_after_warn) {
+                    vector<edge_handle> removed_egdes;
+                    for (const auto& edge: edges_picked) {
+                        edge_handle handle(edge.get().handle.get_idx());
+                        if (evaluator.remove_edge(handle)) {
+                            removed_egdes.push_back(handle);
+                        } else {
+                            pfd::message("Problem", format("Edge with id: {} could not be deleted!", handle), pfd::choice::ok, pfd::icon::error);
+                        }
+                    }
+
+                    if (!removed_egdes.empty()) {
+
+                        // Save picked elements without removed edges
+                        set<picking_element> old_picked;
+                        copy_if(picked_elements.begin(), picked_elements.end(), inserter(old_picked, old_picked.begin()), [&removed_egdes](const picking_element& elem){
+                            if (elem.type == object_type::edge) {
+                                edge_handle eh(elem.handle.get_idx());
+                                return find(removed_egdes.begin(), removed_egdes.end(), eh) == removed_egdes.end();
+                            }
+                            return true;
+                        });
+
+                        // Update all buffers
+                        update_buffer();
+
+                        // Restore the picked elements and update the picked buffer to make them visible
+                        picked_elements.insert(old_picked.begin(), old_picked.end());
+                        update_picked_buffer();
+                    }
+                }
+            }
+            ImGui::Separator();
+            ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
+            ImGui::SliderFloat("Percentage of edges to be removed", &edge_remove_percentage, 0.0f, 100.0f, "%.1f %%");
+            if (ImGui::Button("Remove % of edges")) {
+                bool continue_after_warn = true;
+                auto button = pfd::message("Warning", format("Are you sure you want to delete {}% of the edges?", edge_remove_percentage), pfd::choice::yes_no, pfd::icon::question).result();
+                continue_after_warn = button == pfd::button::yes;
+                if (continue_after_warn) {
+                    evaluator.remove_edges(edge_remove_percentage);
+                    update_buffer();
+                }
+            }
+
+            ImGui::End();
+        }
+    }
+
     if (dialogs.selected_elements) {
         auto picked_elem_window_width = 200;
         ImGui::SetNextWindowPos(ImVec2(this->width - picked_elem_window_width, 30), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSizeConstraints(ImVec2(picked_elem_window_width, 100), ImVec2(width, height));
+        const auto& mesh = evaluator.get_tmesh();
 
         auto draw_edge_information = [&] (const half_edge_handle& eh) {
 
             if (ImGui::TreeNode((void*)(intptr_t) eh.get_idx(), "half edge: %u", eh.get_idx())) {
                 if (ImGui::TreeNode("geometry data")) {
-                    ImGui::BulletText("next: %u", tmesh.mesh.get_next(eh).get_idx());
-                    ImGui::BulletText("prev: %u", tmesh.mesh.get_prev(eh).get_idx());
-                    ImGui::BulletText("twin: %u", tmesh.mesh.get_twin(eh).get_idx());
-                    ImGui::BulletText("target: %u", tmesh.mesh.get_target(eh).get_idx());
-                    ImGui::BulletText("face: %u", tmesh.mesh.get_face_of_half_edge(eh).unwrap().get_idx());
+                    ImGui::BulletText("next: %u", mesh.get_next(eh).get_idx());
+                    ImGui::BulletText("prev: %u", mesh.get_prev(eh).get_idx());
+                    ImGui::BulletText("twin: %u", mesh.get_twin(eh).get_idx());
+                    ImGui::BulletText("target: %u", mesh.get_target(eh).get_idx());
+                    ImGui::BulletText("face: %u", mesh.get_face_of_half_edge(eh).unwrap().get_idx());
                     ImGui::TreePop();
                 }
 
                 if (ImGui::TreeNode("t-mesh data")) {
-                    ImGui::BulletText("points into face corner: %s", tmesh.corners[eh] ? "true" : "false");
-                    ImGui::BulletText("knot interval: %.2f", tmesh.knots[eh]);
-                    ImGui::BulletText("local coords (uv) of vertex for current half edge: (%.0f, %.0f)", tmesh.uv[eh].x, tmesh.uv[eh].y);
-                    ImGui::BulletText("direction (dir) of vertex for current half edge: %u", tmesh.dir[eh]);
+                    // Check for border edge
+                    if (mesh.is_border(eh)) {
+                        ImGui::BulletText("this half edge lies on the border of the edge");
+                    } else {
+                        ImGui::BulletText("points into face corner: %s", *mesh.corner(eh) ? "true" : "false");
+                        ImGui::BulletText("knot interval: %.2f", *mesh.get_knot_interval(eh));
+                        const auto& coords = evaluator.get_coord_map()[eh];
+                        ImGui::BulletText("local coords (uv) of vertex for current half edge: (%.0f, %.0f)", coords.x, coords.y);
+                        ImGui::BulletText("direction (dir) of vertex for current half edge: %u", evaluator.get_dir_map()[eh]);
+                        auto& trans = evaluator.get_edge_trans_map()[eh];
+                        ImGui::BulletText("transition: scale: %.2f, rotate: %u, translate: (%.2f, %.2f)", trans.f, trans.r, trans.t.x, trans.t.y);
+                    }
 
-                    auto& trans = tmesh.edge_transitions[eh];
-                    ImGui::BulletText("transition: scale: %.2f, rotate: %u, translate: (%.2f, %.2f)", trans.f, trans.r, trans.t.x, trans.t.y);
                     ImGui::TreePop();
                 }
 
@@ -609,11 +697,19 @@ void window::draw_gui() {
                     case object_type::vertex: {
                         vertex_handle vh(elem.handle.get_idx());
                         if (ImGui::TreeNode((void*)(intptr_t) vh.get_idx(),"Vertex (id: %u)", vh.get_idx())) {
-                            ImGui::BulletText("extended valence: %u", tmesh.get_extended_valence(vh));
+                            ImGui::BulletText("extended valence: %lu", mesh.get_extended_valence(vh));
+                            auto pos = mesh.get_vertex_position(vh);
+                            ImGui::BulletText("pos: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);
+                            auto out = mesh.get_out(vh);
+                            if (out) {
+                                ImGui::BulletText("out: %u", mesh.get_out(vh).unwrap().get_idx());
+                            } else {
+                                ImGui::BulletText("out: none");
+                            }
                             ImGui::Separator();
 
                             if (ImGui::TreeNode("ingoing half edges (cw order)")) {
-                                for (auto& eh: tmesh.mesh.get_half_edges_of_vertex(vh, direction::ingoing)) {
+                                for (const auto& eh: mesh.get_half_edges_of_vertex(vh, edge_direction::ingoing)) {
                                     draw_edge_information(eh);
                                 }
                                 ImGui::TreePop();
@@ -629,7 +725,7 @@ void window::draw_gui() {
                             ImGui::Separator();
 
                             if (ImGui::TreeNode("consisting of half edges")) {
-                                for (auto& heh: tmesh.mesh.get_half_edges_of_edge(eh)) {
+                                for (const auto& heh: mesh.get_half_edges_of_edge(eh)) {
                                     draw_edge_information(heh);
                                 }
                                 ImGui::TreePop();
@@ -642,16 +738,17 @@ void window::draw_gui() {
                     case object_type::face: {
                         face_handle fh(elem.handle.get_idx());
                         if (ImGui::TreeNode((void*)(intptr_t) fh.get_idx(), "Face (id: %u)", elem.handle.get_idx())) {
-                            auto max_local_coords = tmesh.get_local_max_coordinates(fh);
+                            auto max_local_coords = evaluator.get_max_coords(fh);
                             ImGui::BulletText("local coordinates: (%.2f, %.2f)", max_local_coords.x, max_local_coords.y);
+                            ImGui::BulletText("edge: %u", mesh.get_edge(fh).get_idx());
 
                             ImGui::Separator();
 
-                            auto support = tmesh.support_map[fh];
+                            const auto& support = evaluator.get_support_map()[fh];
                             if (ImGui::TreeNode((void*) nullptr, "supporting basis functions: (%lu)", support.size())) {
-                                for (auto&& [index, trans]: support) {
-                                    if (ImGui::TreeNode((void*)(intptr_t) index.vertex.get_idx(), "vertex: %u", index.vertex.get_idx())) {
-                                        auto [uv, vv] = tmesh.get_knot_vectors(index);
+                                for (const auto& [vh, index, trans]: support) {
+                                    if (ImGui::TreeNode((void*)(intptr_t) vh.get_idx(), "vertex: %u", vh.get_idx())) {
+                                        auto [uv, vv] = evaluator.get_knot_vectors()[vh][index];
                                         if (ImGui::TreeNode("knot vector u")) {
                                             for (const auto& u: uv) {
                                                 ImGui::BulletText("%.2f", u);
@@ -886,7 +983,7 @@ mouse_pos window::get_mouse_pos() const {
 }
 
 void window::update_surface_buffer() {
-    tmesh_faces = tmesh.get_grids(surface_resolution.get());
+    tmesh_faces = evaluator.eval_per_face(surface_resolution.get());
     surface_buffer = get_multi_render_buffer(tmesh_faces, picking_map);
 
     auto vec_data = surface_buffer.get_combined_vec_data();
@@ -932,8 +1029,8 @@ void window::update_surface_buffer() {
 }
 
 void window::update_control_buffer() {
-    control_edges_buffer = get_edges_buffer(tmesh.mesh, picking_map);
-    control_vertices_buffer = get_vertices_buffer(tmesh.mesh, picking_map);
+    control_edges_buffer = get_edges_buffer(evaluator.get_tmesh(), picking_map);
+    control_vertices_buffer = get_vertices_buffer(evaluator.get_tmesh(), picking_map);
 
     // control edges polygon
     glBindVertexArray(control_edges_vertex_array);
@@ -991,7 +1088,7 @@ void window::update_control_buffer() {
 void window::update_picked_buffer()
 {
     // Edges
-    auto picked_edges = get_picked_edges_buffer(tmesh.mesh, picked_elements);
+    auto picked_edges = get_picked_edges_buffer(evaluator.get_tmesh(), picked_elements);
 
     glBindVertexArray(control_edges_vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, edges_picked_buffer);
@@ -1002,7 +1099,7 @@ void window::update_picked_buffer()
     glEnableVertexAttribArray(picked_edges_location);
 
     // Vertices
-    auto picked_vertices = get_picked_vertices_buffer(tmesh.mesh, picked_elements);
+    auto picked_vertices = get_picked_vertices_buffer(evaluator.get_tmesh(), picked_elements);
 
     glBindVertexArray(control_vertices_vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, vertices_picked_buffer);
@@ -1051,12 +1148,12 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
             }
             case object_type::edge: {
                 edge_handle eh(elem.handle.get_idx());
-                tmesh.mesh.get_vertices_of_edge(eh, vertices_to_move);
+                evaluator.get_tmesh().get_vertices_of_edge(eh, vertices_to_move);
                 break;
             }
             case object_type::face: {
                 face_handle fh(elem.handle.get_idx());
-                tmesh.mesh.get_vertices_of_face(fh, vertices_to_move);
+                evaluator.get_tmesh().get_vertices_of_face(fh, vertices_to_move);
                 break;
             }
             default:
@@ -1068,8 +1165,8 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
     vector<reference_wrapper<vec3>> positions;
     positions.reserve(vertices_to_move.size());
     vec3 center(0, 0, 0);
-    for (auto&& vh: vertices_to_move) {
-        auto& pos = tmesh.mesh.get_vertex_position(vh);
+    for (const auto& vh: vertices_to_move) {
+        auto& pos = evaluator.get_vertex_pos(vh);
         positions.emplace_back(pos);
         center += pos;
     }
@@ -1133,8 +1230,7 @@ void window::open_file_dialog_and_load_selected_file() {
     auto files = pfd::open_file("Select a file").result();
     if (!files.empty()) {
         try {
-            auto hem = read_obj_into_hem(files[0]);
-            tmesh = tsl::tmesh(move(hem), dense_half_edge_map<double>(1), dense_half_edge_map<bool>(true), tmesh.config);
+            evaluator = surface_evaluator(move(read_obj_into_tmesh(files[0])));
             update_buffer();
         } catch(const exception& e) {
             pfd::message("Problem", format("An error occurred while loading: {}\n{}", files[0], e.what()), pfd::choice::ok, pfd::icon::error);

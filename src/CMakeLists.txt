@@ -1,11 +1,17 @@
 add_library(tsl SHARED STATIC
-    geometry/half_edge_mesh.cpp
-    tsplines.cpp
     geometry/line_segment.cpp
     geometry/rectangle.cpp
-    subdevision.cpp
+    evaluation/subdevision.cpp
     geometry/line.cpp
     io/obj.cpp
+    geometry/tmesh/tmesh.cpp
+    algorithm/reduction.cpp
+    evaluation/surface_evaluator.cpp
+    evaluation/bsplines.cpp
+    algorithm/generator.cpp
+    geometry/tmesh/iterator.cpp
+    geometry/transform.cpp
+    algorithm/get_vertices.cpp
 )
 
 target_link_libraries(tsl
@@ -18,11 +24,9 @@ add_executable(tsl_main
     window.cpp
     read_file.cpp
     camera.cpp
-    nubs.cpp
     grid.cpp
     gl_buffer.cpp
     opengl.cpp
-    rendering/half_edge_mesh.cpp
     rendering/picking_map.cpp
     rendering/tmesh.cpp
 )

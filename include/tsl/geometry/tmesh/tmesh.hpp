@@ -1,79 +1,46 @@
-#ifndef TSL_HALF_EDGE_MESH_HPP
-#define TSL_HALF_EDGE_MESH_HPP
+#ifndef TSL_TMESH_HPP
+#define TSL_TMESH_HPP
 
 #include <vector>
+#include <set>
 #include <array>
 #include <utility>
-#include <memory>
-#include <algorithm>
-#include <set>
+#include <optional>
 
-#include <tsl/attrmaps/stable_vector.hpp>
+#include "tsl/attrmaps/stable_vector.hpp"
+#include "tsl/geometry/vector.hpp"
+#include "handles.hpp"
+#include "edge_direction.hpp"
+#include "iterator.hpp"
 #include "half_edge.hpp"
-#include "half_edge_face.hpp"
-#include "half_edge_vertex.hpp"
+#include "face.hpp"
+#include "vertex.hpp"
+#include "new_face_vertex.hpp"
 
 using std::vector;
+using std::set;
 using std::array;
 using std::pair;
-using std::unique_ptr;
-using std::move;
-using std::set;
+using std::optional;
 
 namespace tsl {
 
-enum class direction {
-    ingoing,
-    outgoing
-};
-
-template<typename handle_t>
-class hem_iterator
-{
-    static_assert(
-        std::is_base_of<base_handle<index>, handle_t>::value,
-        "handle_t must inherit from base_handle!"
-    );
-public:
-    virtual hem_iterator& operator++() = 0;
-    virtual bool operator==(const hem_iterator& other) const = 0;
-    virtual bool operator!=(const hem_iterator& other) const = 0;
-    virtual handle_t operator*() const = 0;
-    virtual ~hem_iterator() = default;
-};
-
-template<typename handle_t>
-class hem_iterator_ptr
-{
-public:
-    explicit hem_iterator_ptr(unique_ptr<hem_iterator<handle_t>> iter) : iter(move(iter)) {};
-    hem_iterator_ptr& operator++();
-    bool operator==(const hem_iterator_ptr& other) const;
-    bool operator!=(const hem_iterator_ptr& other) const;
-    handle_t operator*() const;
-
-private:
-    unique_ptr<hem_iterator<handle_t>> iter;
-};
-
 // Forward declaration
-class hem_face_iterator_proxy;
-class hem_half_edge_iterator_proxy;
-class hem_edge_iterator_proxy;
-class hem_vertex_iterator_proxy;
+template<typename handle_t>
+class tmesh_iterator_ptr;
+class tmesh_face_iterator_proxy;
+class tmesh_half_edge_iterator_proxy;
+class tmesh_edge_iterator_proxy;
+class tmesh_vertex_iterator_proxy;
 
 /**
- * @brief Half-edge data structure.
- *
- * This implementation encodes many connectivity details explicitly, enabling fast lookup.
+ * @brief This is an implementation of a T-Mesh based on a half edge mesh.
  */
-class half_edge_mesh {
+class tmesh {
 public:
-    using edge = half_edge;
-    using face = half_edge_face;
-    using vertex = half_edge_vertex;
-
-    half_edge_mesh() = default;
+    // ========================================================================
+    // = Modifier
+    // ========================================================================
 
     /**
      * @brief Adds a vertex with the given position to the mesh.
@@ -86,6 +53,29 @@ public:
     vertex_handle add_vertex(vec3 pos);
 
     /**
+     * @brief Check whether or not inserting a face between the given vertices
+     *        would be valid.
+     *
+     * Adding a face is invalid if it destroys the mesh in any kind, like
+     * making it non-manifold, non-orientable or something similar. But there
+     * are other reasons for invalidity as well, like: there is already a face
+     * connecting the given vertices.
+     *
+     * Note that the given vertices have to be in front-face counter-clockwise
+     * order, just as with `add_face()`. See `add_face()` for more information
+     * about this.
+     */
+    bool is_face_insertion_valid(const vector<new_face_vertex>& new_vertices) const;
+
+    /**
+     * @brief This is a convenience function to check the insertion of a regular quad face to the mesh.
+     *
+     * This creates a `new_face_vertex` per handle with its default ctor and than checks insertion of the face via
+     * `tmesh::is_face_insertion_valid(const vector<new_face_vertex>&)`. Knot values will be 1.0 for all inner edges.
+     */
+    bool is_face_insertion_valid(const array<vertex_handle, 4>& new_vertices) const;
+
+    /**
      * @brief Creates a face connecting the given vertices.
      *
      * Important: The face's vertices have to be given in front-face counter-
@@ -94,12 +84,33 @@ public:
      * terms: the face's normal is equal to (v1 - v2) x (v1 - v3) in the
      * right-handed coordinate system (where `x` is cross-product).
      *
+     * Important: The knot and corner values from `new_face_vertex` will be applied to the
+     * inner half edges.
+     *
      * This method panics if an insertion is not possible. You can check
      * whether or not an insertion is valid by using `is_face_insertion_valid()`.
      *
      * @return A handle to access the inserted face later.
      */
-    face_handle add_face(const vector<vertex_handle>& handles);
+    face_handle add_face(const vector<new_face_vertex>& new_vertices);
+
+    /**
+     * @brief This is a convenience function to add a regular quad face to the mesh.
+     *
+     * This creates a `new_face_vertex` per handle with its default ctor and than adds the face via
+     * `tmesh::add_face(const vector<new_face_vertex>&)`. Knot values will be 1.0 for all inner edges.
+     */
+    face_handle add_face(const array<vertex_handle, 4>& new_vertices);
+
+    /**
+     * @brief Removes the given edge and one of the two faces it seperades and returns true. Returns false, if the
+     *        edge could not be deleted.
+     */
+    bool remove_edge(edge_handle handle);
+
+    // ========================================================================
+    // = Get numbers
+    // ========================================================================
 
     /**
      * @brief Returns the number of vertices in the mesh.
@@ -122,6 +133,32 @@ public:
     size_t num_half_edges() const;
 
     /**
+     * @brief Returns the number of adjacent faces to the given edge.
+     *
+     * This functions always returns one of 0, 1 or 2.
+     */
+    uint8_t num_adjacent_faces(edge_handle handle) const;
+
+    /**
+     * @brief Returns the number of direct neighbours of the vertex.
+     */
+    size_t get_valence(vertex_handle handle) const;
+
+    /**
+     * @brief Returns the number of direct neighbours of the vertex plus the faces, for which the vertex is no corner.
+     */
+    size_t get_extended_valence(vertex_handle handle) const;
+
+    /**
+     * @brief Returns true, if the vertex has an extended valence which is not equal to 4, false otherwise.
+     */
+    bool is_extraordinary(vertex_handle handle) const;
+
+    // ========================================================================
+    // = Get attributes
+    // ========================================================================
+
+    /**
      * @brief Get the position of the given vertex.
      */
     vec3 get_vertex_position(vertex_handle handle) const;
@@ -132,9 +169,63 @@ public:
     vec3& get_vertex_position(vertex_handle handle);
 
     /**
-     * @brief Returns the number of direct neighbours of the vertex.
+     * @brief Returns the knot interval associated with the given half edge.
      */
-    index get_valence(vertex_handle handle) const;
+    optional<double> get_knot_interval(half_edge_handle handle) const;
+
+    /**
+     * @brief Returns true, if the given half edge points into a face corner, false otherwise.
+     */
+    optional<bool> corner(half_edge_handle handle) const;
+
+    /**
+     * @brief Returns true, if the given half edge points away from a face corner, false otherwise.
+     */
+    optional<bool> from_corner(half_edge_handle handle) const;
+
+    /**
+     * @brief Returns the knot interval from the requested half edge divided by the knot interval from the twin of
+     *        the requested half edge.
+     */
+    optional<double> get_knot_factor(half_edge_handle handle) const;
+
+    // ========================================================================
+    // = Follow pointer
+    // ========================================================================
+
+    /**
+     * @brief Returns the twin of the requested half edge.
+     */
+    half_edge_handle get_twin(half_edge_handle handle) const;
+
+    /**
+     * @brief Returns the next half edge the given half edge points to.
+     */
+    half_edge_handle get_next(half_edge_handle handle) const;
+
+    /**
+     * @brief Returns the half edge which points to the given half edge.
+     */
+    half_edge_handle get_prev(half_edge_handle handle) const;
+
+    /**
+     * @brief Get handle of the vertex the given half edge handle points to.
+     */
+    vertex_handle get_target(half_edge_handle handle) const;
+
+    /**
+     * @brief Get handle of the half edge the given vertex points to.
+     */
+    optional_half_edge_handle get_out(vertex_handle handle) const;
+
+    /**
+     * @brief Get handle of the half edge the given face points to.
+     */
+    half_edge_handle get_edge(face_handle handle) const;
+
+    // ========================================================================
+    // = Get vertices
+    // ========================================================================
 
     /**
      * @brief Get the vertices surrounding the given face.
@@ -153,7 +244,7 @@ public:
      * take advantages of this method's signature, you can call the other
      * overload of this method which just returns the vector. Such convinient.
      *
-     * Note: you probably should remember to `clear()` the vector before
+     * Note: you probably should remember to `clear()` the vector bcorner(e)efore
      * passing it into this method.
      */
     void get_vertices_of_face(face_handle handle, vector<vertex_handle>& vertices_out) const;
@@ -217,6 +308,10 @@ public:
      */
     array<vertex_handle, 2> get_vertices_of_half_edge(half_edge_handle edge_h) const;
 
+    // ========================================================================
+    // = Get faces
+    // ========================================================================
+
     /**
      * @brief Get the two faces of an edge.
      *
@@ -254,6 +349,56 @@ public:
     optional_face_handle get_face_of_half_edge(half_edge_handle edge_h) const;
 
     /**
+     * @brief Get face handles of the neighbours of the requested face.
+     *
+     * The face handles are written into the `faces_out` vector. This is done
+     * to reduce the number of heap allocations if this method is called in
+     * a loop. If you are not calling it in a loop or can't, for some reason,
+     * take advantages of this method's signature, you can call the other
+     * overload of this method which just returns the vector. Such convinient.
+     *
+     * Note: you probably should remember to `clear()` the vector before
+     * passing it into this method.
+     *
+     * @param faces_out The face-handles of the neighbours of `handle` will be
+     *                 written into this vector in counter-clockwise order.
+     *                 There are at most four neighbours of a face, so this
+     *                 method will push 0, 1, 2 or 3 handles to `faces_out`.
+     */
+    void get_neighbours_of_face(face_handle handle, vector<face_handle>& faces_out) const;
+
+    /**
+     * @brief Get face handles of the neighbours of the requested face.
+     *
+     * This method is implemented using the method
+     * `get_neighbours_of_face(face_handle, vector<face_handle>&)`. If you are
+     * calling this method in a loop, you should probably call the more manual
+     * method (with the out vector) to avoid useless heap allocations.
+     *
+     * @return The face-handles of the neighbours in counter-clockwise order.
+     */
+    vector<face_handle> get_neighbours_of_face(face_handle handle) const;
+
+    /**
+     * @brief If all vertices are part of one face, this face is returned. None
+     *        otherwise.
+     *
+     * The vertices don't have to be in a specific order. In particular, this
+     * method will find a face regardless of whether the vertices are given in
+     * clockwise or counter-clockwise order.
+     */
+    optional_face_handle get_face_between(const vector<vertex_handle>& handles) const;
+
+    // ========================================================================
+    // = Get edges
+    // ========================================================================
+
+    /**
+     * @brief Returns true, if this half edge lies on the border of the mesh, false otherwise.
+     */
+     bool is_border(half_edge_handle handle) const;
+
+    /**
      * @brief Get a list of edges around the given vertex.
      *
      * The edge handles are written into the `edges_out` vector. This is done
@@ -269,6 +414,18 @@ public:
      *                 into this vector in clockwise order.
      */
     void get_edges_of_vertex(vertex_handle handle, vector<edge_handle>& edges_out) const;
+
+    /**
+     * @brief Get a list of edges around the given vertex.
+     *
+     * This method is implemented using the method
+     * `get_edges_of_vertex(vertex_handle, vector<edge_handle>&)`. If you are
+     * calling this method in a loop, you should probably call the more manual
+     * method (with the out vector) to avoid useless heap allocations.
+     *
+     * @return The edge-handles in clockwise order.
+     */
+    vector<edge_handle> get_edges_of_vertex(vertex_handle handle) const;
 
     /**
      * @brief Get a list of half edges around the given vertex. If the edges are in
@@ -288,19 +445,7 @@ public:
      */
     void get_half_edges_of_vertex(vertex_handle handle,
                                   vector<half_edge_handle>& edges_out,
-                                  direction way = direction::ingoing) const;
-
-    /**
-     * @brief Get a list of edges around the given vertex.
-     *
-     * This method is implemented using the method
-     * `get_edges_of_vertex(vertex_handle, vector<edge_handle>&)`. If you are
-     * calling this method in a loop, you should probably call the more manual
-     * method (with the out vector) to avoid useless heap allocations.
-     *
-     * @return The edge-handles in clockwise order.
-     */
-    vector<edge_handle> get_edges_of_vertex(vertex_handle handle) const;
+                                  edge_direction way = edge_direction::ingoing) const;
 
     /**
      * @brief Get a list of half edges around the given vertex. If the edges are in
@@ -313,7 +458,7 @@ public:
      *
      * @return The edge-handles in clockwise order.
      */
-    vector<half_edge_handle> get_half_edges_of_vertex(vertex_handle handle, direction way = direction::ingoing) const;
+    vector<half_edge_handle> get_half_edges_of_vertex(vertex_handle handle, edge_direction way = edge_direction::ingoing) const;
 
     /**
      * @brief Get inner half edges of face in counter clockwise order
@@ -343,165 +488,60 @@ public:
      */
     optional_half_edge_handle get_half_edge_between(face_handle ah, face_handle bh) const;
 
-    /**
-     * @brief Get face handles of the neighbours of the requested face.
-     *
-     * The face handles are written into the `faces_out` vector. This is done
-     * to reduce the number of heap allocations if this method is called in
-     * a loop. If you are not calling it in a loop or can't, for some reason,
-     * take advantages of this method's signature, you can call the other
-     * overload of this method which just returns the vector. Such convinient.
-     *
-     * Note: you probably should remember to `clear()` the vector before
-     * passing it into this method.
-     *
-     * @param faces_out The face-handles of the neighbours of `handle` will be
-     *                 written into this vector in counter-clockwise order.
-     *                 There are at most four neighbours of a face, so this
-     *                 method will push 0, 1, 2 or 3 handles to `faces_out`.
-     */
-    void get_neighbours_of_face(face_handle handle, vector<face_handle>& faces_out) const;
-
-    /**
-     * @brief Get face handles of the neighbours of the requested face.
-     *
-     * This method is implemented using the method
-     * `get_neighbours_of_face(face_handle, vector<face_handle>&)`. If you are
-     * calling this method in a loop, you should probably call the more manual
-     * method (with the out vector) to avoid useless heap allocations.
-     *
-     * @return The face-handles of the neighbours in counter-clockwise order.
-     */
-    virtual vector<face_handle> get_neighbours_of_face(face_handle handle) const;
-
-    /**
-     * @brief Get handle of the twin half edge of the given handle
-     */
-    half_edge_handle get_twin(half_edge_handle handle) const;
-
-    /**
-     * @brief Get handle of the previous half edge of the given handle
-     */
-    half_edge_handle get_prev(half_edge_handle handle) const;
-
-    /**
-     * @brief Get handle of the next half edge of the given handle
-     */
-    half_edge_handle get_next(half_edge_handle handle) const;
-
-    /**
-     * @brief Get handle of the vertex the given half edge handle points to.
-     */
-    vertex_handle get_target(half_edge_handle handle) const;
-
-    /**
-     * @brief Get handle of the half edge the given vertex handle points to.
-     */
-    optional_half_edge_handle get_out(vertex_handle handle) const;
-
-    /**
-     * @brief Check whether or not inserting a face between the given vertices
-     *        would be valid.
-     *
-     * Adding a face is invalid if it destroys the mesh in any kind, like
-     * making it non-manifold, non-orientable or something similar. But there
-     * are other reasons for invalidity as well, like: there is already a face
-     * connecting the given vertices.
-     *
-     * Note that the given vertices have to be in front-face counter-clockwise
-     * order, just as with `add_face()`. See `add_face()` for more information
-     * about this.
-     */
-    bool is_face_insertion_valid(const vector<vertex_handle>& handles) const;
-
-    /**
-     * @brief If all vertices are part of one face, this face is returned. None
-     *        otherwise.
-     *
-     * The vertices don't have to be in a specific order. In particular, this
-     * method will find a face regardless of whether the vertices are given in
-     * clockwise or counter-clockwise order.
-     */
-    optional_face_handle get_face_between(const vector<vertex_handle>& handles) const;
-
-    /**
-     * @brief Returns the number of adjacent faces to the given edge.
-     *
-     * This functions always returns one of 0, 1 or 2.
-     */
-    uint8_t num_adjacent_faces(edge_handle handle) const;
-
-    hem_iterator_ptr<vertex_handle> vertices_begin() const;
-    hem_iterator_ptr<vertex_handle> vertices_end() const;
-    hem_iterator_ptr<face_handle> faces_begin() const;
-    hem_iterator_ptr<face_handle> faces_end() const;
-    hem_iterator_ptr<half_edge_handle> half_edges_begin() const;
-    hem_iterator_ptr<half_edge_handle> half_edges_end() const;
-    hem_iterator_ptr<edge_handle> edges_begin() const;
-    hem_iterator_ptr<edge_handle> edges_end() const;
+    // ========================================================================
+    // = Iterator helper
+    // ========================================================================
+    tmesh_iterator_ptr<vertex_handle> vertices_begin() const;
+    tmesh_iterator_ptr<vertex_handle> vertices_end() const;
+    tmesh_iterator_ptr<face_handle> faces_begin() const;
+    tmesh_iterator_ptr<face_handle> faces_end() const;
+    tmesh_iterator_ptr<half_edge_handle> half_edges_begin() const;
+    tmesh_iterator_ptr<half_edge_handle> half_edges_end() const;
+    tmesh_iterator_ptr<edge_handle> edges_begin() const;
+    tmesh_iterator_ptr<edge_handle> edges_end() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
      *
      * Returns a simple proxy object that uses `faces_begin()` and `faces_end()`.
      */
-    hem_face_iterator_proxy get_faces() const;
+    tmesh_face_iterator_proxy get_faces() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
      *
      * Returns a simple proxy object that uses `half_edges_begin()` and `half_edges_end()`.
      */
-    hem_half_edge_iterator_proxy get_half_edges() const;
+    tmesh_half_edge_iterator_proxy get_half_edges() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
      *
      * Returns a simple proxy object that uses `edges_begin()` and `edges_end()`.
      */
-    hem_edge_iterator_proxy get_edges() const;
+    tmesh_edge_iterator_proxy get_edges() const;
 
     /**
      * @brief Method for usage in range-based for-loops.
      *
      * Returns a simple proxy object that uses `vertices_begin()` and `vertices_end()`.
      */
-    hem_vertex_iterator_proxy get_vertices() const;
-
-    /**
-     * @brief Creates a half edge mesh as a cube
-     */
-    static half_edge_mesh as_cube(double edge_length, uint32_t vertices_per_edge, bool tjoints);
+    tmesh_vertex_iterator_proxy get_vertices() const;
 
 private:
-    stable_vector<half_edge_handle, edge> edges;
+    stable_vector<half_edge_handle, half_edge> edges;
     stable_vector<face_handle, face> faces;
     stable_vector<vertex_handle, vertex> vertices;
 
     // ========================================================================
     // = Private helper methods
     // ========================================================================
-    edge& get_e(half_edge_handle handle);
-    const edge& get_e(half_edge_handle handle) const;
+    half_edge& get_e(half_edge_handle handle);
+    const half_edge& get_e(half_edge_handle handle) const;
     face& get_f(face_handle handle);
     const face& get_f(face_handle handle) const;
     vertex& get_v(vertex_handle handle);
     const vertex& get_v(vertex_handle handle) const;
-
-    /**
-     * @brief Converts a half edge handle to a full edge handle
-     *
-     * @return  The handle with the smaller index of the given half edge and
-     *          its twin
-     */
-    edge_handle half_to_full_edge_handle(half_edge_handle handle) const;
-
-    /**
-     * @brief Given two vertices, find the edge pointing from one to the other.
-     *
-     * @return None, if there exists no such edge.
-     */
-    optional_half_edge_handle edge_between(vertex_handle from_h, vertex_handle to_h);
 
     /**
      * @brief Attempts to find an edge between the given vertices and, if none
@@ -509,7 +549,7 @@ private:
      *
      * @return The half edge from `from_h` to `to_h`
      */
-    half_edge_handle find_or_create_edge_between(vertex_handle from_h, vertex_handle to_h);
+    half_edge_handle find_or_create_edge_between(new_face_vertex from_h, new_face_vertex to_h);
 
     /**
      * @brief Adds a new, incomplete edge-pair.
@@ -524,7 +564,37 @@ private:
      * @return Both edge handles. The first edge points from v1h to v2h, the
      *         second one points from v2h to v1h.
      */
-    pair<half_edge_handle, half_edge_handle> add_edge_pair(vertex_handle v1h, vertex_handle v2h);
+    pair<half_edge_handle, half_edge_handle> add_edge_pair(new_face_vertex v1h, new_face_vertex v2h);
+
+    /**
+     * @brief Converts a half edge handle to a full edge handle
+     *
+     * @return The handle with the smaller index of the given half edge and its twin.
+     */
+    edge_handle half_to_full_edge_handle(half_edge_handle handle) const;
+
+    /**
+     * @brief Circulates around the vertex `vh`, calling the `visitor` for each
+     *        edge of the vertex. If the in or outgoing edges are visited is
+     *        determined by the way parameter.
+     *
+     * The edges are visited in clockwise order. The iteration stops if all
+     * edges were visited once or if the visitor returns `false`. It has to
+     * return `true` to keep circulating. If the vertex has no outgoing edge,
+     * this method does nothing.
+     */
+    template <typename visitor_t>
+    void circulate_around_vertex(vertex_handle vh, visitor_t visitor, edge_direction way = edge_direction::ingoing) const;
+
+    /**
+     * @brief Circulates clockwise around the vertex, calling the
+     *        `visitor` for each edge of the vertex. If the in or outgoing edges are visited is
+     *        determined by the way parameter.
+     *
+     * IMPORTANT: The start_edge has to match the direction of the way parameter!
+     */
+    template <typename visitor_t>
+    void circulate_around_vertex(half_edge_handle start_edge_h, visitor_t visitor, edge_direction way = edge_direction::ingoing) const;
 
     /**
      * @brief Circulates over the inner edges of the given face `fh` in counter clockwise order,
@@ -548,29 +618,6 @@ private:
     void circulate_in_face(half_edge_handle start_edge_h, visitor_t visitor) const;
 
     /**
-     * @brief Circulates around the vertex `vh`, calling the `visitor` for each
-     *        edge of the vertex. If the in or outgoing edges are visited is
-     *        determined by the way parameter.
-     *
-     * The edges are visited in clockwise order. The iteration stops if all
-     * edges were visited once or if the visitor returns `false`. It has to
-     * return `true` to keep circulating. If the vertex has no outgoing edge,
-     * this method does nothing.
-     */
-    template <typename visitor_t>
-    void circulate_around_vertex(vertex_handle vh, visitor_t visitor, direction way = direction::ingoing) const;
-
-    /**
-     * @brief Circulates clockwise around the vertex, calling the
-     *        `visitor` for each edge of the vertex. If the in or outgoing edges are visited is
-     *        determined by the way parameter.
-     *
-     * IMPORTANT: The start_edge has to match the direction of the way parameter!
-     */
-    template <typename visitor_t>
-    void circulate_around_vertex(half_edge_handle start_edge_h, visitor_t visitor, direction way = direction::ingoing) const;
-
-    /**
      * @brief Iterates over all edges of one vertex, returning the
      *        first edge that satisfies the given predicate. If the
      *        in or outgoing edges are visited is determined by the way parameter.
@@ -580,7 +627,7 @@ private:
      */
     template <typename pred_t>
     optional_half_edge_handle
-    find_edge_around_vertex(vertex_handle vh, pred_t pred, direction way = direction::ingoing) const;
+    find_edge_around_vertex(vertex_handle vh, pred_t pred, edge_direction way = edge_direction::ingoing) const;
 
     /**
      * @brief Iterates over all edges of the vertex, returning the first edge that
@@ -592,95 +639,16 @@ private:
      * @return Returns None if no edge in the circle satisfies the predicate.
      */
     template <typename pred_t>
-    optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred, direction way = direction::ingoing) const;
+    optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred, edge_direction way = edge_direction::ingoing) const;
 
     // ========================================================================
     // = Friends
     // ========================================================================
-    friend class hem_edge_iterator;
-};
-
-class hem_face_iterator_proxy
-{
-public:
-    hem_iterator_ptr<face_handle> begin() const;
-    hem_iterator_ptr<face_handle> end() const;
-
-private:
-    explicit hem_face_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
-    const half_edge_mesh& mesh;
-    friend half_edge_mesh;
-};
-
-class hem_half_edge_iterator_proxy
-{
-public:
-    hem_iterator_ptr<half_edge_handle> begin() const;
-    hem_iterator_ptr<half_edge_handle> end() const;
-
-private:
-    explicit hem_half_edge_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
-    const half_edge_mesh& mesh;
-    friend half_edge_mesh;
-};
-
-class hem_edge_iterator_proxy
-{
-public:
-    hem_iterator_ptr<edge_handle> begin() const;
-    hem_iterator_ptr<edge_handle> end() const;
-
-private:
-    explicit hem_edge_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
-    const half_edge_mesh& mesh;
-    friend half_edge_mesh;
-};
-
-class hem_vertex_iterator_proxy
-{
-public:
-    hem_iterator_ptr<vertex_handle> begin() const;
-    hem_iterator_ptr<vertex_handle> end() const;
-
-private:
-    explicit hem_vertex_iterator_proxy(const half_edge_mesh& mesh) : mesh(mesh) {}
-    const half_edge_mesh& mesh;
-    friend half_edge_mesh;
-};
-
-template<typename handle_t, typename elem_t>
-class hem_fev_iterator : public hem_iterator<handle_t>
-{
-public:
-    explicit hem_fev_iterator(stable_vector_iterator<handle_t, elem_t> iterator) : iterator(iterator) {};
-    hem_fev_iterator& operator++();
-    bool operator==(const hem_iterator<handle_t>& other) const;
-    bool operator!=(const hem_iterator<handle_t>& other) const;
-    handle_t operator*() const;
-
-private:
-    stable_vector_iterator<handle_t, elem_t> iterator;
-};
-
-class hem_edge_iterator : public hem_iterator<edge_handle>
-{
-public:
-    explicit hem_edge_iterator(
-        stable_vector_iterator<half_edge_handle, half_edge> iterator,
-        const half_edge_mesh& mesh
-    ) : iterator(iterator), mesh(mesh) {};
-    hem_edge_iterator& operator++();
-    bool operator==(const hem_iterator<edge_handle>& other) const;
-    bool operator!=(const hem_iterator<edge_handle>& other) const;
-    edge_handle operator*() const;
-
-private:
-    stable_vector_iterator<half_edge_handle, half_edge> iterator;
-    const half_edge_mesh& mesh;
+    friend class tmesh_edge_iterator;
 };
 
 }
 
-#include <tsl/geometry/half_edge_mesh.tcc>
+#include "tmesh.tcc"
 
-#endif //TSL_HALF_EDGE_MESH_HPP
+#endif //TSL_TMESH_HPP

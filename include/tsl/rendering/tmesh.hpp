@@ -3,18 +3,22 @@
 
 #include <vector>
 #include <set>
-#include <functional>
 
-#include <tsl/grid.hpp>
+#include "tsl/grid.hpp"
+#include "tsl/geometry/tmesh/tmesh.hpp"
 
 using std::vector;
-using std::reference_wrapper;
 using std::set;
 
 namespace tsl
 {
 
 vector<uint8_t> get_picked_faces_buffer(const vector<regular_grid>& faces, const set<picking_element>& picked);
+vector<uint8_t> get_picked_edges_buffer(const tmesh& mesh, const set<picking_element>& picked);
+vector<uint8_t> get_picked_vertices_buffer(const tmesh& mesh, const set<picking_element>& picked);
+
+gl_buffer get_edges_buffer(const tmesh& mesh, picking_map& picking_map);
+gl_buffer get_vertices_buffer(const tmesh& mesh, picking_map& picking_map);
 
 }
 
