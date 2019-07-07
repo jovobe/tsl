@@ -16,9 +16,7 @@ const eigen_struct& eigen_cache::get(eigen_handle handle) {
     // Make sure the given handle (valence) is between (inklusive) 3 and MAX_VALENCE.
     if (handle.get_idx() < 3 || handle.get_idx() > MAX_VALENCE)
     {
-        stringstream ss;
-        ss << "The given valence (" << handle.get_idx() << ") is lower than 3 or higher than the defined maximum (" << MAX_VALENCE << ")!";
-        panic(ss.str());
+        panic("The given valence ({}) is lower than 3 or higher than the defined maximum ({})!", handle, MAX_VALENCE);
     }
 #endif
 

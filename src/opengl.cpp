@@ -1,13 +1,11 @@
-#include <GL/glew.h>
-
-#include <iostream>
 #include <vector>
 
-#include <tsl/opengl.hpp>
-#include <tsl/read_file.hpp>
+#include <GL/glew.h>
 
-using std::cout;
-using std::endl;
+#include "tsl/opengl.hpp"
+#include "tsl/read_file.hpp"
+#include "tsl/util/println.hpp"
+
 using std::vector;
 
 namespace tsl {
@@ -20,7 +18,7 @@ GLuint create_program(vector<GLuint> shaders) {
     glLinkProgram(program);
     GLint is_linked = 0;
     glGetProgramiv(program, GL_LINK_STATUS, &is_linked);
-    cout << "program link status: " << is_linked << endl;
+    println("program link status: {}", is_linked);
     if (is_linked == GL_FALSE)
     {
         GLint max_length = 0;
@@ -42,7 +40,7 @@ GLuint create_program(vector<GLuint> shaders) {
         // pop null terminator
         log.pop_back();
 
-        cout << "Linking program failed:\n" << log << endl;
+        println("Linking program failed:\n{}", log);
 
         // In this simple program, we'll just leave
         exit(1);
@@ -59,14 +57,14 @@ GLuint create_program(vector<GLuint> shaders) {
 GLuint create_shader(const string& shader_path, GLenum shader_type) {
     auto shader = glCreateShader(shader_type);
     auto shader_text = read_file(shader_path);
-//    cout << shader_text << endl;
+//    println(shader_text.c_str());
     // TODO: why variable?
     auto tmp1 = shader_text.c_str();
     glShaderSource(shader, 1, &tmp1, nullptr);
     glCompileShader(shader);
     GLint res;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &res);
-    cout << "shader '" << shader_path << "' compile status: " << res << endl;
+    println("shader '{}' compile status: {}", shader_path, res);
     if (res == GL_FALSE) {
         GLint max_length = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &max_length);
@@ -78,7 +76,7 @@ GLuint create_shader(const string& shader_path, GLenum shader_type) {
         // pop null terminator
         log.pop_back();
 
-        cout << "Compiling shader failed:\n" << log << endl;
+        println("Compiling shader failed:\n{}", log);
 
         glDeleteShader(shader); // Don't leak the shader.
         exit(1);

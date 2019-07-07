@@ -11,6 +11,9 @@
 
 #include <portable-file-dialogs.h>
 
+#include <fmt/format.h>
+
+#include "tsl/util/println.hpp"
 #include <tsl/window.hpp>
 #include <tsl/application.hpp>
 #include <tsl/opengl.hpp>
@@ -22,7 +25,6 @@
 #include <tsl/io/obj.hpp>
 
 #include <string>
-#include <iostream>
 #include <vector>
 #include <utility>
 #include <functional>
@@ -30,8 +32,6 @@
 using std::move;
 using std::exchange;
 using std::string;
-using std::cout;
-using std::endl;
 using std::vector;
 using std::reference_wrapper;
 
@@ -43,6 +43,8 @@ using glm::perspective;
 using glm::lookAt;
 using glm::rotate;
 using glm::length;
+
+using fmt::format;
 
 namespace tsl {
 
@@ -91,7 +93,7 @@ window::window(string title, uint32_t width, uint32_t height) :
 
     // GLEW
     if (glewInit() != GLEW_OK) {
-        cout << "ERROR: Failed to init GLEW!" << endl;
+        println("ERROR: Failed to init GLEW!");
         exit(EXIT_FAILURE);
     }
 
@@ -204,7 +206,7 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     break;
                 case GLFW_KEY_W:
                     if ((mods & GLFW_MOD_CONTROL) != 0) {
-                        cout << "INFO: toggled wireframe mode" << endl;
+                        println("INFO: toggled wireframe mode");
                         wireframe_mode = !wireframe_mode;
                     } else {
                         camera.moving_direction.forward = true;
@@ -212,7 +214,7 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     break;
                 case GLFW_KEY_S:
                     if ((mods & GLFW_MOD_CONTROL) != 0) {
-                        cout << "INFO: toggled surface mode" << endl;
+                        println("INFO: toggled surface mode");
                         surface_mode = !surface_mode;
                     } else {
                         camera.moving_direction.backwards = true;
@@ -229,7 +231,7 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
                     break;
                 case GLFW_KEY_C:
                     if ((mods & GLFW_MOD_CONTROL) != 0) {
-                        cout << "INFO: toggled control plygon mode" << endl;
+                        println("INFO: toggled control plygon mode");
                         control_mode = !control_mode;
                     } else {
                         camera.moving_direction.down = true;
@@ -1204,10 +1206,7 @@ void window::open_file_dialog_and_load_selected_file() {
             tmesh = tsl::tmesh(move(hem), dense_half_edge_map<double>(1), dense_half_edge_map<bool>(true), tmesh.config);
             update_buffer();
         } catch(const exception& e) {
-            std::ostringstream string_stream;
-            string_stream << "An error occurred while loading: " << files[0] << "\n" << e.what();
-            string message = string_stream.str();
-            pfd::message("Problem", message, pfd::choice::ok, pfd::icon::error);
+            pfd::message("Problem", format("An error occurred while loading: {}\n{}", files[0], e.what()), pfd::choice::ok, pfd::icon::error);
         }
     }
 }

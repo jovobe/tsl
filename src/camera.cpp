@@ -18,8 +18,6 @@ using glm::dot;
 using glm::abs;
 using glm::fvec3;
 
-using std::cout;
-using std::endl;
 using std::nullopt;
 
 namespace tsl {

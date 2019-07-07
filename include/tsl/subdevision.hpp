@@ -52,4 +52,6 @@ void subd_eval(double& u, //parametric u value
 
 }
 
+handle_formatter(eigen_handle, "EI")
+
 #endif //TSL_SUBDEVISION_HPP

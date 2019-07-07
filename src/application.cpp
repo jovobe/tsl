@@ -1,16 +1,14 @@
-#include <tsl/application.hpp>
-
 #include <utility>
-#include <iostream>
 #include <functional>
 #include <stdexcept>
 #include <vector>
 #include <thread>
 #include <chrono>
 
+#include "tsl/application.hpp"
+#include "tsl/util/println.hpp"
+
 using std::string;
-using std::cout;
-using std::endl;
 using std::istreambuf_iterator;
 using std::bind;
 using std::move;
@@ -29,22 +27,21 @@ void application::init_glfw() const {
 
     glfwSetErrorCallback(&application::glfw_error_callback);
     if (!glfwInit()) {
-        cout << "ERROR: Failed to init GLFW!" << endl;
-        exit(EXIT_FAILURE);
+        panic("ERROR: Failed to init GLFW!");
     }
 
     glfwSetTime(0);
 }
 
 void application::glfw_error_callback(int error, const char* description) {
-    cout << "ERROR: " << description << endl;
+    println("ERROR: {}", description);
 }
 
 void application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
-//    cout << "INFO: key pressed!" << endl;
+//    println("INFO: key pressed!");
 
 //    if (action == GLFW_PRESS) {
-//        cout << "INFO: key pressed!" << endl;
+//        println("INFO: key pressed!");
 //    }
 
     auto& instance = get_instance();
@@ -52,12 +49,12 @@ void application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scanco
         auto& window = instance.windows.at(glfw_window);
         window.glfw_key_callback(key, scancode, action, mods);
     } catch (out_of_range&) {
-        cout << "WARNING: key caught for unknown window!" << endl;
+        println("WARNING: key caught for unknown window!");
     }
 }
 
 void application::glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
-    cout << "INFO: framebuffer size callback! (" << width << "," << height << ")" << endl;
+    println("INFO: framebuffer size callback! ({}, {})", width, height);
 
     // TODO: make this window specific
     glViewport(0, 0, width, height);
@@ -67,31 +64,31 @@ void application::glfw_framebuffer_size_callback(GLFWwindow* glfw_window, int wi
         auto& window = instance.windows.at(glfw_window);
         window.glfw_framebuffer_size_callback(width, height);
     } catch (out_of_range&) {
-        cout << "WARNING: window size callback for unknown window!" << endl;
+        println("WARNING: framebuffer size callback for unknown window!");
     }
 }
 
 void application::glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height) {
-    cout << "INFO: window size callback! (" << width << "," << height << ")" << endl;
+    println("INFO: window size callback! ({}, {})", width, height);
 
     auto& instance = get_instance();
     try {
         auto& window = instance.windows.at(glfw_window);
         window.glfw_window_size_callback(width, height);
     } catch (out_of_range&) {
-        cout << "WARNING: window size callback for unknown window!" << endl;
+        println("WARNING: window size callback for unknown window!");
     }
 }
 
 void application::glfw_mouse_button_callback(GLFWwindow* glfw_window, int button, int action, int mods) {
-//    cout << "INFO: mouse button pressed" << endl;
+//    println("INFO: mouse button pressed");
 
     auto& instance = get_instance();
     try {
         auto& window = instance.windows.at(glfw_window);
         window.glfw_mouse_button_callback(button, action, mods);
     } catch (out_of_range&) {
-        cout << "WARNING: window size callback for unknown window!" << endl;
+        println("WARNING: mouse button pressed callback for unknown window!");
     }
 }
 

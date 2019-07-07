@@ -4,6 +4,8 @@
 #include <optional>
 #include <string>
 
+#include <fmt/core.h>
+
 using std::optional;
 using std::string;
 
@@ -80,5 +82,35 @@ private:
 }
 
 #include <tsl/util/base_handle.tcc>
+
+#define handle_formatter(handle_type, prefix)\
+namespace fmt {\
+template<>\
+struct formatter<tsl::handle_type> {\
+    template <typename ParseContext>\
+    constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }\
+    template <typename FormatContext>\
+    auto format(const tsl::handle_type& handle, FormatContext& ctx) {\
+        return format_to(ctx.out(), "{}{}", prefix, handle.get_idx());\
+    }\
+};\
+}
+
+#define optional_handle_formatter(handle_type, prefix)\
+namespace fmt {\
+template<>\
+struct formatter<tsl::handle_type> {\
+    template <typename ParseContext>\
+    constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }\
+    template <typename FormatContext>\
+    auto format(const tsl::handle_type& handle, FormatContext& ctx) {\
+        if (handle) {\
+            return format_to(ctx.out(), "{}{}", prefix, handle.unwrap().get_idx());\
+        } else {\
+            return format_to(ctx.out(), "{}⊥", prefix);\
+        }\
+    }\
+};\
+}
 
 #endif //TSL_BASE_HANDLE_HPP

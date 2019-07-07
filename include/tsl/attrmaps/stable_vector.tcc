@@ -4,7 +4,6 @@
 #include <tsl/util/panic.hpp>
 
 using std::nullopt;
-using std::stringstream;
 using std::reference_wrapper;
 
 namespace tsl {
@@ -17,9 +16,7 @@ void stable_vector<handle_t, elem_t>::check_access(handle_type handle) const
     // Make sure the handle is not OOB
     if (handle.get_idx() >= size())
     {
-        stringstream ss;
-        ss << "lookup with an out of bounds handle (" << handle.get_idx() << ") in stable_vector";
-        panic(ss.str());
+        panic("lookup with an out of bounds handle ({}) in stable_vector", handle);
     }
 
     // You cannot access deleted or uninitialized elements!
