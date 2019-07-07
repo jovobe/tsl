@@ -29,7 +29,7 @@ public:
     uint32_t get_last_num_frames() const;
     uint32_t get_last_sleep() const;
 
-    void create_window(string title, uint32_t width, uint32_t height);
+    void create_window(string&& title, uint32_t width, uint32_t height);
     void run();
 
     // GLFW wrapper functions

@@ -48,7 +48,7 @@ using fmt::format;
 
 namespace tsl {
 
-window::window(string title, uint32_t width, uint32_t height) :
+window::window(string&& title, uint32_t width, uint32_t height) :
     title(move(title)),
     width(width),
     height(height),
@@ -78,17 +78,17 @@ window::window(string title, uint32_t width, uint32_t height) :
 //    glfwWindowHint(GLFW_DEPTH_BITS, 24);
 //    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-    glfw_window = glfwCreateWindow(this->width, this->height, this->title.c_str(), nullptr, nullptr);
-    if (glfw_window == nullptr) {
+    glfw_window = glfw_window_ptr(glfwCreateWindow(this->width, this->height, this->title.c_str(), nullptr, nullptr));
+    if (!glfw_window) {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
 
-    glfwMakeContextCurrent(glfw_window);
-    glfwSetKeyCallback(glfw_window, &application::glfw_key_callback);
-    glfwSetFramebufferSizeCallback(glfw_window, &application::glfw_framebuffer_size_callback);
-    glfwSetWindowSizeCallback(glfw_window, &application::glfw_window_size_callback);
-    glfwSetMouseButtonCallback(glfw_window, &application::glfw_mouse_button_callback);
+    glfwMakeContextCurrent(glfw_window.get());
+    glfwSetKeyCallback(glfw_window.get(), &application::glfw_key_callback);
+    glfwSetFramebufferSizeCallback(glfw_window.get(), &application::glfw_framebuffer_size_callback);
+    glfwSetWindowSizeCallback(glfw_window.get(), &application::glfw_window_size_callback);
+    glfwSetMouseButtonCallback(glfw_window.get(), &application::glfw_mouse_button_callback);
     glfwSwapInterval(1);
 
     // GLEW
@@ -103,12 +103,12 @@ window::window(string title, uint32_t width, uint32_t height) :
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     //io.IniFilename = nullptr;
 
-    ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(glfw_window.get(), true);
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
 
     // get framebuffer size
-    glfwGetFramebufferSize(glfw_window, &frame_width, &frame_height);
+    glfwGetFramebufferSize(glfw_window.get(), &frame_width, &frame_height);
 
     // get dpi
     dpi = static_cast<double>(frame_height) / static_cast<double>(height);
@@ -202,7 +202,7 @@ void window::glfw_key_callback(int key, int scancode, int action, int mods) {
         case GLFW_PRESS:
             switch (key) {
                 case GLFW_KEY_ESCAPE:
-                    glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
+                    glfwSetWindowShouldClose(glfw_window.get(), GLFW_TRUE);
                     break;
                 case GLFW_KEY_W:
                     if ((mods & GLFW_MOD_CONTROL) != 0) {
@@ -341,7 +341,7 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
         case GLFW_PRESS:
             switch (button) {
                 case GLFW_MOUSE_BUTTON_RIGHT:
-                    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    glfwSetInputMode(glfw_window.get(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                     camera.moving_direction.mouse = true;
                     break;
                 case GLFW_MOUSE_BUTTON_LEFT: {
@@ -359,7 +359,7 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
         case GLFW_RELEASE:
             switch (button) {
                 case GLFW_MOUSE_BUTTON_RIGHT:
-                    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    glfwSetInputMode(glfw_window.get(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                     camera.moving_direction.mouse = false;
                     camera.reset_last_move_time();
                     camera.reset_curos_pos();
@@ -389,7 +389,7 @@ void window::glfw_mouse_button_callback(int button, int action, int mods) {
 void window::render() {
     draw_gui();
 
-    glfwMakeContextCurrent(glfw_window);
+    glfwMakeContextCurrent(glfw_window.get());
     camera.handle_moving_direction(get_mouse_pos());
 
     // projection
@@ -421,8 +421,8 @@ void window::render() {
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    glfwMakeContextCurrent(glfw_window);
-    glfwSwapBuffers(glfw_window);
+    glfwMakeContextCurrent(glfw_window.get());
+    glfwSwapBuffers(glfw_window.get());
     glfwPollEvents();
 }
 
@@ -843,7 +843,7 @@ void window::draw_surface_picking(const mat4& model, const mat4& vp) const {
 
 window::~window() {
     // if this window was moved, we don't have to destruct it
-    if (glfw_window != nullptr) {
+    if (glfw_window) {
         // TODO: add checks if array and buffers need to be deleted
         glDeleteVertexArrays(1, &surface_vertex_array);
         glDeleteBuffers(1, &surface_vertex_buffer);
@@ -871,86 +871,17 @@ window::~window() {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
-
-        glfwDestroyWindow(glfw_window);
     }
 }
 
 bool window::should_close() const {
-    return (glfwWindowShouldClose(glfw_window) != 0);
-}
-
-window::window(window&& window) noexcept : surface_resolution(1) {
-    *this = move(window);
-}
-
-window& window::operator=(window&& window) noexcept {
-    glfw_window = exchange(window.glfw_window, nullptr);
-    title = move(window.title);
-    width = exchange(window.width, 0);
-    height = exchange(window.height, 0);
-    frame_width = exchange(window.frame_width, 0);
-    frame_height = exchange(window.frame_height, 0);
-    dpi = exchange(window.dpi, 0);
-
-    edge_program = exchange(window.edge_program, 0);
-    vertex_program = exchange(window.vertex_program, 0);
-    edge_picking_program = exchange(window.edge_picking_program, 0);
-    vertex_picking_program = exchange(window.vertex_picking_program, 0);
-    phong_program = exchange(window.phong_program, 0);
-    surface_picking_program = exchange(window.surface_picking_program, 0);
-    normal_program = exchange(window.normal_program, 0);
-
-    surface_vertex_array = exchange(window.surface_vertex_array, 0);
-    control_edges_vertex_array = exchange(window.control_edges_vertex_array, 0);
-    control_vertices_vertex_array = exchange(window.control_vertices_vertex_array, 0);
-    control_picking_edges_vertex_array = exchange(window.control_picking_edges_vertex_array, 0);
-    control_picking_vertices_vertex_array = exchange(window.control_picking_vertices_vertex_array, 0);
-    surface_picking_vertex_array = exchange(window.surface_picking_vertex_array, 0);
-    surface_normal_vertex_array = exchange(window.surface_normal_vertex_array, 0);
-
-    surface_picked_buffer = exchange(window.surface_picked_buffer, 0);
-    edges_picked_buffer = exchange(window.edges_picked_buffer, 0);
-    vertices_picked_buffer = exchange(window.vertices_picked_buffer, 0);
-    surface_vertex_buffer = exchange(window.surface_vertex_buffer, 0);
-    surface_index_buffer = exchange(window.surface_index_buffer, 0);
-    control_edges_vertex_buffer = exchange(window.control_edges_vertex_buffer, 0);
-    control_edges_index_buffer = exchange(window.control_edges_index_buffer, 0);
-    control_vertices_vertex_buffer = exchange(window.control_vertices_vertex_buffer, 0);
-    control_vertices_index_buffer = exchange(window.control_vertices_index_buffer, 0);
-    control_edges_buffer = move(window.control_edges_buffer);
-    control_vertices_buffer = move(window.control_vertices_buffer);
-
-    wireframe_mode = exchange(window.wireframe_mode, false);
-    control_mode = exchange(window.control_mode, false);
-    surface_mode = exchange(window.surface_mode, false);
-    move_object = exchange(window.move_object, false);
-    dialogs = move(window.dialogs);
-
-    normal_mode = exchange(window.normal_mode, false);
-    surface_buffer = move(window.surface_buffer);
-    surface_resolution = move(window.surface_resolution);
-    tmesh = move(window.tmesh);
-    tmesh_faces = move(window.tmesh_faces);
-    camera = move(window.camera);
-    request_pick = move(window.request_pick);
-    start_move = move(window.start_move);
-    request_remove = move(window.request_remove);
-
-    picking_map = move(window.picking_map);
-    picking_frame = exchange(window.picking_frame, 0);
-    picking_texture = exchange(window.picking_texture, 0);
-    picking_render = exchange(window.picking_render, 0);
-    picked_elements = move(window.picked_elements);
-    move_direction = move(window.move_direction);
-
-    return *this;
+    return (glfwWindowShouldClose(glfw_window.get()) != 0);
 }
 
 mouse_pos window::get_mouse_pos() const {
     double x_pos;
     double y_pos;
-    glfwGetCursorPos(glfw_window, &x_pos, &y_pos);
+    glfwGetCursorPos(glfw_window.get(), &x_pos, &y_pos);
     return mouse_pos(x_pos, y_pos);
 }
 

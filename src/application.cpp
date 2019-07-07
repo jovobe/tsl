@@ -101,9 +101,9 @@ application::application() : windows(), last_num_frames(0), last_sleep(0) {
     init_glfw();
 }
 
-void application::create_window(string title, uint32_t width, uint32_t height) {
+void application::create_window(string&& title, uint32_t width, uint32_t height) {
     window win(move(title), width, height);
-    windows.insert(make_pair(win.glfw_window, move(win)));
+    windows.insert(make_pair(win.glfw_window.get(), move(win)));
 }
 
 void application::run() {

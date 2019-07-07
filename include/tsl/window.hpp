@@ -7,6 +7,7 @@
 #include <string>
 #include <functional>
 #include <set>
+#include <memory>
 
 #include <tsl/mouse_pos.hpp>
 #include <tsl/application.hpp>
@@ -19,6 +20,7 @@
 using std::string;
 using std::reference_wrapper;
 using std::set;
+using std::unique_ptr;
 
 namespace tsl {
 
@@ -45,14 +47,21 @@ struct show_dialogs {
     show_dialogs() : settings(false), selected_elements(false), remove_edges(false) {}
 };
 
+struct glfw_window_destructor {
+    void operator()(GLFWwindow* glfw_window) {
+        glfwDestroyWindow(glfw_window);
+    }
+};
+using glfw_window_ptr = unique_ptr<GLFWwindow, glfw_window_destructor>;
+
 class window {
 public:
     // TODO: make private?
-    window(string title, uint32_t width, uint32_t height);
+    window(string&& title, uint32_t width, uint32_t height);
     window(window const &) = delete;
-    window(window&& window) noexcept;
+    window(window&& window) = default;
     window& operator=(const window&) = delete;
-    window& operator=(window&& window) noexcept;
+    window& operator=(window&& window) = default;
 
     ~window();
 
@@ -90,9 +99,8 @@ private:
     gl_buffer control_edges_buffer;
     gl_buffer control_vertices_buffer;
 
-    // TODO: wrap this in a smart pointer
     // Pointer to glfw window. If this points to nullptr, the window was moved.
-    GLFWwindow* glfw_window;
+    glfw_window_ptr glfw_window;
 
     // picking stuff
     class picking_map picking_map;
