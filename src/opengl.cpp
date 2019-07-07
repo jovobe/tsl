@@ -12,7 +12,7 @@ namespace tsl {
 
 GLuint create_program(vector<GLuint> shaders) {
     auto program = glCreateProgram();
-    for (auto&& shader: shaders) {
+    for (const auto& shader: shaders) {
         glAttachShader(program, shader);
     }
     glLinkProgram(program);
@@ -31,7 +31,7 @@ GLuint create_program(vector<GLuint> shaders) {
         // We don't need the program anymore.
         glDeleteProgram(program);
         // Don't leak shaders either.
-        for (auto&& shader: shaders) {
+        for (const auto& shader: shaders) {
             glDeleteShader(shader);
         }
 
@@ -47,7 +47,7 @@ GLuint create_program(vector<GLuint> shaders) {
     }
 
     // Always detach shaders after a successful link.
-    for (auto&& shader: shaders) {
+    for (const auto& shader: shaders) {
         glDetachShader(program, shader);
     }
 

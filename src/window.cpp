@@ -603,7 +603,7 @@ void window::draw_gui() {
         if (ImGui::Begin("Selected elements", &dialogs.selected_elements)) {
             ImGui::Text("Count: %lu", picked_elements.size());
             ImGui::Separator();
-            for (auto&& elem: picked_elements) {
+            for (const auto& elem: picked_elements) {
 
                 switch (elem.type) {
                     case object_type::vertex: {
@@ -653,13 +653,13 @@ void window::draw_gui() {
                                     if (ImGui::TreeNode((void*)(intptr_t) index.vertex.get_idx(), "vertex: %u", index.vertex.get_idx())) {
                                         auto [uv, vv] = tmesh.get_knot_vectors(index);
                                         if (ImGui::TreeNode("knot vector u")) {
-                                            for (auto&& u: uv) {
+                                            for (const auto& u: uv) {
                                                 ImGui::BulletText("%.2f", u);
                                             }
                                             ImGui::TreePop();
                                         }
                                         if (ImGui::TreeNode("knot vector v")) {
-                                            for (auto&& v: vv) {
+                                            for (const auto& v: vv) {
                                                 ImGui::BulletText("%.2f", v);
                                             }
                                             ImGui::TreePop();
@@ -1043,7 +1043,7 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
 
     // Collect all vertex handles which should be moved
     set<vertex_handle> vertices_to_move;
-    for (auto&& elem: picked_elements) {
+    for (const auto& elem: picked_elements) {
         switch (elem.type) {
             case object_type::vertex: {
                 vertices_to_move.emplace(elem.handle.get_idx());
@@ -1101,7 +1101,7 @@ void window::handle_object_move(const mat4& model, const mat4& vp) {
         }
 
         // Actually move points
-        for (auto&& pos: positions) {
+        for (const auto& pos: positions) {
             pos.get() -= offset;
         }
         start_move = intersection;

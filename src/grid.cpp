@@ -134,7 +134,7 @@ gl_buffer regular_grid::add_to_render_buffer(gl_buffer& buffer, picking_map& pic
 gl_multi_buffer get_multi_render_buffer(const vector<regular_grid>& grids, picking_map& picking_map) {
     gl_multi_buffer buffer;
 
-    for (auto&& grid: grids) {
+    for (const auto& grid: grids) {
         auto old_count = buffer.index_buffer.size();
         buffer.indices.push_back(static_cast<GLsizeiptr>(buffer.index_buffer.size() * sizeof(GLuint)));
         grid.add_to_render_buffer(buffer, picking_map);

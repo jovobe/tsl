@@ -11,7 +11,7 @@ vector<uint8_t> get_picked_faces_buffer(const vector<regular_grid>& faces, const
     });
 
     size_t num_vertices = 0;
-    for (auto&& face: faces) {
+    for (const auto& face: faces) {
         num_vertices += face.num_points_y * face.num_points_x;
     }
 
@@ -29,7 +29,7 @@ vector<uint8_t> get_picked_faces_buffer(const vector<regular_grid>& faces, const
     // Get selected faces
     vector<uint8_t> out;
     out.reserve(num_vertices);
-    for (auto&& face: faces) {
+    for (const auto& face: faces) {
         auto found = find(picked_handles.begin(), picked_handles.end(), face.handle);
         auto picked_val = static_cast<uint8_t>(found != picked_handles.end());
         out.insert(out.end(), face.num_points_x * face.num_points_y, picked_val);

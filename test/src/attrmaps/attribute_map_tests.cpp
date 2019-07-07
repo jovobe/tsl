@@ -120,7 +120,7 @@ TYPED_TEST(AttributeMapTest, Iterator) {
     // Extract data from map
     vector<test_handle> expected_handles;
     vector<dummy> expected_dummies;
-    for (auto&& h: map) {
+    for (const auto& h: map) {
         expected_handles.push_back(h);
         expected_dummies.push_back(map[h]);
     }
@@ -189,7 +189,7 @@ TYPED_TEST(AttributeMapWithDefaultTest, Iterator) {
     // Extract data from map
     vector<test_handle> expected_handles;
     vector<dummy> expected_dummies;
-    for (auto&& h: map) {
+    for (const auto& h: map) {
         expected_handles.push_back(h);
         expected_dummies.push_back(map[h]);
     }

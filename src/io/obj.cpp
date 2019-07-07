@@ -47,7 +47,7 @@ half_edge_mesh read_obj_into_hem(const string& file_path) {
     // Loop over faces
     vector<vertex_handle> vertices;
     size_t index_offset = 0;
-    for (auto&& fv: mesh.mesh.num_face_vertices) {
+    for (const auto& fv: mesh.mesh.num_face_vertices) {
         vertices.clear();
 
         // Loop over vertices in the face.

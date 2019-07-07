@@ -18,7 +18,7 @@ bool line_segment::intersects(const aa_rectangle& rectangle) const {
 
     bool need_further_check = false;
     optional<side> last;
-    for (auto&& c: corners) {
+    for (const auto& c: corners) {
         auto t = test(c);
         if (last) {
             if ((t != side::on && *last != side::on) && *last != t) {

@@ -146,7 +146,7 @@ void application::run() {
 
         // close requested windows
         if (!to_close.empty()) {
-            for (auto&& w: to_close) {
+            for (const auto& w: to_close) {
                 windows.erase(w);
             }
             to_close.clear();
