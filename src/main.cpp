@@ -2,7 +2,7 @@
 
 int main() {
     auto& app = tsl::application::get_instance();
-    app.create_window("main", 900, 900);
+    app.create_window("T-Spline Editor", 900, 900);
     app.run();
     exit(EXIT_SUCCESS);
 }
