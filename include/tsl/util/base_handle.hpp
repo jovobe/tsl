@@ -86,11 +86,11 @@ private:
 #define handle_formatter(handle_type, prefix)\
 namespace fmt {\
 template<>\
-struct formatter<tsl::handle_type> {\
+struct formatter<handle_type> {\
     template <typename ParseContext>\
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }\
     template <typename FormatContext>\
-    auto format(const tsl::handle_type& handle, FormatContext& ctx) {\
+    auto format(const handle_type& handle, FormatContext& ctx) {\
         return format_to(ctx.out(), "{}{}", prefix, handle.get_idx());\
     }\
 };\
@@ -99,11 +99,11 @@ struct formatter<tsl::handle_type> {\
 #define optional_handle_formatter(handle_type, prefix)\
 namespace fmt {\
 template<>\
-struct formatter<tsl::handle_type> {\
+struct formatter<handle_type> {\
     template <typename ParseContext>\
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }\
     template <typename FormatContext>\
-    auto format(const tsl::handle_type& handle, FormatContext& ctx) {\
+    auto format(const handle_type& handle, FormatContext& ctx) {\
         if (handle) {\
             return format_to(ctx.out(), "{}{}", prefix, handle.unwrap().get_idx());\
         } else {\
