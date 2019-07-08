@@ -1,4 +1,4 @@
-# tsl
+# T-Spline Library (tsl)
 Library for representation and manipulation of generalised T-Spline surfaces written in C++.
 
 [![CircleCI](https://circleci.com/gh/jovobe/tsl.svg?style=svg)](https://circleci.com/gh/jovobe/tsl)
@@ -20,9 +20,6 @@ In order to build this software you need a C++ compiler (compatible with C++17 s
 ---
 
 ## License
-
-This repository contains two software packages with different licenses. Note the license file in the respective package folder.
-
 Licensed under either of
 
  * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)

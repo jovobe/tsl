@@ -1,0 +1,10 @@
+[requires]
+glm/0.9.9.1@g-truc/stable
+glew/2.1.0@bincrafters/stable
+glfw/3.2.1@bincrafters/stable
+fmt/5.3.0@bincrafters/stable
+
+openblas/0.3.5@conan/stable
+
+[generators]
+cmake
