@@ -89,6 +89,9 @@ bool tmesh::is_face_insertion_valid(const vector<new_face_vertex>& new_vertices)
         }
     }
 
+    // TODO: Check for consistency condition
+    // TODO: Check for cycle condition
+
     return true;
 }
 

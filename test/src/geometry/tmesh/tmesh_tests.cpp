@@ -532,11 +532,19 @@ TEST_F(TmeshTestWithCubeData, GetHalfEdgesOfEdge) {
     ASSERT_THAT(half_edges, ::testing::UnorderedElementsAre(expected_half_edge01, expected_half_edge10));
 }
 
-TEST_F(TmeshTestWithCubeData, RemoveEdge) {
-    auto v0 = vertex_handles[0];
-    auto v1 = vertex_handles[1];
-    auto v2 = vertex_handles[2];
-    auto v3 = vertex_handles[3];
+TEST_F(TmeshTestAsGrid, RemoveEdge) {
+    // v4 ===== v1 ===== v0
+    // ||       ||       ||
+    // ||  f??  ||  f??  ||
+    // ||       ||       ||
+    // v5 ===== v2 ===== v3
+    auto v0 = vertex_handles[41];
+    auto v1 = vertex_handles[40];
+    auto v2 = vertex_handles[49];
+    auto v3 = vertex_handles[50];
+
+    auto v4 = vertex_handles[39];
+    auto v5 = vertex_handles[48];
 
     auto num_faces = mesh.num_faces();
     auto num_vertices = mesh.num_vertices();
@@ -564,8 +572,8 @@ TEST_F(TmeshTestWithCubeData, RemoveEdge) {
 
     // try to get deleted face
     auto face0 = mesh.get_face_between({v0, v1, v2, v3});
-    EXPECT_NE(face_handles[0], face0.unwrap());
-    EXPECT_EQ(face_handles[1], face0.unwrap());
+    auto face1 = mesh.get_face_between({v1, v4, v5, v2});
+    EXPECT_EQ(face1, face0);
 }
 
 TEST_F(TmeshTestWithTfaceTest, GetExtendedValence) {
