@@ -62,12 +62,12 @@ public:
     ~surface_evaluator() = default;
 
     // TODO: Implement `surface_evaluator::eval`
-    regular_grid eval(uint32_t res) const;
+    vector<regular_grid> eval(uint32_t res) const;
     vector<regular_grid> eval_per_face(uint32_t res) const;
 
-    regular_grid eval_bsplines(uint32_t res, face_handle handle) const;
+    regular_grid eval_bsplines(uint32_t res, face_handle handle, bool skip_edges = false) const;
     array<vec3, 3> eval_bsplines_point(double u, double v, face_handle f) const;
-    regular_grid eval_subdevision(uint32_t res, face_handle handle) const;
+    regular_grid eval_subdevision(uint32_t res, face_handle handle, bool skip_edges = false) const;
 
     /**
      * @brief The max u and v coordinates for the local system of the given face returned as (u, v).
@@ -147,6 +147,12 @@ private:
      */
     void report_error(const string& msg) const;
 
+    /**
+     * @brief Executes the evaluation loop for the given face and calls the evaluator for each point.
+     */
+    template <typename eval_t>
+    regular_grid eval_loop(uint32_t res, face_handle handle, eval_t evaluator, bool skip_edges = false) const;
+
     // ========================================================================
     // = Routines from paper
     // ========================================================================
@@ -178,5 +184,7 @@ private:
 };
 
 }
+
+#include "surface_evaluator.tcc"
 
 #endif //TSL_SURFACE_HPP

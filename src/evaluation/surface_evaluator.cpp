@@ -69,43 +69,51 @@ vector<regular_grid> surface_evaluator::eval_per_face(uint32_t res) const {
     }
 
     return out;
-
 }
 
-regular_grid surface_evaluator::eval_bsplines(uint32_t res, face_handle handle) const {
-    auto local_system_max = get_max_coords(handle);
-    double u_coord = local_system_max.x;
-    double v_coord = local_system_max.y;
-    auto u_max = res + 1u;
-    auto v_max = res + 1u;
-    double step_u = u_coord / res;
-    double step_v = v_coord / res;
+vector<regular_grid> surface_evaluator::eval(uint32_t res) const {
+    vector<regular_grid> out;
+    out.reserve(mesh.num_faces());
 
-    regular_grid grid(handle);
-    grid.points.reserve(static_cast<size_t>(v_max));
-    grid.normals.reserve(static_cast<size_t>(v_max));
-    grid.num_points_x = u_max;
-    grid.num_points_y = v_max;
-
-    double current_u = 0;
-    double current_v = 0;
-    for (uint32_t v = 0; v < v_max; ++v) {
-        current_u = 0;
-        vector<vec3> row;
-        vector<vec3> normal_row;
-        row.reserve(static_cast<size_t>(u_max));
-        normal_row.reserve(static_cast<size_t>(u_max));
-        for (uint32_t u = 0; u < u_max; ++u) {
-            auto[point, du, dv] = eval_bsplines_point(min(current_u, u_coord), min(current_v, v_coord), handle);
-            row.push_back(point);
-            normal_row.push_back(normalize(cross(du, dv)));
-            current_u += step_u;
+    // This buffer will be used in the loop to store vertex handles. To reduce allocations we reuse the buffer
+    // and start with a estimated size of 10.
+    vector<vertex_handle> vertices_buffer;
+    vertices_buffer.reserve(10);
+    for (const auto& fh: mesh.get_faces()) {
+        auto contains_extraordinary_vertex = false;
+        auto contains_invalid_valence = false;
+        vertices_buffer.clear();
+        mesh.get_vertices_of_face(fh, vertices_buffer);
+        for (const auto& vh: vertices_buffer) {
+            if (mesh.is_extraordinary(vh)) {
+                contains_extraordinary_vertex = true;
+            }
+            // TODO: this will be fixed, when evaluation near borders is implemented; or not: if not, we should throw
+            //       a warning!
+            if (mesh.get_valence(vh) < 3) {
+                contains_invalid_valence = true;
+                report_error(format("invalid valence at vertex with handle id: {}", vh.get_idx()));
+            }
         }
-        grid.points.push_back(row);
-        grid.normals.push_back(normal_row);
-        current_v += step_v;
+
+        if (contains_extraordinary_vertex) {
+            if (!contains_invalid_valence) {
+                auto grid = eval_subdevision(res, fh, true);
+                out.emplace_back(grid);
+            }
+        } else {
+            auto grid = eval_bsplines(res, fh, true);
+            out.emplace_back(grid);
+        }
     }
-    return grid;
+
+    return out;
+}
+
+regular_grid surface_evaluator::eval_bsplines(uint32_t res, face_handle handle, bool skip_edges) const {
+    return eval_loop(res, handle, [this](auto u, auto v, auto handle) {
+        return eval_bsplines_point(u, v, handle);
+    }, skip_edges);
 }
 
 array<vec3, 3> surface_evaluator::eval_bsplines_point(double u, double v, face_handle f) const {
@@ -171,21 +179,7 @@ array<vec3, 3> surface_evaluator::eval_bsplines_point(double u, double v, face_h
     };
 }
 
-regular_grid surface_evaluator::eval_subdevision(uint32_t res, face_handle handle) const {
-    auto local_system_max = get_max_coords(handle);
-    double u_coord = local_system_max.x;
-    double v_coord = local_system_max.y;
-    auto u_max = res + 1u;
-    auto v_max = res + 1u;
-    double step_u = u_coord / res;
-    double step_v = v_coord / res;
-
-    regular_grid grid(handle);
-    grid.points.reserve(static_cast<size_t>(v_max));
-    grid.normals.reserve(static_cast<size_t>(v_max));
-    grid.num_points_x = u_max;
-    grid.num_points_y = v_max;
-
+regular_grid surface_evaluator::eval_subdevision(uint32_t res, face_handle handle, bool skip_edges) const {
     // TODO: This can be cached!
     auto neighbours = get_vertices_for_subd(handle);
     vector<double> x_coords;
@@ -204,43 +198,27 @@ regular_grid surface_evaluator::eval_subdevision(uint32_t res, face_handle handl
     auto extraordinary_vertex = neighbours.front();
     auto valence = mesh.get_valence(extraordinary_vertex);
 
-    double current_u = 0;
-    double current_v = 0;
-    for (uint32_t v = 0; v < v_max; ++v) {
-        current_u = 0;
-        vector<vec3> pos_row;
-        vector<vec3> normal_row;
-        pos_row.reserve(static_cast<size_t>(u_max));
-        normal_row.reserve(static_cast<size_t>(u_max));
-        for (uint32_t u = 0; u < u_max; ++u) {
-            auto ud = min(current_u / u_coord, u_coord);
-            auto vd = min(current_v / v_coord, v_coord);
-            vec3 point;
-            vec3 du;
-            vec3 dv;
-            subd_eval(
-                ud,
-                vd,
-                2 * valence + 8,
-                x_coords.data(),
-                y_coords.data(),
-                z_coords.data(),
-                value_ptr(point),
-                value_ptr(du),
-                value_ptr(dv),
-                nullptr,
-                nullptr,
-                nullptr
-            );
-            pos_row.push_back(point);
-            normal_row.push_back(normalize(cross(du, dv)));
-            current_u += step_u;
-        }
-        grid.points.push_back(pos_row);
-        grid.normals.push_back(normal_row);
-        current_v += step_v;
-    }
-    return grid;
+    return eval_loop(res, handle, [&valence, &x_coords, &y_coords, &z_coords, this](auto u, auto v, auto handle) -> array<vec3, 3> {
+        vec3 point;
+        vec3 du;
+        vec3 dv;
+        subd_eval(
+            u,
+            v,
+            2 * valence + 8,
+            x_coords.data(),
+            y_coords.data(),
+            z_coords.data(),
+            value_ptr(point),
+            value_ptr(du),
+            value_ptr(dv),
+            nullptr,
+            nullptr,
+            nullptr
+        );
+
+        return {point, du, dv};
+    }, skip_edges);
 }
 
 const tmesh& surface_evaluator::get_tmesh() const {
