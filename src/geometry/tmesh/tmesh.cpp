@@ -984,11 +984,11 @@ half_edge_handle tmesh::find_or_create_edge_between(new_face_vertex from_h, new_
     if (found_edge) {
         return found_edge.unwrap();
     } else {
-        return add_edge_pair(from_h, to_h).first;
+        return add_edge_pair(from_h.handle, to_h.handle).first;
     }
 }
 
-pair<half_edge_handle, half_edge_handle> tmesh::add_edge_pair(new_face_vertex v1h, new_face_vertex v2h) {
+pair<half_edge_handle, half_edge_handle> tmesh::add_edge_pair(vertex_handle v1h, vertex_handle v2h) {
     // This method adds two new half edges, called "a" and "b".
     //
     //  +----+  --------(a)-------->  +----+
@@ -1007,8 +1007,8 @@ pair<half_edge_handle, half_edge_handle> tmesh::add_edge_pair(new_face_vertex v1
     auto& b_inserted = get_e(bh);
 
     // Assign half-edge targets
-    a_inserted.target = v2h.handle;
-    b_inserted.target = v1h.handle;
+    a_inserted.target = v2h;
+    b_inserted.target = v1h;
 
     return make_pair(ah, bh);
 }
@@ -1017,6 +1017,90 @@ edge_handle tmesh::half_to_full_edge_handle(half_edge_handle handle) const {
     auto twin = get_twin(handle);
     // return the handle with the smaller index of the given half edge and its twin
     return edge_handle(min(twin.get_idx(), handle.get_idx()));
+}
+
+void tmesh::split_edge(edge_handle handle) {
+    // TODO: This ignores borders, fix this!
+
+    // We cut the given edge in half by connecting the old half edges to the new center and inserting a new edge
+    // between center and vh2. In other words, we go from:
+    //               fh1
+    //  +----+  --------(he1)-------->  +----+
+    //  | v1 |                          | v2 |
+    //  +----+  <-------(he2)---------  +----+
+    //               fh2
+    // to:
+    //  +----+  --------(he1)-------->  +----+  --------(he3)-------->  +----+
+    //  | v1 |                          | v3 |                          | v2 |
+    //  +----+  <-------(he2)---------  +----+  <-------(he4)---------  +----+
+
+    auto [vh1, vh2] = get_vertices_of_edge(handle);
+    auto [fh1, fh2] = get_faces_of_edge(handle);
+    auto center = (get_vertex_position(vh1) + get_vertex_position(vh2)) / 2.0;
+    auto vh3 = add_vertex(center);
+
+    // heh1 points from vh1 to vh2
+    // heh2 points from vh2 to vh1
+    auto heh1 = get_half_edge_between(vh1, vh2).unwrap();
+    auto heh2 = get_twin(heh1);
+
+    // Calc new knots
+    auto& he1 = get_e(heh1);
+    auto& he2 = get_e(heh2);
+    double new_knot_heh13 = (*he1.knot) / 2.0;
+    double new_knot_heh24 = (*he2.knot) / 2.0;
+
+    // Add new edge
+    auto [heh3, heh4] = add_edge_pair(vh3, vh2);
+    auto& he3 = get_e(heh3);
+    auto& he4 = get_e(heh4);
+
+    // Fix new half edges
+    he3.prev = heh1;
+    he3.knot = new_knot_heh13;
+    he3.next = he1.next;
+    he3.corner = he1.corner;
+    he3.target = vh2;
+    he3.face = he1.face;
+
+    he4.prev = he2.prev;
+    he4.knot = new_knot_heh24;
+    he4.next = heh2;
+    he4.corner = false;
+    he4.target = vh3;
+    he4.face = he2.face;
+
+    // Fix old half edges
+    auto& h1_old_next = get_e(he1.next);
+    h1_old_next.prev = heh3;
+
+    he1.knot = new_knot_heh13;
+    he1.next = heh3;
+    he1.corner = false;
+    he1.target = vh3;
+
+    auto& h2_old_prev = get_e(he2.prev);
+    h2_old_prev.next = heh4;
+
+    he2.prev = heh4;
+    he2.knot = new_knot_heh24;
+
+    // Fix old vertices
+    auto& v2 = get_v(vh2);
+    if (v2.outgoing.unwrap() == heh2) {
+        v2.outgoing = optional_half_edge_handle(heh4);
+    }
+
+    // Fix new vertex
+    auto& v3 = get_v(vh3);
+    v3.outgoing = optional_half_edge_handle(heh2);
+
+    // Eventually f2 pointed to he2, which, if this was the case, is not based at a corner anymore.
+    // But if f2 pointed to he2, we know, that he2 was based at a corner, so we can assign he4 now.
+    auto& f2 = get_f(fh2.unwrap());
+    if (f2.edge == heh2) {
+        f2.edge = heh4;
+    }
 }
 
 }

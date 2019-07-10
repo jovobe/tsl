@@ -564,7 +564,7 @@ private:
      * @return Both edge handles. The first edge points from v1h to v2h, the
      *         second one points from v2h to v1h.
      */
-    pair<half_edge_handle, half_edge_handle> add_edge_pair(new_face_vertex v1h, new_face_vertex v2h);
+    pair<half_edge_handle, half_edge_handle> add_edge_pair(vertex_handle v1h, vertex_handle v2h);
 
     /**
      * @brief Converts a half edge handle to a full edge handle
@@ -640,6 +640,15 @@ private:
      */
     template <typename pred_t>
     optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred, edge_direction way = edge_direction::ingoing) const;
+
+    /**
+     * @brief Splits the given edge in the middle, inserts a new vertex and connects it to the new edges.
+     *
+     * WARNING: This method is private and unsafe, because the invariants of this mesh are broken after calling this.
+     * The broken invariant is, that no not-border-vertices with valence == 2 should exist. The caller has to fix
+     * this!
+     */
+    void split_edge(edge_handle handle);
 
     // ========================================================================
     // = Friends
