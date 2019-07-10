@@ -3,11 +3,12 @@
 
 #include <utility>
 #include <tuple>
-
 #include "tsl/geometry/rectangle.hpp"
+
 #include "tsl/attrmaps/attr_maps.hpp"
 #include "tsl/geometry/transform.hpp"
 #include "tsl/geometry/tmesh/tmesh.hpp"
+#include "tsl/row.hpp"
 #include "tsl/grid.hpp"
 
 using std::tuple;
@@ -62,7 +63,7 @@ public:
     ~surface_evaluator() = default;
 
     // TODO: Implement `surface_evaluator::eval`
-    vector<regular_grid> eval(uint32_t res) const;
+    tuple<vector<regular_grid>, vector<row>> eval(uint32_t res) const;
     vector<regular_grid> eval_per_face(uint32_t res) const;
 
     regular_grid eval_bsplines(uint32_t res, face_handle handle, bool skip_edges = false) const;

@@ -987,7 +987,9 @@ mouse_pos window::get_mouse_pos() const {
 }
 
 void window::update_surface_buffer() {
-    tmesh_faces = evaluator.eval_per_face(surface_resolution.get());
+//    tmesh_faces = evaluator.eval_per_face(surface_resolution.get());
+    auto res = evaluator.eval(surface_resolution.get());
+    tmesh_faces = get<0>(res);
     surface_buffer = get_multi_render_buffer(tmesh_faces, picking_map);
 
     auto vec_data = surface_buffer.get_combined_vec_data();

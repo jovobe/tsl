@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fmt/format.h>
 
+#include "tsl/row.hpp"
 #include "tsl/geometry/line_segment.hpp"
 #include "tsl/evaluation/surface_evaluator.hpp"
 #include "tsl/evaluation/subdevision.hpp"
@@ -71,7 +72,7 @@ vector<regular_grid> surface_evaluator::eval_per_face(uint32_t res) const {
     return out;
 }
 
-vector<regular_grid> surface_evaluator::eval(uint32_t res) const {
+tuple<vector<regular_grid>, vector<row>> surface_evaluator::eval(uint32_t res) const {
     vector<regular_grid> out;
     out.reserve(mesh.num_faces());
 
@@ -107,7 +108,22 @@ vector<regular_grid> surface_evaluator::eval(uint32_t res) const {
         }
     }
 
-    return out;
+    vector<row> rows;
+    rows.reserve(mesh.num_edges());
+    for (const auto& eh: mesh.get_edges()) {
+        auto vertices = mesh.get_vertices_of_edge(eh);
+        auto faces = mesh.get_faces_of_edge(eh);
+        // TODO: calc distance and use it as res factor
+        uint32_t row_res = 5 + 1;
+        row r(eh, vertices.front());
+        r.points.reserve(row_res);
+        r.normals.reserve(row_res);
+        for (uint32_t i = 0; i < row_res; ++i) {
+
+        }
+    }
+
+    return {out, rows};
 }
 
 regular_grid surface_evaluator::eval_bsplines(uint32_t res, face_handle handle, bool skip_edges) const {
