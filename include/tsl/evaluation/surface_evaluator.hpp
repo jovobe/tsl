@@ -74,7 +74,7 @@ public:
      */
     vec2 get_max_coords(face_handle handle) const;
 
-    const tmesh& get_tmesh() const;
+    tmesh& get_tmesh();
 
     // ========================================================================
     // = T-Mesh modifier
@@ -102,6 +102,13 @@ public:
     const coord_map& get_coord_map() const { return uv; }
     const dir_map& get_dir_map() const { return dir; }
     const edge_trans_map& get_edge_trans_map() const { return edge_trans; }
+
+    /**
+     * @brief Updates the local cached values, because the mesh structure has changed.
+     *
+     * This could be updated to only update the cache for some values instead of updating the whole cache.
+     */
+    void update_cache();
 private:
     tmesh mesh;
     coord_map uv;
@@ -134,13 +141,6 @@ private:
      * @brief Calculates the knot vectors in u and v direction for the basis function rooted at the given vertex.
      */
     local_knot_vectors get_knot_vectors(vertex_handle handle, size_t handle_index) const;
-
-    /**
-     * @brief Updates the local cached values, because the mesh structure has changed.
-     *
-     * This could be updated to only update the cache for some values instead of updating the whole cache.
-     */
-    void update_cache();
 
     /**
      * @brief Depending on the configuration, print error or panic.

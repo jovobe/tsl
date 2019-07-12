@@ -665,14 +665,17 @@ void window::draw_gui() {
                     ImGui::BulletText("prev: %u", mesh.get_prev(eh).get_idx());
                     ImGui::BulletText("twin: %u", mesh.get_twin(eh).get_idx());
                     ImGui::BulletText("target: %u", mesh.get_target(eh).get_idx());
-                    ImGui::BulletText("face: %u", mesh.get_face_of_half_edge(eh).unwrap().get_idx());
+                    auto face = mesh.get_face_of_half_edge(eh);
+                    if (face) {
+                        ImGui::BulletText("face: %u", mesh.get_face_of_half_edge(eh).unwrap().get_idx());
+                    }
                     ImGui::TreePop();
                 }
 
                 if (ImGui::TreeNode("t-mesh data")) {
                     // Check for border edge
                     if (mesh.is_border(eh)) {
-                        ImGui::BulletText("this half edge lies on the border of the edge");
+                        ImGui::BulletText("this half edge lies on the border of the mesh");
                     } else {
                         ImGui::BulletText("points into face corner: %s", *mesh.corner(eh) ? "true" : "false");
                         ImGui::BulletText("knot interval: %.2f", *mesh.get_knot_interval(eh));
@@ -715,6 +718,21 @@ void window::draw_gui() {
                                     draw_edge_information(eh);
                                 }
                                 ImGui::TreePop();
+                            }
+                            if (ImGui::Button("Refine")) {
+                                evaluator.get_tmesh().refine_around(vh);
+//                                evaluator.update_cache();
+
+                                // Save picked elements without removed edges
+//                                set<picking_element> old_picked;
+//                                std::copy(picked_elements.begin(), picked_elements.end(), inserter(old_picked, old_picked.begin()));
+
+                                // Update all buffers
+                                update_buffer();
+
+                                // Restore the picked elements and update the picked buffer to make them visible
+//                                picked_elements.insert(old_picked.begin(), old_picked.end());
+//                                update_picked_buffer();
                             }
                             ImGui::TreePop();
                         }
@@ -1129,10 +1147,10 @@ void window::update_buffer()
 {
     // This needs to be cleared because the picking map will be cleared
     // otherwise the old indices stored here are invalid
-    picked_elements.clear();
+//    picked_elements.clear();
 
     picking_map.clear();
-    update_surface_buffer();
+//    update_surface_buffer();
     update_control_buffer();
     update_picked_buffer();
 }

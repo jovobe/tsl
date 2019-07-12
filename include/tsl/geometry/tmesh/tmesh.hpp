@@ -108,6 +108,16 @@ public:
      */
     bool remove_edge(edge_handle handle);
 
+    /**
+     * @brief Removes the given face.
+     */
+    void remove_face(face_handle handle);
+
+    /**
+     * @brief Refines the mesh around the given extraordinary vertex.
+     */
+    void refine_around(vertex_handle handle);
+
     // ========================================================================
     // = Get numbers
     // ========================================================================
@@ -396,7 +406,12 @@ public:
     /**
      * @brief Returns true, if this half edge lies on the border of the mesh, false otherwise.
      */
-     bool is_border(half_edge_handle handle) const;
+    bool is_border(half_edge_handle handle) const;
+
+    /**
+     * @brief Returns true, if this edge lies on the border of the mesh, false otherwise.
+     */
+    bool is_border(edge_handle handle) const;
 
     /**
      * @brief Get a list of edges around the given vertex.
@@ -642,13 +657,30 @@ private:
     optional_half_edge_handle find_edge_around_vertex(half_edge_handle start_edge_h, pred_t pred, edge_direction way = edge_direction::ingoing) const;
 
     /**
-     * @brief Splits the given edge in the middle, inserts a new vertex and connects it to the new edges.
+     * @brief Splits the given edge in the middle, inserts a new vertex, connects it to the new edges and returns the
+     *        new vertex.
      *
      * WARNING: This method is private and unsafe, because the invariants of this mesh are broken after calling this.
      * The broken invariant is, that no not-border-vertices with valence == 2 should exist. The caller has to fix
      * this!
      */
-    void split_edge(edge_handle handle);
+    vertex_handle split_edge(edge_handle handle);
+
+    /**
+     * @brief This removes an edge without checking for constraints.
+     *
+     * WARNING: This method is private and unsafe, because the invariants of this mesh could be broken after
+     * calling this.
+     */
+    void remove_edge_unsafe(edge_handle handle);
+
+    /**
+     * @brief This removes a border edge without checking for constraints.
+     *
+     * WARNING: This method is private and unsafe, because the invariants of this mesh could be broken after
+     * calling this.
+     */
+    void remove_border_edge_unsafe(edge_handle handle);
 
     // ========================================================================
     // = Friends

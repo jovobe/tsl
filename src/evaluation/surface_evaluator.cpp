@@ -243,7 +243,7 @@ regular_grid surface_evaluator::eval_subdevision(uint32_t res, face_handle handl
     return grid;
 }
 
-const tmesh& surface_evaluator::get_tmesh() const {
+tmesh& surface_evaluator::get_tmesh() {
     return mesh;
 }
 

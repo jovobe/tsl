@@ -3,12 +3,15 @@
 #include <algorithm>
 #include <optional>
 
+#include "tsl/attrmaps/attr_maps.hpp"
+#include "tsl/util/println.hpp"
 #include "tsl/geometry/tmesh/tmesh.hpp"
 #include "tsl/geometry/tmesh/iterator.hpp"
 #include "tsl/algorithm/get_vertices.hpp"
 
 using std::make_unique;
 using std::min;
+using std::min_element;
 using std::get;
 using std::make_tuple;
 using std::tuple;
@@ -423,20 +426,6 @@ bool tmesh::remove_edge(edge_handle handle) {
     if (!half_edge_1.face || !half_edge_2.face) {
         return false;
     }
-    auto face1_h = half_edge_1.face.unwrap();
-    auto face2_h = half_edge_2.face.unwrap();
-
-    // get vertices
-    auto& vertex_1 = get_v(half_edge_1.target);
-    auto& vertex_2 = get_v(half_edge_2.target);
-
-    // we have to fix:
-    // - prev
-    // - next
-    // - out (of vertex)
-    // - edge (of face)
-    // - face (of inner edges of face 1)
-    // - corner
 
     // TODO: special case: valence == 3
     if (get_valence(half_edge_1.target)  == 3 || get_valence(half_edge_2.target)  == 3) {
@@ -445,61 +434,166 @@ bool tmesh::remove_edge(edge_handle handle) {
         return false;
     }
 
-    // the face of half edge 1 is going to be deleted by this operation, store all inner edge handles, to fix their
-    // face pointer
-    auto inner_edges_of_face1 = get_half_edges_of_face(face1_h);
-
-    // fix prev and next
-    auto& next_1 = get_e(half_edge_1.next);
-    auto& prev_1 = get_e(half_edge_1.prev);
-    auto& next_2 = get_e(half_edge_2.next);
-    auto& prev_2 = get_e(half_edge_2.prev);
-
-    next_1.prev = half_edge_2.prev;
-    next_2.prev = half_edge_1.prev;
-    prev_1.next = half_edge_2.next;
-    prev_2.next = half_edge_1.next;
-
-    // fix corner
-    prev_1.corner = false;
-    prev_2.corner = false;
-
-    // fix out (of vertex)
-    if (vertex_1.outgoing.unwrap() == half_edge_2_h) {
-        vertex_1.outgoing = optional_half_edge_handle(half_edge_1.next);
-    }
-    if (vertex_2.outgoing.unwrap() == half_edge_1_h) {
-        vertex_2.outgoing = optional_half_edge_handle(half_edge_2.next);
-    }
-
-    // fix edge (of face 2)
-    auto& face2 = get_f(face2_h);
-    if (!*from_corner(face2.edge)) {
-        // Find a half edge which is based at a corner
-        optional_half_edge_handle based_at_corner;
-        circulate_in_face(half_edge_2.prev, [&based_at_corner, this](auto handle) {
-            if (*from_corner(handle)) {
-                based_at_corner = optional_half_edge_handle(handle);
-                return false;
-            }
-            return true;
-        });
-
-        face2.edge = based_at_corner.expect("No edge based at a corner found in face!");
-    }
-
-    // fix face (of inner edges of face 1)
-    for (const auto& eh: inner_edges_of_face1) {
-        auto& half_edge = get_e(eh);
-        half_edge.face = optional_face_handle(face2_h);
-    }
-
-    // actually delete the edge and face 1
-    edges.erase(half_edge_1_h);
-    edges.erase(half_edge_2_h);
-    faces.erase(face1_h);
+    // Actually remove the edge
+    remove_edge_unsafe(handle);
 
     return true;
+}
+
+void tmesh::remove_face(face_handle handle) {
+//     TODO: This ignores borders - fix this!
+
+    bool face_removed = false;
+    auto inner_edges = get_half_edges_of_face(handle);
+    for (const auto& heh: inner_edges) {
+        // Remove edge, if this was the last face connected to it
+        const auto& twin = get_e(get_twin(heh));
+        if (!twin.face) {
+            remove_border_edge_unsafe(half_to_full_edge_handle(heh));
+            face_removed = true;
+        } else {
+            auto& he = get_e(heh);
+            he.face = optional_face_handle();
+            he.knot = nullopt;
+            he.corner = nullopt;
+        }
+    }
+    if (!face_removed) {
+        faces.erase(handle);
+    }
+}
+
+void tmesh::refine_around(vertex_handle handle) {
+    if (!is_extraordinary(handle)) {
+        panic("The given vertex {} is not an extraordinary one!", handle);
+    }
+
+    // Find shortest edge around vertex
+    auto half_edges = get_half_edges_of_vertex(handle, edge_direction::ingoing);
+    get_half_edges_of_vertex(handle, half_edges, edge_direction::outgoing);
+    const auto shortest = min_element(half_edges.begin(), half_edges.end(), [this](auto heh1, auto heh2) {
+        const auto& he1 = get_e(heh1);
+        const auto& he2 = get_e(heh2);
+        return (*he1.knot) < (*he2.knot);
+    });
+    double factor = (*get_knot_interval(*shortest)) / 4.0;
+
+    auto edges_of_vertex = get_edges_of_vertex(handle);
+
+    struct entry {
+        entry(const vector<vertex_handle>& vertices, const vertex_handle& corner): vertices(vertices), corner(corner) {}
+
+        vector<vertex_handle> vertices;
+        vertex_handle corner;
+    };
+
+    // Split all edges in four parts
+    sparse_edge_map<entry> em;
+    em.reserve(get_valence(handle));
+    for (const auto& eh: edges_of_vertex) {
+        // Get vertices of edge with vh1 beeing the extraordinary vertex
+        auto [vh1, vh2] = get_vertices_of_edge(eh);
+        if (vh1 != handle) {
+            vh2 = vh1;
+            vh1 = handle;
+        }
+
+        auto pos1 = get_vertex_position(vh1);
+        auto pos2 = get_vertex_position(vh2);
+        auto pos_center = (pos1 + pos2) / 2.0;
+        auto center = add_vertex(pos_center);
+        auto first = add_vertex((pos1 + pos_center) / 2.0);
+        auto second = add_vertex((pos_center + pos2) / 2.0);
+
+        // Split the edge in four pieces
+//        auto center = split_edge(eh);
+//        auto first_half = get_edge_between(vh1, center).unwrap();
+//        auto first = split_edge(first_half);
+//        auto second_half = get_edge_between(center, vh2).unwrap();
+//        auto second = split_edge(second_half);
+
+        // Get corner
+        auto heh = get_half_edge_between(vh1, vh2).unwrap();
+        auto corner = get_e(get_e(heh).next).target;
+        em.insert(eh, entry({first, center, second, vh2}, corner));
+    }
+
+    // Remove old faces
+    auto incident_faces = get_faces_of_vertex(handle);
+    for (const auto& fh: incident_faces) {
+        remove_face(fh);
+    }
+
+    // Generate grid per face
+    for (size_t i = 0; i < edges_of_vertex.size(); ++i) {
+        //      (root) ===== (00) ====== (01) ====== (02)    <-- next row
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //       (00) ====== (v0) ====== (v1) ====== (v2)
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //       (01) ====== (v3) ====== (v4) ====== (v5)
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //        ||          ||          ||          ||
+        //       (02) ====== (v6) ====== (v7) ====== (v8)
+        //         |
+        //         ↳ current row
+
+        const auto& current_entry = em[edges_of_vertex[i]];
+        const auto& next_entry = em[edges_of_vertex[(i + 1) % edges_of_vertex.size()]];
+
+        const auto& current_row = current_entry.vertices;
+        const auto& next_row = next_entry.vertices;
+
+        auto root = get_vertex_position(handle);
+        auto offset_x = get_vertex_position(current_row[0]) - root;
+        auto offset_y = get_vertex_position(next_row[0]) - root;
+
+        vector<vertex_handle> inner;
+        inner.reserve(3 * 3);
+        for (uint32_t x = 0; x < 3; ++x) {
+            for (uint32_t y = 0; y < 3; ++y) {
+                auto vh = add_vertex(root + ((1.0 + x) * offset_x) + ((1.0 + y) * offset_y));
+                inner.push_back(vh);
+            }
+        }
+
+        vector<vertex_handle> grid = {
+            handle,         next_row[0], next_row[1], next_row[2],
+            current_row[0],    inner[0],         inner[1],         inner[2],
+            current_row[1],    inner[3],         inner[4],         inner[5],
+            current_row[2],    inner[6],         inner[7],         inner[8]
+        };
+
+        for (uint32_t y = 0; y < 3; ++y) {
+            for (uint32_t x = 0; x < 3; ++x) {
+                add_face({
+                         new_face_vertex(grid[x + 1 + (y * 4)], true, factor),
+                         new_face_vertex(grid[x + (y * 4)], true, factor),
+                         new_face_vertex(grid[x + ((y + 1) * 4)], true, factor),
+                         new_face_vertex(grid[x + 1 + ((y + 1) * 4)], true, factor)
+                         });
+            }
+        }
+
+        // Add missing two faces
+//        auto corner_edge = get_edge_between(current_row.back(), next_entry.corner).unwrap();
+//        auto new_vertex = split_edge(corner_edge);
+//        add_face({
+//            new_face_vertex(new_vertex, true, factor),
+//            new_face_vertex(current_row[3], true, factor),
+//            new_face_vertex(current_row[2], true, factor),
+//            new_face_vertex(inner[6], false, factor),
+//            new_face_vertex(inner[7], false, factor),
+//            new_face_vertex(inner[8], true, factor)
+//        });
+    }
 }
 
 // ========================================================================
@@ -769,6 +863,11 @@ bool tmesh::is_border(half_edge_handle handle) const {
     return !he.face;
 }
 
+bool tmesh::is_border(edge_handle handle) const {
+    auto [fh1, fh2] = get_faces_of_edge(handle);
+    return !fh1 || !fh2;
+}
+
 void tmesh::get_edges_of_vertex(
     vertex_handle handle,
     vector<edge_handle>& edges_out
@@ -1019,23 +1118,33 @@ edge_handle tmesh::half_to_full_edge_handle(half_edge_handle handle) const {
     return edge_handle(min(twin.get_idx(), handle.get_idx()));
 }
 
-void tmesh::split_edge(edge_handle handle) {
-    // TODO: This ignores borders, fix this!
-
+vertex_handle tmesh::split_edge(edge_handle handle) {
     // We cut the given edge in half by connecting the old half edges to the new center and inserting a new edge
     // between center and vh2. In other words, we go from:
-    //               fh1
+    //
+    //  |    |                          |    |
+    //  |    |          ?f1?            |    |
+    //  |    |                          |    |
     //  +----+  --------(he1)-------->  +----+
     //  | v1 |                          | v2 |
     //  +----+  <-------(he2)---------  +----+
-    //               fh2
+    //  |    |                          |    |
+    //  |    |          ?f2?            |    |
+    //  |    |                          |    |
+    //
     // to:
+    //
+    //  |    |                                                          |    |
+    //  |    |                           ?f1?                           |    |
+    //  |    |                                                          |    |
     //  +----+  --------(he1)-------->  +----+  --------(he3)-------->  +----+
     //  | v1 |                          | v3 |                          | v2 |
     //  +----+  <-------(he2)---------  +----+  <-------(he4)---------  +----+
+    //  |    |                                                          |    |
+    //  |    |                           ?f2?                           |    |
+    //  |    |                                                          |    |
 
     auto [vh1, vh2] = get_vertices_of_edge(handle);
-    auto [fh1, fh2] = get_faces_of_edge(handle);
     auto center = (get_vertex_position(vh1) + get_vertex_position(vh2)) / 2.0;
     auto vh3 = add_vertex(center);
 
@@ -1047,8 +1156,14 @@ void tmesh::split_edge(edge_handle handle) {
     // Calc new knots
     auto& he1 = get_e(heh1);
     auto& he2 = get_e(heh2);
-    double new_knot_heh13 = (*he1.knot) / 2.0;
-    double new_knot_heh24 = (*he2.knot) / 2.0;
+    optional<double> new_knot_heh13;
+    optional<double> new_knot_heh24;
+    if (he1.knot) {
+        new_knot_heh13 = (*he1.knot) / 2.0;
+    }
+    if (he2.knot) {
+        new_knot_heh24 = (*he2.knot) / 2.0;
+    }
 
     // Add new edge
     auto [heh3, heh4] = add_edge_pair(vh3, vh2);
@@ -1095,11 +1210,171 @@ void tmesh::split_edge(edge_handle handle) {
     auto& v3 = get_v(vh3);
     v3.outgoing = optional_half_edge_handle(heh2);
 
-    // Eventually f2 pointed to he2, which, if this was the case, is not based at a corner anymore.
-    // But if f2 pointed to he2, we know, that he2 was based at a corner, so we can assign he4 now.
-    auto& f2 = get_f(fh2.unwrap());
-    if (f2.edge == heh2) {
-        f2.edge = heh4;
+    // If f2 exists
+    if (he2.face) {
+        // Eventually f2 pointed to he2, which, if this was the case, is not based at a corner anymore.
+        // But if f2 pointed to he2, we know, that he2 was based at a corner, so we can assign he4 now.
+        auto& f2 = get_f(he2.face.unwrap());
+        if (f2.edge == heh2) {
+            f2.edge = heh4;
+        }
+    }
+
+    return vh3;
+}
+
+void tmesh::remove_edge_unsafe(edge_handle handle) {
+    // This method behaves differently when a border edge is removed. In this case, we dont have to merge the
+    // two faces of the edge together.
+    if (is_border(handle)) {
+        remove_border_edge_unsafe(handle);
+        return;
+    }
+
+    auto [half_edge_1_h, half_edge_2_h] = get_half_edges_of_edge(handle);
+    const auto& half_edge_1 = get_e(half_edge_1_h);
+    const auto& half_edge_2 = get_e(half_edge_2_h);
+
+    // get vertices
+    auto& vertex_1 = get_v(half_edge_1.target);
+    auto& vertex_2 = get_v(half_edge_2.target);
+
+    // we have to fix:
+    // - prev
+    // - next
+    // - out (of vertex)
+    // - edge (of face)
+    // - face (of inner edges of face 1)
+    // - corner
+
+    auto face1_h = half_edge_1.face.unwrap();
+    auto face2_h = half_edge_2.face.unwrap();
+
+    // the face of half edge 1 is going to be deleted by this operation, store all inner edge handles, to fix their
+    // face pointer
+    auto inner_edges_of_face1 = get_half_edges_of_face(face1_h);
+
+    // fix prev and next
+    auto& next_1 = get_e(half_edge_1.next);
+    auto& prev_1 = get_e(half_edge_1.prev);
+    auto& next_2 = get_e(half_edge_2.next);
+    auto& prev_2 = get_e(half_edge_2.prev);
+
+    next_1.prev = half_edge_2.prev;
+    next_2.prev = half_edge_1.prev;
+    prev_1.next = half_edge_2.next;
+    prev_2.next = half_edge_1.next;
+
+    // fix corner
+    prev_1.corner = false;
+    prev_2.corner = false;
+
+    // fix out (of vertex)
+    if (vertex_1.outgoing.unwrap() == half_edge_2_h) {
+        vertex_1.outgoing = optional_half_edge_handle(half_edge_1.next);
+    }
+    if (vertex_2.outgoing.unwrap() == half_edge_1_h) {
+        vertex_2.outgoing = optional_half_edge_handle(half_edge_2.next);
+    }
+
+    // fix edge (of face 2)
+    auto& face2 = get_f(face2_h);
+    if (!*from_corner(face2.edge)) {
+        // Find a half edge which is based at a corner
+        optional_half_edge_handle based_at_corner;
+        circulate_in_face(half_edge_2.prev, [&based_at_corner, this](auto handle) {
+            if (*from_corner(handle)) {
+                based_at_corner = optional_half_edge_handle(handle);
+                return false;
+            }
+            return true;
+        });
+
+        face2.edge = based_at_corner.expect("No edge based at a corner found in face!");
+    }
+
+    // fix face (of inner edges of face 1)
+    for (const auto& eh: inner_edges_of_face1) {
+        auto& half_edge = get_e(eh);
+        half_edge.face = optional_face_handle(face2_h);
+    }
+
+    // actually delete the edge and face 1
+    edges.erase(half_edge_1_h);
+    edges.erase(half_edge_2_h);
+    faces.erase(face1_h);
+}
+
+void tmesh::remove_border_edge_unsafe(edge_handle handle) {
+    auto [half_edge_1_h, half_edge_2_h] = get_half_edges_of_edge(handle);
+    const auto& half_edge_1 = get_e(half_edge_1_h);
+    const auto& half_edge_2 = get_e(half_edge_2_h);
+
+    // get vertices
+    auto& vertex_1 = get_v(half_edge_1.target);
+    auto& vertex_2 = get_v(half_edge_2.target);
+
+    // we have to fix:
+    // - prev
+    // - next
+    // - out (of vertex)
+    // - edge (of face)
+    // - face (of inner edges of face 1)
+    // - corner
+
+    // Get the existing face of the edge
+    auto [fh1, fh2] = get_faces_of_edge(handle);
+    auto face_h = fh1;
+    if (!fh1) {
+        face_h = fh2;
+    }
+
+    vector<half_edge_handle> inner_edges_of_face;
+    if (face_h) {
+        inner_edges_of_face = get_half_edges_of_face(face_h.unwrap());
+    }
+
+    // fix prev and next
+    auto& next_1 = get_e(half_edge_1.next);
+    auto& prev_1 = get_e(half_edge_1.prev);
+    auto& next_2 = get_e(half_edge_2.next);
+    auto& prev_2 = get_e(half_edge_2.prev);
+
+    next_1.prev = half_edge_2.prev;
+    next_2.prev = half_edge_1.prev;
+    prev_1.next = half_edge_2.next;
+    prev_2.next = half_edge_1.next;
+
+    // fix out (of vertex)
+    if (vertex_1.outgoing.unwrap() == half_edge_2_h) {
+        vertex_1.outgoing = optional_half_edge_handle(half_edge_1.next);
+    }
+    if (half_edge_2_h == half_edge_1.next) {
+        vertex_1.outgoing = optional_half_edge_handle();
+    }
+    if (vertex_2.outgoing.unwrap() == half_edge_1_h) {
+        vertex_2.outgoing = optional_half_edge_handle(half_edge_2.next);
+    }
+    if (half_edge_1_h == half_edge_2.next) {
+        vertex_2.outgoing = optional_half_edge_handle();
+    }
+
+    if (face_h) {
+        // fix inner edges of face
+        for (const auto& eh: inner_edges_of_face) {
+            auto& he = get_e(eh);
+            he.face = optional_face_handle();
+            he.corner = nullopt;
+            he.knot = nullopt;
+        }
+    }
+
+    // actually delete the edge and face
+    edges.erase(half_edge_1_h);
+    edges.erase(half_edge_2_h);
+
+    if (face_h) {
+        faces.erase(face_h.unwrap());
     }
 }
 
