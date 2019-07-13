@@ -214,6 +214,6 @@ private:
 
 }
 
-#include <tsl/attrmaps/attribute_map.tcc>
+#include "tsl/attrmaps/attribute_map.tcc"
 
 #endif //TSL_ATTRIBUTE_MAP_HPP

@@ -4,8 +4,8 @@
 #include <optional>
 #include <functional>
 
-#include <tsl/attrmaps/attribute_map.hpp>
-#include <tsl/attrmaps/stable_vector.hpp>
+#include "tsl/attrmaps/attribute_map.hpp"
+#include "tsl/attrmaps/stable_vector.hpp"
 
 using std::optional;
 using std::reference_wrapper;
@@ -103,6 +103,6 @@ private:
 
 }
 
-#include <tsl/attrmaps/vector_map.tcc>
+#include "tsl/attrmaps/vector_map.tcc"
 
 #endif //TSL_VECTOR_MAP_HPP

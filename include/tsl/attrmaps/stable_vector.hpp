@@ -248,6 +248,6 @@ private:
 
 }
 
-#include <tsl/attrmaps/stable_vector.tcc>
+#include "tsl/attrmaps/stable_vector.tcc"
 
 #endif //TSL_STABLE_VECTOR_HPP

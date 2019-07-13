@@ -5,7 +5,7 @@
 #include <optional>
 #include <functional>
 
-#include <tsl/attrmaps/attribute_map.hpp>
+#include "tsl/attrmaps/attribute_map.hpp"
 
 using std::unordered_map;
 using std::optional;
@@ -91,6 +91,6 @@ private:
 
 }
 
-#include <tsl/attrmaps/hash_map.tcc>
+#include "tsl/attrmaps/hash_map.tcc"
 
 #endif //TSL_HASH_MAP_HPP
