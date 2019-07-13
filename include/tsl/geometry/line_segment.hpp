@@ -1,15 +1,25 @@
 #ifndef TSL_LINE_SEGMENT_HPP
 #define TSL_LINE_SEGMENT_HPP
 
-#include <tsl/geometry/rectangle.hpp>
-#include <tsl/geometry/vector.hpp>
+#include "tsl/geometry/rectangle.hpp"
+#include "tsl/geometry/vector.hpp"
 
 namespace tsl {
 
+/**
+ * @brief Represents a 2d line segment by to points.
+ */
 struct line_segment {
+    /// Start point
     vec2 p1;
+    /// End point.
     vec2 p2;
 
+    /**
+     * @brief Creates a line segment, which lies between the given points.
+     * @param p1 Start point.
+     * @param p2 End point.
+     */
     line_segment(const vec2& p1, const vec2& p2) : p1(p1), p2(p2) {}
 
     /**

@@ -10,7 +10,7 @@ namespace tsl {
 struct optional_half_edge_handle;
 
 /**
- * @brief Represents a vertex in the HEM data structure.
+ * @brief Represents a vertex in the tmesh data structure.
  */
 struct vertex
 {

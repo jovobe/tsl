@@ -9,7 +9,7 @@ namespace tsl {
 struct half_edge_handle;
 
 /**
- * @brief Represents a face in the HEM data structure.
+ * @brief Represents a face in the tmesh data structure.
  */
 struct face
 {

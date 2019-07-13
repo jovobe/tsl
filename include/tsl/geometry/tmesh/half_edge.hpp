@@ -9,6 +9,9 @@ using std::optional;
 
 namespace tsl {
 
+/**
+ * @brief Represents a half edge in the tmesh data structure.
+ */
 struct half_edge
 {
     /// The face this edge belongs to (or none, if this edge lies on the
