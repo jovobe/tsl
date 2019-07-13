@@ -7,6 +7,9 @@ namespace tsl {
 
 // TODO: checks are for the mesh only - but we need to check tmesh
 //       integrity as well, if it is still valid after edge removal (new extraordinary vertices could be created!)
+/**
+ * @brief Tries to remove the given percentage of egdges from the given tmesh.
+ */
 size_t remove_edges(tmesh& mesh, double percent);
 
 }

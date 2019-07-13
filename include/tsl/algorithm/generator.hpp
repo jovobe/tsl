@@ -5,6 +5,9 @@
 
 namespace tsl {
 
+/**
+ * @brief Generates a tmesh in form of a cube with the given edge length and size.
+ */
 tmesh tmesh_cube(uint32_t size, double edge_length = 1.0);
 
 }
