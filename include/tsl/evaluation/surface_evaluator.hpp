@@ -15,11 +15,17 @@ using std::move;
 
 namespace tsl {
 
+/**
+ * @brief Represents the direction of a half edge in the tmesh relative to its local coordinate system.
+ */
 enum class tag {
     positive_u,
     negative_v
 };
 
+/**
+ * @brief POD type to hold the knot vectors of a basis function.
+ */
 struct local_knot_vectors {
     vector<double> u;
     vector<double> v;
@@ -27,32 +33,41 @@ struct local_knot_vectors {
     local_knot_vectors(vector<double>&& u, vector<double>&& v): u(move(u)), v(move(v)) {}
 };
 
+/**
+ * @brief POD type to hold the configuration of the evaluator.
+ */
 struct evaluator_config {
     bool panic_at_integrity_violations;
 
     evaluator_config() : panic_at_integrity_violations(false) {}
 };
 
-/// uv
+/// uv coords of half edges
 using coord_map = dense_half_edge_map<vec2>;
-/// dir
+/// dir ections of half egdes
 using dir_map = dense_half_edge_map<uint8_t>;
-/// t(h)
+/// t(h) transforms of half edges from one local coord system to another
 using edge_trans_map = dense_half_edge_map<transform>;
-/// t(J^a_i)
+/// t(J^a_i) transforms from the local coord system to the domain system
 using basis_fun_trans_map = dense_vertex_map<vector<transform>>;
-/// J^a_i
+/// J^a_i handles of basis functions
 using basis_fun_map = dense_vertex_map<vector<tuple<half_edge_handle, tag>>>;
-/// k^a_i,{1,2}
+/// k^a_i,{1,2} knots of basis functions of vertices
 using knot_map = dense_vertex_map<vector<array<double, 2>>>;
-/// C_m
+/// C_m support for each face
 using support_map = dense_face_map<vector<tuple<vertex_handle, index, transform>>>;
 
 /**
- * @brief
+ * @brief Evaluates the surface of a tmesh.
+ *
+ * This evaluator uses the algorithm described in the paper
+ * "Similarity Maps and Field-Guided T-Splines: a Perfect Couple" by Campen.
  */
 class surface_evaluator {
 public:
+    /**
+     * @brief ctor which takes a given tmesh.
+     */
     explicit surface_evaluator(tmesh&& mesh);
 
     surface_evaluator(const surface_evaluator&) = delete;
@@ -63,10 +78,25 @@ public:
 
     // TODO: Implement `surface_evaluator::eval`
     regular_grid eval(uint32_t res) const;
+
+    /**
+     * @brief Evaluates the surface per face with the given resolution.
+     */
     vector<regular_grid> eval_per_face(uint32_t res) const;
 
+    /**
+     * @brief Evaluates the surface of the given face with the given resolution using b-spline basis functions.
+     */
     regular_grid eval_bsplines(uint32_t res, face_handle handle) const;
+
+    /**
+     * @brief Evaluates the given point (by local u, v coords) of the given face.
+     */
     array<vec3, 3> eval_bsplines_point(double u, double v, face_handle f) const;
+
+    /**
+     * @brief Evaluates the surface of the given face with the given resolution using subdevision surface evaluation.
+     */
     regular_grid eval_subdevision(uint32_t res, face_handle handle) const;
 
     /**
@@ -74,6 +104,9 @@ public:
      */
     vec2 get_max_coords(face_handle handle) const;
 
+    /**
+     * @brief Returns the used tmesh.
+     */
     const tmesh& get_tmesh() const;
 
     // ========================================================================
@@ -95,21 +128,50 @@ public:
      */
     vec3& get_vertex_pos(vertex_handle handle);
 
+    /// The current config of the evaluator.
     evaluator_config config;
 
+    /**
+     * @brief Returns the current support map.
+     */
     const support_map& get_support_map() const { return support; }
+
+    /**
+     * @brief Returns the knot vectors.
+     */
     const dense_vertex_map<vector<local_knot_vectors>>& get_knot_vectors() const { return knot_vectors; }
+
+    /**
+     * @brief Returns the local coords map.
+     */
     const coord_map& get_coord_map() const { return uv; }
+
+    /**
+     * @brief Returns the direction map.
+     */
     const dir_map& get_dir_map() const { return dir; }
+
+    /**
+     * @brief Returns the edge transitions.
+     */
     const edge_trans_map& get_edge_trans_map() const { return edge_trans; }
+
 private:
+    /// Used tmesh.
     tmesh mesh;
+    /// uv coords map
     coord_map uv;
+    /// direction map
     dir_map dir;
+    /// edge transitions
     edge_trans_map edge_trans;
+    /// Support map
     support_map support;
+    /// cached knots
     knot_map knots;
+    /// basis function handles
     basis_fun_map handles;
+    /// local knot vectors of vertices
     dense_vertex_map<vector<local_knot_vectors>> knot_vectors;
 
     // TODO: this will be removed, when evaluation near borders is implemented
