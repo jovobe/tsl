@@ -121,9 +121,6 @@ window::window(string&& title, uint32_t width, uint32_t height) :
     // get framebuffer size
     glfwGetFramebufferSize(glfw_window.get(), &frame_width, &frame_height);
 
-    // get dpi
-    dpi = static_cast<double>(frame_height) / static_cast<double>(height);
-
     // picking
     glGenFramebuffers(1, &picking_frame);
     glBindFramebuffer(GL_FRAMEBUFFER, picking_frame);

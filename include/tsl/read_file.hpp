@@ -7,6 +7,9 @@ using std::string;
 
 namespace tsl {
 
+/**
+ * @brief Reads the given file into a string.
+ */
 string read_file(const string& filename);
 
 }

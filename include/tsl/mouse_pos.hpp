@@ -3,6 +3,9 @@
 
 namespace tsl {
 
+/**
+ * @brief Represents the position of the mouse cursor.
+ */
 struct mouse_pos {
     double x;
     double y;
