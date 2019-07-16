@@ -4,7 +4,7 @@ Library and editor for representation and manipulation of generalised T-Spline s
 [![CircleCI](https://circleci.com/gh/jovobe/tsl.svg?style=svg)](https://circleci.com/gh/jovobe/tsl)
 
 ## Build
-In order to build this software you need a C++ compiler (compatible with C++17 standard) and the package manager [conan](https://conan.io/).
+In order to build this software you need a C++ compiler (compatible with C++17 standard), CMake and the package manager [conan](https://conan.io/).
 
 - `mkdir build && cd build`
 
