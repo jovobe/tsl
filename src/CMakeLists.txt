@@ -40,3 +40,12 @@ target_link_libraries(tsl_main
     imgui
     tsl
 )
+
+add_executable(tsl_benchmark
+    benchmark.cpp
+)
+
+target_link_libraries(tsl_benchmark
+    ${CONAN_LIBS}
+    tsl
+)
