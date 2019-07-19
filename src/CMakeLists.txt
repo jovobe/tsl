@@ -7,7 +7,6 @@ add_library(tsl SHARED STATIC
     geometry/tmesh/tmesh.cpp
     algorithm/reduction.cpp
     evaluation/surface_evaluator.cpp
-    evaluation/bsplines.cpp
     algorithm/generator.cpp
     geometry/tmesh/iterator.cpp
     geometry/transform.cpp

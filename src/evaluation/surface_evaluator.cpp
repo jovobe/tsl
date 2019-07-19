@@ -117,15 +117,15 @@ array<vec3, 3> surface_evaluator::eval_bsplines_point(double u, double v, face_h
     double dv = 0;
     vec2 in(u, v);
 
-    auto& supports = support[f];
+    const auto& supports = support[f];
     for (const auto& [vertex, idx, trans]: supports) {
-        auto local_knots = knot_vectors[vertex][idx];
+        const auto& local_knots = knot_vectors[vertex][idx];
 
-        auto p = mesh.get_vertex_position(vertex);
+        const auto& p = mesh.get_vertex_position(vertex);
         auto transformed = trans.apply(in);
 
-        auto u_basis = get_bspline_with_der(transformed.x, local_knots.u);
-        auto v_basis = get_bspline_with_der(transformed.y, local_knots.v);
+        auto u_basis = get_bspline_with_der<3>(transformed.x, local_knots.u);
+        auto v_basis = get_bspline_with_der<3>(transformed.y, local_knots.v);
 
         c += u_basis.x * v_basis.x * p;
         d += u_basis.x * v_basis.x;

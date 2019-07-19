@@ -1,21 +1,20 @@
 #include <array>
 
-#include "tsl/evaluation/bsplines.hpp"
 #include "tsl/geometry/vector.hpp"
 
 using std::array;
 
 namespace tsl {
 
-vec2 get_bspline_with_der(double u, const vector<double>& knot_vector, uint32_t degree) {
+template<uint32_t degree>
+vec2 get_bspline_with_der(double u, const vector<double>& knot_vector) {
     if (u < knot_vector[0] || u >= knot_vector[degree + 1]) {
         return {0, 0};
     }
 
     // Initialize zero degree funs
-    vector<vector<double>> funs(degree + 1);
+    array<array<double, degree + 1>, degree + 1> funs{};
     for (uint32_t j = 0; j <= degree; ++j) {
-        funs[j].resize(degree + 1);
         if (u >= knot_vector[j] && u < knot_vector[j + 1]) {
             funs[j][0] = 1;
         } else {
@@ -52,9 +51,9 @@ vec2 get_bspline_with_der(double u, const vector<double>& knot_vector, uint32_t 
     // Calc first derivative
     array<double, 2> funs_devs = {funs[0][degree - 1], funs[1][degree - 1]};
     out.y = degree * (
-        (funs_devs[0] / (knot_vector[degree] - knot_vector[0]))
-        -
-        (funs_devs[1] / (knot_vector[degree + 1] - knot_vector[1]))
+    (funs_devs[0] / (knot_vector[degree] - knot_vector[0]))
+    -
+    (funs_devs[1] / (knot_vector[degree + 1] - knot_vector[1]))
     );
 
     return out;

@@ -19,12 +19,15 @@ namespace tsl {
  *
  * @param u The input for the B-Spline function.
  * @param knot_vector The knot vector on which the B-Spline function will be calculated.
- * @param degree The degree of the B-Spline function.
+ * @tparam degree The degree of the B-Spline function.
  * @return A two component vector with x containing the value of the B-Spline function and y containing the value of
  *         the first derivate.
  */
-vec2 get_bspline_with_der(double u, const vector<double>& knot_vector, uint32_t degree = 3);
+template<uint32_t degree>
+vec2 get_bspline_with_der(double u, const vector<double>& knot_vector);
 
 }
+
+#include "bsplines.tcc"
 
 #endif //TSL_BSPLINES_HPP
