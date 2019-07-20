@@ -16,19 +16,28 @@ using fmt::format;
 
 using namespace tsl;
 
-void bench_load_mesh(const string& filename, double runs) {
-    auto path = format("meshes/{}", filename);
+string duration_to_str(const time_point<high_resolution_clock>& t1, const time_point<high_resolution_clock>& t2, double runs) {
+    auto duration_ms = duration_cast<milliseconds>(t2 - t1).count() / runs;
+    auto out = format("{}ms", duration_ms);
+
+    if (duration_ms < 100) {
+        auto duration_us = duration_cast<microseconds>(t2 - t1).count() / runs;
+        out = format("{}μs", duration_us);
+    }
+
+    return out;
+}
+
+void bench_load_mesh(const string& path, double runs) {
     auto t1 = high_resolution_clock::now();
     for (uint32_t i = 0; i < runs; ++i) {
         read_obj_into_tmesh(path);
     }
     auto t2 = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(t2 - t1).count() / runs;
-    println("Benchmark load mesh with {} in {} runs avg.: {}ms", filename, runs, duration);
+    println("Benchmark load mesh with {} in {} runs avg.: {}", path, runs, duration_to_str(t1, t2, runs));
 }
 
-void bench_build_caches(const string& filename, double runs) {
-    auto path = format("meshes/{}", filename);
+void bench_build_caches(const string& path, double runs) {
     auto mesh = read_obj_into_tmesh(path);
     auto t1 = high_resolution_clock::now();
     for (uint32_t i = 0; i < runs; ++i) {
@@ -36,12 +45,10 @@ void bench_build_caches(const string& filename, double runs) {
         surface_evaluator(move(cloned));
     }
     auto t2 = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(t2 - t1).count() / runs;
-    println("Benchmark build caches with {} in {} runs avg.: {}ms", filename, runs, duration);
+    println("Benchmark build caches with {} in {} runs avg.: {}", path, runs, duration_to_str(t1, t2, runs));
 }
 
-void bench_eval_surface(const string& filename, double runs, const vector<uint32_t>& resolutions) {
-    auto path = format("meshes/{}", filename);
+void bench_eval_surface(const string& path, double runs, const vector<uint32_t>& resolutions) {
     auto mesh = read_obj_into_tmesh(path);
     auto evaluator = surface_evaluator(move(mesh));
     for (const auto& res: resolutions) {
@@ -50,21 +57,26 @@ void bench_eval_surface(const string& filename, double runs, const vector<uint32
             evaluator.eval_per_face(res);
         }
         auto t2 = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(t2 - t1).count() / runs;
-        println("Benchmark eval surface with {} (resolution: {}) in {} runs avg.: {}ms", filename, res, runs, duration);
+        println("Benchmark eval surface with {} (resolution: {}) in {} runs avg.: {}", path, res, runs, duration_to_str(t1, t2, runs));
     }
 }
 
-void bench(const string& filename) {
-    bench_load_mesh(filename, 100.0);
-    bench_build_caches(filename, 100.0);
-    bench_eval_surface(filename, 100.0, {1, 2, 3, 4, 5});
-}
+int main(int argc, char* argv[]) {
+    vector<string> args(argv, argv + argc);
+    auto filename = args[1];
+    auto runs = std::stod(args[2]);
+    auto bench = args[3];
 
-int main() {
-    auto small = "fandisk.obj";
-    auto large = "bumpy_sphere.obj";
-    bench(small);
-    bench(large);
+    if (bench == "load") {
+        bench_load_mesh(filename, runs);
+    } else if (bench == "build") {
+        bench_build_caches(filename, runs);
+    } else if (bench == "eval") {
+        auto res = static_cast<uint32_t>(std::stoi(args[4]));
+        bench_eval_surface(filename, runs, {res});
+    } else {
+        println("Unknown benchmark!");
+    }
+
     exit(EXIT_SUCCESS);
 }
