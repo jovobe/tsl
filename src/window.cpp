@@ -118,6 +118,10 @@ window::window(string&& title, uint32_t width, uint32_t height) :
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
 
+    auto& style = ImGui::GetStyle();
+    style.ScaleAllSizes(2.0);
+    io.Fonts->AddFontFromFileTTF("fonts/FiraSans-Light.ttf", 26);
+
     // get framebuffer size
     glfwGetFramebufferSize(glfw_window.get(), &frame_width, &frame_height);
 
