@@ -29,8 +29,7 @@ void stable_vector<handle_t, elem_t>::check_access(handle_type handle) const
 
 template<typename handle_t, typename elem_t>
 stable_vector<handle_t, elem_t>::stable_vector(size_t count_elements, const element_type& default_value)
-    : elements(count_elements, default_value),
-      used_count(count_elements)
+    : used_count(count_elements), elements(count_elements, default_value)
 {}
 
 template<typename handle_t, typename elem_t>

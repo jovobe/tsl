@@ -11,7 +11,7 @@ vector<vertex_element> gl_buffer::get_combined_vec_data() const {
     vec_data.reserve(vertex_buffer.size());
 
     // TODO: make this loop parallel
-    for (int i = 0; i < vertex_buffer.size(); ++i) {
+    for (size_t i = 0; i < vertex_buffer.size(); ++i) {
 
         vertex_element elem(vertex_buffer[i]);
 

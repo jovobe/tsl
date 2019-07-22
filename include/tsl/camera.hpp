@@ -49,14 +49,13 @@ public:
     bool move_boost;
 
     camera() :
+        moving_direction(),
+        move_boost(false),
         pos(INITIAL_POS),
         direction(INITIAL_DIRECTION),
         up(INITIAL_UP),
         last_cursor_pos(),
-        last_mouse_time(0),
-        last_move_time(),
-        moving_direction(),
-        move_boost(false)
+        last_move_time()
     {};
 
     /**
@@ -109,8 +108,6 @@ private:
 
     /// Last cursor position. If this is none, the user hast not clicked.
     optional<mouse_pos> last_cursor_pos;
-    /// Last time the mouse was moved. If this is none, the user has not moved the mouse.
-    double last_mouse_time;
     /// Last time the camera was moved. If this is none, the user has not moved the camera.
     optional<double> last_move_time;
 

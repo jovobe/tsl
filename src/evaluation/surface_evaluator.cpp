@@ -28,7 +28,7 @@ using fmt::format;
 namespace tsl {
 
 surface_evaluator::surface_evaluator(tmesh&& mesh):
-    mesh(move(mesh)), config(), uv(), dir(), edge_trans(), handles(), knots(), support(), knot_vectors() {
+    config(), mesh(move(mesh)), uv(), dir(), edge_trans(), support(), knots(), handles(), knot_vectors() {
     update_cache();
 }
 

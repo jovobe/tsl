@@ -155,7 +155,7 @@ face_handle tmesh::add_face(const vector<new_face_vertex>& new_vertices) {
     face_handle new_face_h = faces.next_handle();
     {
         // Get half edge based at a corner
-        auto found = find_if(new_vertices.begin(), new_vertices.end(), [&, this](const auto& new_vertex) {
+        auto found = find_if(new_vertices.begin(), new_vertices.end(), [&](const auto& new_vertex) {
             return new_vertex.corner;
         });
         if (found == new_vertices.end()) {
@@ -533,7 +533,7 @@ uint8_t tmesh::num_adjacent_faces(edge_handle handle) const
 
 size_t tmesh::get_valence(vertex_handle handle) const {
     index valence = 0;
-    circulate_around_vertex(handle, [&, this](auto ingoing_edge_h)
+    circulate_around_vertex(handle, [&](auto ingoing_edge_h)
     {
         valence += 1;
         return true;
@@ -794,7 +794,7 @@ void tmesh::get_half_edges_of_vertex(
     edge_direction way
 ) const
 {
-    circulate_around_vertex(handle, [&edges_out, this](auto eh)
+    circulate_around_vertex(handle, [&edges_out](auto eh)
     {
         edges_out.push_back(eh);
         return true;
@@ -812,7 +812,7 @@ vector<half_edge_handle> tmesh::get_half_edges_of_face(face_handle face_handle) 
 {
     vector<half_edge_handle> edges_out;
     edges_out.reserve(4);
-    circulate_in_face(face_handle, [&edges_out, this](auto eh)
+    circulate_in_face(face_handle, [&edges_out](auto eh)
     {
         edges_out.push_back(eh);
         return true;

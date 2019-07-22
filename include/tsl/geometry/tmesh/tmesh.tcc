@@ -93,7 +93,7 @@ optional_half_edge_handle tmesh::find_edge_around_vertex(half_edge_handle start_
     // This function simply follows `next` and `twin` handles to visit all
     // edges around a vertex.
     optional_half_edge_handle out;
-    circulate_around_vertex(start_edge_h, [&, this](auto ingoing_edge_h) {
+    circulate_around_vertex(start_edge_h, [&](auto ingoing_edge_h) {
         if (pred(ingoing_edge_h)) {
             out = optional_half_edge_handle(ingoing_edge_h);
             return false;

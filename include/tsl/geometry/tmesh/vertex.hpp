@@ -7,7 +7,7 @@
 namespace tsl {
 
 // Forward declarations
-struct optional_half_edge_handle;
+class optional_half_edge_handle;
 
 /**
  * @brief Represents a vertex in the tmesh data structure.

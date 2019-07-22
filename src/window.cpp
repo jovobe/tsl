@@ -60,17 +60,17 @@ window::window(string&& title, uint32_t width, uint32_t height) :
     title(move(title)),
     width(width),
     height(height),
-    camera(),
     wireframe_mode(false),
     control_mode(true),
     surface_mode(true),
-    move_object(false),
     normal_mode(false),
     show_reflection_lines(false),
-    surface_resolution(1),
-    edge_remove_percentage(10.0f),
+    move_object(false),
     dialogs(),
-    evaluator(move(tmesh_cube(5)))
+    edge_remove_percentage(10.0f),
+    surface_resolution(1),
+    evaluator(tmesh_cube(5)),
+    camera()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -1231,7 +1231,7 @@ void window::open_file_dialog_and_load_selected_file() {
     auto files = pfd::open_file("Select a file").result();
     if (!files.empty()) {
         try {
-            evaluator = surface_evaluator(move(read_obj_into_tmesh(files[0])));
+            evaluator = surface_evaluator(read_obj_into_tmesh(files[0]));
             update_buffer();
         } catch(const exception& e) {
             pfd::message("Problem", format("An error occurred while loading: {}\n{}", files[0], e.what()), pfd::choice::ok, pfd::icon::error);

@@ -6,7 +6,7 @@
 namespace tsl {
 
 // Forward declarations
-struct half_edge_handle;
+class half_edge_handle;
 
 /**
  * @brief Represents a face in the tmesh data structure.

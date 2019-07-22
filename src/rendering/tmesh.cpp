@@ -64,9 +64,7 @@ vector<uint8_t> get_picked_edges_buffer(const tmesh& mesh, const set<picking_ele
         auto found = find(picked_handles.begin(), picked_handles.end(), eh);
         auto picked_val = static_cast<uint8_t>(found != picked_handles.end());
         auto vertices = mesh.get_vertices_of_edge(eh);
-        for (const auto& vh: vertices) {
-            out.push_back(picked_val);
-        }
+        out.insert(out.end(), vertices.size(), picked_val);
     }
 
     return out;

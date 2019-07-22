@@ -170,8 +170,8 @@ TEST_F(TmeshTest, Orientability) {
     auto v2 = mesh.add_vertex({0, 0, 0});
     auto v3 = mesh.add_vertex({0, 0, 0});
 
-    auto v4 = mesh.add_vertex({0, 0, 0});
-    auto v5 = mesh.add_vertex({0, 0, 0});
+//    auto v4 = mesh.add_vertex({0, 0, 0});
+//    auto v5 = mesh.add_vertex({0, 0, 0});
 
     mesh.add_face({v0, v1, v2, v3});
 

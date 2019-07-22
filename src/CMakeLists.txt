@@ -1,3 +1,4 @@
+# TSL
 add_library(tsl SHARED STATIC
     geometry/line_segment.cpp
     geometry/rectangle.cpp
@@ -17,6 +18,7 @@ target_link_libraries(tsl
     ${CONAN_LIBS}
 )
 
+# TSE
 add_executable(tsl_main
     main.cpp
     application.cpp
@@ -41,6 +43,7 @@ target_link_libraries(tsl_main
     tsl
 )
 
+# TSL Benchmark
 add_executable(tsl_benchmark
     benchmark.cpp
 )

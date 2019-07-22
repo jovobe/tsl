@@ -34,7 +34,7 @@ void application::init_glfw() const {
 }
 
 void application::glfw_error_callback(int error, const char* description) {
-    println("ERROR: {}", description);
+    println("ERROR ({}): {}", error, description);
 }
 
 void application::glfw_key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
@@ -109,14 +109,11 @@ void application::create_window(string&& title, uint32_t width, uint32_t height)
 void application::run() {
     vector<GLFWwindow*> to_close;
     auto last_time = get_time();
-    auto start = steady_clock::now();
     uint32_t num_frames = 0;
     uint32_t num_sleep = 0;
-    auto ms = milliseconds(1);
 
     while (true) {
         auto now = steady_clock::now();
-        auto diff = now - start;
         auto end = now + milliseconds(static_cast<uint32_t>((1.0f / FPS_TARGET) * 1000));
 
         // mesaure speed
