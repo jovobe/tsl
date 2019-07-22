@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <optional>
 
+#include "tsl/util/println.hpp"
 #include "tsl/geometry/tmesh/tmesh.hpp"
 #include "tsl/geometry/tmesh/iterator.hpp"
 #include "tsl/algorithm/get_vertices.hpp"
@@ -373,7 +374,7 @@ face_handle tmesh::add_face(const array<vertex_handle, 4>& new_vertices) {
     });
 }
 
-bool tmesh::remove_edge(edge_handle handle) {
+bool tmesh::remove_edge(edge_handle handle, bool keep_vertices) {
     // TODO: Check this implementation for edge cases.
     auto [half_edge_1_h, half_edge_2_h] = get_half_edges_of_edge(handle);
     const auto& half_edge_1 = get_e(half_edge_1_h);
@@ -412,6 +413,16 @@ bool tmesh::remove_edge(edge_handle handle) {
         return false;
     }
 
+    // both half edges need to point into a face corner, otherwise we would create not qaudratic faces
+    if (!(*from_corner(half_edge_1_h)) || !(*half_edge_1.corner) || !(*from_corner(half_edge_2_h)) || !(*half_edge_2.corner)) {
+        return false;
+    }
+
+    // if we were told to keep all vertices, we are not allowed to remove edges poiting to t-vertices
+    if (keep_vertices && (get_valence(half_edge_1.target)  == 3 || get_valence(half_edge_2.target)  == 3)) {
+        return false;
+    }
+
     // TODO: check cylce and consistency conditions, if edge would be removed!
 
     // we cannot remove border edges
@@ -422,22 +433,18 @@ bool tmesh::remove_edge(edge_handle handle) {
     auto face2_h = half_edge_2.face.unwrap();
 
     // get vertices
-    auto& vertex_1 = get_v(half_edge_1.target);
-    auto& vertex_2 = get_v(half_edge_2.target);
+    auto vertex_1_h = half_edge_1.target;
+    auto vertex_2_h = half_edge_2.target;
+    auto& vertex_1 = get_v(vertex_1_h);
+    auto& vertex_2 = get_v(vertex_2_h);
 
     // we have to fix:
     // - prev
     // - next
+    // - corner
     // - out (of vertex)
     // - edge (of face)
     // - face (of inner edges of face 1)
-    // - corner
-
-    if (get_valence(half_edge_1.target)  == 3 || get_valence(half_edge_2.target)  == 3) {
-        // Check for T-Joints which could be removed
-        // TODO: when a edge inc to a t-joint is removed, it removes the vertex as well
-        return false;
-    }
 
     // the face of half edge 1 is going to be deleted by this operation, store all inner edge handles, to fix their
     // face pointer
@@ -492,6 +499,81 @@ bool tmesh::remove_edge(edge_handle handle) {
     edges.erase(half_edge_1_h);
     edges.erase(half_edge_2_h);
     faces.erase(face1_h);
+
+    // we need to fix invalid edges created because of removed t-edges
+    // the situation we end up in looks like this: with vertex_1_h or vertex_2_h beeing v4
+    // v0 ===== v1 ===== v2
+    // ||       f1       ||
+    // ||                ||
+    // || he11>    he21> ||
+    // v3 ===== v4 ===== v5
+    // || <he12    <he22 ||
+    // ||                ||
+    // ||       f2       ||
+    // v6 ===== v7 ===== v8
+
+    // we need to remove v4, he11 and he12 and connect he21 and he22 with v3
+    auto vertices_to_check = {vertex_1_h, vertex_2_h};
+    for (const auto& vh: vertices_to_check) {
+        if (get_valence(vh) == 2) {
+
+            auto v4_h = vh;
+            auto v4 = get_v(v4_h);
+            auto he12_h = v4.outgoing.unwrap();
+            auto he11_h = get_twin(he12_h);
+            auto he22_h = get_prev(he12_h);
+            auto he21_h = get_twin(he22_h);
+
+            auto he12 = get_e(he12_h);
+            auto he11 = get_e(he11_h);
+            auto& he21 = get_e(he21_h);
+            auto& he22 = get_e(he22_h);
+
+            // we have to fix:
+            // - prev
+            // - next
+            // - corner (of he22)
+            // - target (of he22)
+            // - knots
+            // - out (of v3)
+            // - edge (of f1)
+
+            // fix prev and next
+            auto& prev_11 = get_e(he11.prev);
+            auto& next_12 = get_e(he12.next);
+            next_12.prev = he22_h;
+            prev_11.next = he21_h;
+            he21.prev = he11.prev;
+            he22.next = he12.next;
+
+            // fix corner
+            he22.corner = true;
+
+            // fix target
+            he22.target = he12.target;
+
+            // fix knots
+            he22.knot = (*he22.knot) + (*he12.knot);
+            he21.knot = (*he21.knot) + (*he11.knot);
+
+            // fix out (of v3)
+            auto& v3 = get_v(he12.target);
+            if (v3.outgoing.unwrap() == he11_h) {
+                v3.outgoing = optional_half_edge_handle(he21_h);
+            }
+
+            // fix edge (of face 1)
+            auto& f1 = get_f(he11.face.unwrap());
+            if (f1.edge == he11_h) {
+                f1.edge = he21_h;
+            }
+
+            // actually delete the vertex and half edges
+            edges.erase(he11_h);
+            edges.erase(he12_h);
+            vertices.erase(v4_h);
+        }
+    }
 
     return true;
 }

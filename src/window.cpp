@@ -566,8 +566,8 @@ void window::draw_gui() {
             if (ImGui::InputInt("Cube size", &cube_size, 1, 1)) {
                 if (cube_size < 3) {
                     cube_size = 3;
-                } else if (cube_size > 50) {
-                    cube_size = 50;
+                } else if (cube_size > 20) {
+                    cube_size = 20;
                 }
             }
             ImGui::SameLine();
@@ -613,7 +613,7 @@ void window::draw_gui() {
                     vector<edge_handle> removed_egdes;
                     for (const auto& edge: edges_picked) {
                         edge_handle handle(edge.get().handle.get_idx());
-                        if (evaluator.remove_edge(handle)) {
+                        if (evaluator.remove_edge(handle, false)) {
                             removed_egdes.push_back(handle);
                         } else {
                             pfd::message("Problem", format("Edge with id: {} could not be deleted!", handle), pfd::choice::ok, pfd::icon::error);

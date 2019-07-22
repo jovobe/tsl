@@ -262,8 +262,8 @@ vec2 surface_evaluator::get_max_coords(face_handle handle) const {
 // = T-Mesh modifier
 // ========================================================================
 
-bool surface_evaluator::remove_edge(edge_handle handle) {
-    auto res = mesh.remove_edge(handle);
+bool surface_evaluator::remove_edge(edge_handle handle, bool keep_vertices) {
+    auto res = mesh.remove_edge(handle, keep_vertices);
     if (res) {
         update_cache();
     }

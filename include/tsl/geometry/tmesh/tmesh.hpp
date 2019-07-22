@@ -105,8 +105,11 @@ public:
     /**
      * @brief Removes the given edge and one of the two faces it seperades and returns true. Returns false, if the
      *        edge could not be deleted.
+     *
+     * @param keep_vertices This indicates whether this method should remove edges pointing into a t-vertex and
+     *        thus remove the vertex.
      */
-    bool remove_edge(edge_handle handle);
+    bool remove_edge(edge_handle handle, bool keep_vertices = true);
 
     // ========================================================================
     // = Get numbers

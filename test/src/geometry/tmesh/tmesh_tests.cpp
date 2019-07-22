@@ -576,6 +576,68 @@ TEST_F(TmeshTestAsGrid, RemoveEdge) {
     EXPECT_EQ(face1, face0);
 }
 
+TEST_F(TmeshTestAsGrid, RemoveEdgeWithOneTVertex) {
+    // v30 ==== v31 ==== v32
+    // ||       ||       ||
+    // ||  f27  ||  f28  ||
+    // ||       ||       ||
+    // v39 ==== v40 ==== v41
+    // ||       ||       ||
+    // ||  f35  ||  f36  ||
+    // ||       ||       ||
+    // v48 ==== v49 ==== v50
+    auto v30 = vertex_handles[30];
+    auto v31 = vertex_handles[31];
+    auto v32 = vertex_handles[32];
+    auto v39 = vertex_handles[39];
+    auto v40 = vertex_handles[40];
+    auto v41 = vertex_handles[41];
+    auto v48 = vertex_handles[48];
+    auto v49 = vertex_handles[49];
+    auto v50 = vertex_handles[50];
+
+    auto f35 = face_handles[35];
+    auto f36 = face_handles[36];
+
+    // v30 ==== v31 ==== v32
+    // ||                ||
+    // ||      f??       ||
+    // ||                ||
+    // v39 ==== v40 ==== v41
+    // ||       ||       ||
+    // ||  f35  ||  f36  ||
+    // ||       ||       ||
+    // v48 ==== v49 ==== v50
+    auto edge1 = mesh.get_edge_between(v31, v40);
+    mesh.remove_edge(edge1.unwrap());
+
+    auto num_faces = mesh.num_faces();
+    auto num_vertices = mesh.num_vertices();
+    auto num_edges = mesh.num_edges();
+    auto num_half_edges = mesh.num_half_edges();
+
+    auto edge2 = mesh.get_edge_between(v40, v49);
+    ASSERT_FALSE(mesh.remove_edge(edge2.unwrap(), true));
+    ASSERT_TRUE(mesh.remove_edge(edge2.unwrap(), false));
+
+    // test valence
+    EXPECT_EQ(4, mesh.get_extended_valence(v49));
+    EXPECT_EQ(3, mesh.get_valence(v49));
+    EXPECT_EQ(4, mesh.get_extended_valence(v31));
+    EXPECT_EQ(3, mesh.get_valence(v31));
+
+    // check edge and face count decresed
+    EXPECT_EQ(num_faces - 1, mesh.num_faces());
+    EXPECT_EQ(num_vertices - 1, mesh.num_vertices());
+    EXPECT_EQ(num_edges - 2, mesh.num_edges());
+    EXPECT_EQ(num_half_edges - 4, mesh.num_half_edges());
+
+    EXPECT_EQ(3, mesh.get_faces_of_vertex(v49).size());
+    auto face = mesh.get_face_between({v39, v48, v49, v50, v41}).unwrap();
+    vector<face_handle> faces = {f35, f36};
+    EXPECT_TRUE(std::find(faces.begin(), faces.end(), face) != faces.end());
+}
+
 TEST_F(TmeshTestWithTfaceTest, GetExtendedValence) {
     EXPECT_EQ(4, mesh.get_extended_valence(vertex_handles[4]));
 }

@@ -121,7 +121,7 @@ public:
     /**
      * @see tmesh::remove_edge(edge_handle)
      */
-    bool remove_edge(edge_handle handle);
+    bool remove_edge(edge_handle handle, bool keep_vertices = true);
 
     /**
      * @see tmesh::get_vertex_position(vertex_handle)
