@@ -511,12 +511,6 @@ basis_fun_trans_map surface_evaluator::setup_basis_funs() {
         handles.insert(vh, vector<tuple<half_edge_handle, tag>>());
         handles[vh].reserve(mesh.get_valence(vh));
         for (const auto& eh: mesh.get_half_edges_of_vertex(vh, edge_direction::outgoing)) {
-            // TODO: Check, if this should be done or not (will be commented out until this is clarified)
-            // Skip extraordinary vertices
-//            if (mesh.is_extraordinary(mesh.get_target(mesh.get_next(eh)))) {
-//                continue;
-//            }
-
             handles[vh].emplace_back(eh, tag::positive_u);
             auto r = static_cast<uint8_t>(4 - dir[eh]);
             auto t = -rotate(r, uv[mesh.get_prev(eh)]);

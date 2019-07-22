@@ -30,7 +30,7 @@ vertex_handle tmesh::add_vertex(vec3 pos) {
 }
 
 bool tmesh::is_face_insertion_valid(const vector<new_face_vertex>& new_vertices) const {
-    // TODO: This implementation is incomplete! Check it for edge cases.
+    // TODO: Check this implementation for edge cases.
     // TODO: This does not detect non-manifold edges!
 
     // We are working with a quad mesh, so a face needs at least 4 vertices!
@@ -105,9 +105,6 @@ bool tmesh::is_face_insertion_valid(const array<vertex_handle, 4>& new_vertices)
 }
 
 face_handle tmesh::add_face(const vector<new_face_vertex>& new_vertices) {
-    // TODO: This implementation is incomplete! Check it for edge cases.
-    // TODO: Sometimes this method get's stuck in an endless loop -> investigate!
-
     if (!is_face_insertion_valid(new_vertices)) {
         panic("attempting to add a face which cannot be added!");
     }
@@ -377,12 +374,10 @@ face_handle tmesh::add_face(const array<vertex_handle, 4>& new_vertices) {
 }
 
 bool tmesh::remove_edge(edge_handle handle) {
-    // TODO: This implementation is incomplete! Check it for edge cases.
+    // TODO: Check this implementation for edge cases.
     auto [half_edge_1_h, half_edge_2_h] = get_half_edges_of_edge(handle);
     const auto& half_edge_1 = get_e(half_edge_1_h);
     const auto& half_edge_2 = get_e(half_edge_2_h);
-
-    // TODO: Check, if T-Mesh constraints are fulfilled after edge is removed!
 
     // We may not delete edges near extraordinary vertices
     {
@@ -438,7 +433,6 @@ bool tmesh::remove_edge(edge_handle handle) {
     // - face (of inner edges of face 1)
     // - corner
 
-    // TODO: special case: valence == 3
     if (get_valence(half_edge_1.target)  == 3 || get_valence(half_edge_2.target)  == 3) {
         // Check for T-Joints which could be removed
         // TODO: when a edge inc to a t-joint is removed, it removes the vertex as well
@@ -732,7 +726,7 @@ vector<face_handle> tmesh::get_neighbours_of_face(face_handle handle) const
 optional_face_handle tmesh::get_face_between(const vector<vertex_handle>& handles) const {
     // TODO: This is more compilcated! what if a face of v0, v1, v2, v3 exists and we try to create a face
     //       with v0-v6? Search for more edge cases!
-    // TODO: This implementation is incomplete! Check it for edge cases.
+    // TODO: Check this implementation for edge cases.
     if (handles.size() < 4) {
         panic("too few vertex handles! A face in a quad mesh needs at least four vertices!");
     }

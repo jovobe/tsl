@@ -28,10 +28,6 @@ TEST_F(EigenCacheTest, Get) {
     EXPECT_TRUE(eigen3.loaded_);
 }
 
-TEST_F(EigenCacheTest, Cached) {
-    // TODO: Test if the eigen_cache really caches the elements.
-}
-
 #ifndef NDEBUG
 TEST_F(EigenCacheTest, InvalidValence) {
     EXPECT_THROW(cache.get(eigen_handle(0)), panic_exception);

@@ -127,7 +127,6 @@ void application::run() {
             last_time += 1.0;
         }
 
-        // TODO: quit the app if quit was pressed, not when no windows are left
         if (windows.empty()) {
             break;
         }

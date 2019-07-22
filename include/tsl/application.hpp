@@ -87,9 +87,7 @@ private:
     static void glfw_window_size_callback(GLFWwindow* glfw_window, int width, int height);
     static void glfw_mouse_button_callback(GLFWwindow* glfw_window, int button, int action, int mods);
 
-    // TODO: restrict scope
     friend class window;
-//    friend window::window(string title, uint32_t width, uint32_t height);
 };
 
 }

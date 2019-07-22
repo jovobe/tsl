@@ -401,10 +401,6 @@ void window::render() {
     auto projection = perspective(radians(45.0f), static_cast<float>(width) / height, 0.1f, 1000.0f);
     auto view = camera.get_view_matrix();
 
-    // TODO: If this is commented in, it breaks the object movement -> check why
-    //       Something seems to be not valid with the backwards model projection in the window::get_ray or the
-    //       window::handle_object_move method
-//    auto model = rotate(mat4(1.0f), radians(-90.0f), fvec3(1.0f, 0.0f, 0.0f));
     auto model = mat4(1.0f);
     auto vp = projection * view;
 
@@ -942,7 +938,6 @@ void window::draw_surface_picking(const mat4& model, const mat4& vp) const {
 window::~window() {
     // if this window was moved, we don't have to destruct it
     if (glfw_window) {
-        // TODO: add checks if array and buffers need to be deleted
         glDeleteVertexArrays(1, &surface_vertex_array);
         glDeleteBuffers(1, &surface_vertex_buffer);
         glDeleteBuffers(1, &surface_index_buffer);

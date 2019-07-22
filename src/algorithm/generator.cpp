@@ -3,8 +3,6 @@
 namespace tsl {
 
 tmesh tmesh_cube(uint32_t size, double edge_length) {
-    // TODO: refactor code to methods (remove duplicate code) and use x_vertices.size()
-
     tmesh out;
     // =============================
     // Front side

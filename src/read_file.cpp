@@ -17,7 +17,6 @@ string read_file(const string& filename) {
         throw runtime_error("Could not open file: " + filename);
     }
 
-    // TODO: why is the first argument wrapped in parenthesis?
     string content((istreambuf_iterator<char>(ifs)), istreambuf_iterator<char>());
     return content;
 }

@@ -57,8 +57,6 @@ GLuint create_program(vector<GLuint> shaders) {
 GLuint create_shader(const string& shader_path, GLenum shader_type) {
     auto shader = glCreateShader(shader_type);
     auto shader_text = read_file(shader_path);
-//    println(shader_text.c_str());
-    // TODO: why variable?
     auto tmp1 = shader_text.c_str();
     glShaderSource(shader, 1, &tmp1, nullptr);
     glCompileShader(shader);

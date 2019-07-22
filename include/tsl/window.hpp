@@ -79,7 +79,6 @@ using glfw_window_ptr = unique_ptr<GLFWwindow, glfw_window_destructor>;
  */
 class window {
 public:
-    // TODO: make private?
     window(string&& title, uint32_t width, uint32_t height);
     window(window const &) = delete;
     window(window&& window) = default;
@@ -227,8 +226,6 @@ private:
     /// Camera
     class camera camera;
 
-    // TODO: restrict scope
-//    friend void application::create_window(string title, uint32_t width, uint32_t height);
     friend class application;
 
     /**

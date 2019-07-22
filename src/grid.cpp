@@ -24,7 +24,6 @@ gl_buffer regular_grid::get_render_buffer(picking_map& picking_map) const {
 
 gl_buffer regular_grid::add_to_render_buffer(gl_buffer& buffer, picking_map& picking_map) const {
     // reserve space
-    // TODO: assuming filled and regular here -> fix!
     auto x = static_cast<GLuint>(num_points_x);
     auto y = static_cast<GLuint>(num_points_y);
     auto num_vertices = x * y;
@@ -80,9 +79,8 @@ gl_buffer regular_grid::add_to_render_buffer(gl_buffer& buffer, picking_map& pic
         }
     }
 
-    // TODO: remove check if normal calculation is implemented for bspline eval
     if (normals.empty()) {
-        // generate normals TODO: approach is very naive! change it!
+        // generate normals
         for (GLuint i = 0; i < y; ++i) {
             for (GLuint j = 0; j < x; ++j) {
 

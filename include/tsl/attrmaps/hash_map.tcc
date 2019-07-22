@@ -31,9 +31,6 @@ optional<value_t> hash_map<handle_t, value_t>::insert(handle_t key, const value_
     auto res = map.insert(make_pair(key, value));
     if (!res.second)
     {
-        // TODO: this makes some copies that are not necessary. Dunno how
-        //       to correctly code this right now. Maybe the compiler optimizes
-        //       everything perfectly anyway.
         auto old = (*res.first).second;
         (*res.first).second = value;
         return old;
