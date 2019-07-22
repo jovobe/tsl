@@ -217,6 +217,8 @@ private:
     float edge_remove_percentage;
     /// Resolution of the surface.
     resolution<uint32_t> surface_resolution;
+    /// Size of cube loaded at start
+    int cube_size;
     /// Surface evaluator.
     surface_evaluator evaluator;
 

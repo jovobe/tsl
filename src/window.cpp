@@ -69,7 +69,8 @@ window::window(string&& title, uint32_t width, uint32_t height) :
     dialogs(),
     edge_remove_percentage(10.0f),
     surface_resolution(1),
-    evaluator(tmesh_cube(5)),
+    cube_size(5),
+    evaluator(tmesh_cube(static_cast<size_t>(cube_size))),
     camera()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -559,6 +560,19 @@ void window::draw_gui() {
                 if (surface_resolution.get() < 1) {
                     surface_resolution.set(1);
                 }
+                update_buffer();
+            }
+
+            if (ImGui::InputInt("Cube size", &cube_size, 1, 1)) {
+                if (cube_size < 3) {
+                    cube_size = 3;
+                } else if (cube_size > 50) {
+                    cube_size = 50;
+                }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Load")) {
+                evaluator = surface_evaluator(tmesh_cube(static_cast<size_t>(cube_size)));
                 update_buffer();
             }
 
