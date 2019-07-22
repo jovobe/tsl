@@ -669,7 +669,7 @@ void window::draw_gui() {
                 if (ImGui::TreeNode("t-mesh data")) {
                     // Check for border edge
                     if (mesh.is_border(eh)) {
-                        ImGui::BulletText("this half edge lies on the border of the edge");
+                        ImGui::BulletText("this half edge lies on the border of the mesh");
                     } else {
                         ImGui::BulletText("points into face corner: %s", *mesh.corner(eh) ? "true" : "false");
                         ImGui::BulletText("knot interval: %.2f", *mesh.get_knot_interval(eh));

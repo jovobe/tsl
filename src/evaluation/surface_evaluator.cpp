@@ -130,34 +130,31 @@ array<vec3, 3> surface_evaluator::eval_bsplines_point(double u, double v, face_h
         c += u_basis.x * v_basis.x * p;
         d += u_basis.x * v_basis.x;
 
-        // TODO: Apply trans.f to derivs!
-        // TODO: this could eventually be done with a rotation?
-
         switch (trans.r) {
             case 0:
             case 4:
-                cdu += u_basis.y * v_basis.x * p;
-                cdv += u_basis.x * v_basis.y * p;
-                du += u_basis.y * v_basis.x;
-                dv += u_basis.x * v_basis.y;
+                cdu += u_basis.y * v_basis.x * p * trans.f;
+                cdv += u_basis.x * v_basis.y * p * trans.f;
+                du += u_basis.y * v_basis.x * trans.f;
+                dv += u_basis.x * v_basis.y * trans.f;
                 break;
             case 1:
-                cdu += u_basis.x * v_basis.y * p;
-                cdv += (-u_basis.y) * v_basis.x * p;
-                du += u_basis.x * v_basis.y;
-                dv += (-u_basis.y) * v_basis.x;
+                cdu += u_basis.x * v_basis.y * p * trans.f;
+                cdv += (-u_basis.y) * v_basis.x * p * trans.f;
+                du += u_basis.x * v_basis.y * trans.f;
+                dv += (-u_basis.y) * v_basis.x * trans.f;
                 break;
             case 2:
-                cdu += (-u_basis.y) * v_basis.x * p;
-                cdv += u_basis.x * (-v_basis.y) * p;
-                du += (-u_basis.y) * v_basis.x;
-                dv += u_basis.x * (-v_basis.y);
+                cdu += (-u_basis.y) * v_basis.x * p * trans.f;
+                cdv += u_basis.x * (-v_basis.y) * p * trans.f;
+                du += (-u_basis.y) * v_basis.x * trans.f;
+                dv += u_basis.x * (-v_basis.y) * trans.f;
                 break;
             case 3:
-                cdu += u_basis.x * (-v_basis.y) * p;
-                cdv += u_basis.y * v_basis.x * p;
-                du += u_basis.x * (-v_basis.y);
-                dv += u_basis.y * v_basis.x;
+                cdu += u_basis.x * (-v_basis.y) * p * trans.f;
+                cdv += u_basis.y * v_basis.x * p * trans.f;
+                du += u_basis.x * (-v_basis.y) * trans.f;
+                dv += u_basis.y * v_basis.x * trans.f;
                 break;
             default:
                 panic("unknown rotation in transform!");
