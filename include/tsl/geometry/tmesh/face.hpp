@@ -16,7 +16,7 @@ struct face
     explicit face(half_edge_handle edge)
         : edge(edge) {}
 
-    /// One of the edges bounding this face.
+    /// One of the edges bounding this face, which is based at a corner.
     half_edge_handle edge;
 };
 

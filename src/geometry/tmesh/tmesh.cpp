@@ -984,11 +984,11 @@ half_edge_handle tmesh::find_or_create_edge_between(new_face_vertex from_h, new_
     if (found_edge) {
         return found_edge.unwrap();
     } else {
-        return add_edge_pair(from_h, to_h).first;
+        return add_edge_pair(from_h.handle, to_h.handle).first;
     }
 }
 
-pair<half_edge_handle, half_edge_handle> tmesh::add_edge_pair(new_face_vertex v1h, new_face_vertex v2h) {
+pair<half_edge_handle, half_edge_handle> tmesh::add_edge_pair(vertex_handle v1h, vertex_handle v2h) {
     // This method adds two new half edges, called "a" and "b".
     //
     //  +----+  --------(a)-------->  +----+
@@ -1007,8 +1007,8 @@ pair<half_edge_handle, half_edge_handle> tmesh::add_edge_pair(new_face_vertex v1
     auto& b_inserted = get_e(bh);
 
     // Assign half-edge targets
-    a_inserted.target = v2h.handle;
-    b_inserted.target = v1h.handle;
+    a_inserted.target = v2h;
+    b_inserted.target = v1h;
 
     return make_pair(ah, bh);
 }

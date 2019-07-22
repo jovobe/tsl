@@ -564,7 +564,7 @@ private:
      * @return Both edge handles. The first edge points from v1h to v2h, the
      *         second one points from v2h to v1h.
      */
-    pair<half_edge_handle, half_edge_handle> add_edge_pair(new_face_vertex v1h, new_face_vertex v2h);
+    pair<half_edge_handle, half_edge_handle> add_edge_pair(vertex_handle v1h, vertex_handle v2h);
 
     /**
      * @brief Converts a half edge handle to a full edge handle
