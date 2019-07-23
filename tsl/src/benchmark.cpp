@@ -61,7 +61,23 @@ void bench_eval_surface(const string& path, double runs, const vector<uint32_t>&
     }
 }
 
+/**
+ * @brief Runs benchmarks for the three main steps of point calculation.
+ *
+ * Step 1: Load data into the T-Mesh.
+ * Step 2: Build caches of `surface_evaluator`.
+ * Step 3: Evaluate points in the surface.
+ */
 int main(int argc, char* argv[]) {
+    if (argc < 4) {
+        println("Usage: tsl_benchmark path_to_mesh runs benchmark [resolution]\n");
+        println("path_to_mesh: The file path to the mesh to run the benchmark on.");
+        println("runs: Number of runs to get the avg. runtime from.");
+        println("benchmark: Benchmark to run. This has to be one of: load, build, eval.");
+        println("resolution: Resolution for eval benchmark.");
+        exit(EXIT_SUCCESS);
+    }
+
     vector<string> args(argv, argv + argc);
     auto filename = args[1];
     auto runs = std::stod(args[2]);
