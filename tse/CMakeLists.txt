@@ -12,6 +12,7 @@ include_directories(ext/pfd)
 add_subdirectory(ext/glfw EXCLUDE_FROM_ALL)
 add_definitions(-DGLEW_STATIC)
 add_subdirectory(ext/glew EXCLUDE_FROM_ALL)
+add_definitions(-DTSL_EIGENVALUES_PREFX="../tsl/")
 add_subdirectory(../tsl tsl EXCLUDE_FROM_ALL)
 include_directories(../tsl/include)
 

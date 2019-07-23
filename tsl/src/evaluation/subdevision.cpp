@@ -36,8 +36,10 @@ const eigen_struct& eigen_cache::get(eigen_handle handle) {
 }
 
 eigen_struct eigen_cache::load(index valence) {
-    std::string path ("eigenvalues/");
-
+    std::string path("eigenvalues/");
+#ifdef TSL_EIGENVALUES_PREFX
+    path = format("{}{}", TSL_EIGENVALUES_PREFX, path);
+#endif
     eigen_struct out;
 
     std::string Vpath = path;
@@ -46,6 +48,9 @@ eigen_struct eigen_cache::load(index valence) {
     Vpath += ".txt";
     std::fstream is;
     is.open (Vpath.c_str (), std::ios::in);
+    if (!is.is_open()) {
+        panic("Could not load eigenvalues for valence: {} at '{}'!\nPerhaps you have to #define TSL_EIGENVALUES_PREFX to the correct path.", valence, path);
+    }
 
     out.N_ = static_cast<int>(valence);
     out.twoN_ = 2*out.N_;
