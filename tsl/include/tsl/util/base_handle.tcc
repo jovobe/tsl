@@ -23,7 +23,7 @@ template <typename idx_t>
 void base_handle<idx_t>::set_idx(idx_t idx)
 {
 #ifndef NDEBUG
-    if (idx == numeric_limits<idx_t>::max())
+    if (idx == (numeric_limits<idx_t>::max)())
     {
         panic("Trying to create a handle with numeric_limits<idx_t>::max() as idx!");
     }
@@ -51,7 +51,7 @@ bool base_handle<idx_t>::operator<(const base_handle& other) const {
 
 template <typename idx_t, typename non_optional_t>
 base_optional_handle<idx_t, non_optional_t>::base_optional_handle()
-    : idx(numeric_limits<idx_t>::max())
+    : idx((numeric_limits<idx_t>::max)())
 {}
 
 template <typename idx_t, typename non_optional_t>
@@ -72,7 +72,7 @@ base_optional_handle<idx_t, non_optional_t>::base_optional_handle(idx_t idx)
 template <typename idx_t, typename non_optional_t>
 base_optional_handle<idx_t, non_optional_t>::operator bool() const
 {
-    return idx != numeric_limits<idx_t>::max();
+    return idx != (numeric_limits<idx_t>::max)();
 }
 
 template <typename idx_t, typename non_optional_t>

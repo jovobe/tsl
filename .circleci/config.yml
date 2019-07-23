@@ -12,19 +12,22 @@ jobs:
     executor: ubuntu-build
     steps:
       - checkout
-      - run: cd /build && cmake /source -DCMAKE_BUILD_TYPE=Release
+      - run: git submodule update --init --recursive
+      - run: cd /build && cmake /source/tse -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build /build
+      - run: cmake --build /build --target tsl_tests
       - persist_to_workspace:
           root: /build
           paths:
-            - test/bin/tsl_tests
+            - tsl/test/src/tsl_tests
 
   test:
     executor: ubuntu-build
     steps:
+      - checkout
       - attach_workspace:
           at: /build
-      - run: /build/test/bin/tsl_tests
+      - run: cd /source/tsl && /build/tsl/test/src/tsl_tests
 
 workflows:
   version: 2.1
