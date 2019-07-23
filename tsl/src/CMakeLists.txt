@@ -17,7 +17,7 @@ add_library(tsl SHARED STATIC
 target_link_libraries(tsl
     PUBLIC fmt
     PUBLIC glm
-    PUBLIC BLAS
+    PUBLIC blas
 )
 
 # TSL Benchmark
