@@ -7,8 +7,12 @@ set(CMAKE_CXX_STANDARD 17)
 # deps
 find_package(BLAS REQUIRED)
 include_directories(ext/tinyobjloader)
-add_subdirectory(ext/glm EXCLUDE_FROM_ALL)
-add_subdirectory(ext/fmt EXCLUDE_FROM_ALL)
+if (NOT TARGET glm)
+    add_subdirectory(ext/glm EXCLUDE_FROM_ALL)
+endif()
+if (NOT TARGET fmt)
+    add_subdirectory(ext/fmt EXCLUDE_FROM_ALL)
+endif()
 
 # application
 set(TSL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)

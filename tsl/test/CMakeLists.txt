@@ -3,7 +3,9 @@ project(tsl_tests VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_subdirectory(ext/googletest EXCLUDE_FROM_ALL)
+if (NOT TARGET gtest_main)
+    add_subdirectory(ext/googletest EXCLUDE_FROM_ALL)
+endif()
 
 # application
 set(TSL_TESTS_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)

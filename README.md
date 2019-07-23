@@ -3,28 +3,7 @@ Library and editor for representation and manipulation of generalised T-Spline s
 
 [![CircleCI](https://circleci.com/gh/jovobe/tsl.svg?style=svg)](https://circleci.com/gh/jovobe/tsl)
 
-## Build
-In order to build this software you need a C++ compiler (compatible with C++17 standard), CMake and the package manager [conan](https://conan.io/).
-
-- `mkdir build && cd build`
-
-### deps (conan)
-- add remote: `conan remote add conan-bintray https://api.bintray.com/conan/bincrafters/public-conan`
-- add remote: `conan remote add conan-community https://api.bintray.com/conan/conan-community/conan`
-- build deps: `conan install .. --build missing`
-
-### Editor
-- `cmake .. -DCMAKE_BUILD_TYPE=Release`
-- `cmake --build .`
-
-## Run
-To run the editor you have to start it from the root directory of the repository. If you used the
-commands above the following would start the editor: `./build/bin/tsl_main`.
-
-## Controls
-The camera is moved with standard first person control via WASD. Space moves the camera up and
-c moves it downwards. To speed up the movement you can hold shift. To select multiple elements in the
-editor you can click them while holding down ctrl.
+This repository contains two C++ projects. One contains the library and can be found in the [tsl](tsl) folder and the other one contains the editor, which can be found in the [tse](tse) folder. For further informations please read the repsective README files in the two projects.
 
 ---
 
