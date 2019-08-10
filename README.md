@@ -1,5 +1,5 @@
 # T-Spline Library & T-Spline Editor
-Library and editor for representation and manipulation of generalised T-Spline surfaces written in C++.
+Library and editor for representation and manipulation of generalised T-Spline surfaces following [Similarity Maps and Field-Guided T-Splines: a Perfect Couple](https://doi.org/10.1145/3072959.3073647) written in C++.
 
 [![CircleCI](https://circleci.com/gh/jovobe/tsl.svg?style=svg)](https://circleci.com/gh/jovobe/tsl)
 

@@ -1,5 +1,5 @@
 # T-Spline Library
-Library for representation and manipulation of generalised T-Spline surfaces written in C++.
+Library for representation and manipulation of generalised T-Spline surfaces following [Similarity Maps and Field-Guided T-Splines: a Perfect Couple](https://doi.org/10.1145/3072959.3073647) written in C++.
 
 ## Build
 In order to build this software you need a C++ compiler (compatible with C++17 standard), CMake and git. Please make sure, that you cloned this repository with `--recursive` flag. If this is not the case, you need to run `git submodule update --init --recursive`.
