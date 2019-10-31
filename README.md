@@ -6,6 +6,13 @@ Library and editor for representation and manipulation of generalised T-Spline s
 This repository contains two C++ projects. One contains the library and can be found in the [tsl](tsl) folder and the other one contains the editor, which can be found in the [tse](tse) folder. For further informations please read the repsective README files in the two projects.
 
 ---
+## Screenshots
+
+![TSE Surface](res/tse-surface.png)
+
+![TSE T-Mesh](res/tse-tmesh.png)
+
+---
 
 ## License
 Licensed under either of
